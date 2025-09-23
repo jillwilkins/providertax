@@ -32,6 +32,12 @@ hcris.vars = rbind(hcris.vars,c('uncomp_care','S100000','03000','0100','numeric'
 hcris.vars = rbind(hcris.vars,c('cost_to_charge','S100000','02400','0100','numeric'))
 hcris.vars = rbind(hcris.vars,c('new_cap_ass','A700002','00900','0200','numeric'))
 hcris.vars = rbind(hcris.vars,c('cash','G000000','00100','0100','numeric'))
+
+# add my variables 
+hcris.vars = rbind(hcris.vars,c('gross_medicaid_rev','S100000','01701','0100','numeric')) # is this net medicaid revenue? 
+hcris.vars = rbind(hcris.vars,c('medicaid_charge','S100000','02800','0100','numeric'))
+hcris.vars = rbind(hcris.vars,c('medicaid_cost','S100000','02900','0100','numeric'))
+
 colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")
 
 
@@ -74,3 +80,5 @@ for (i in 1998:2011) {
   
 }
 write_tsv(final.hcris.v1996,'data/output/HCRIS_Data_v1996.txt',append=FALSE,col_names=TRUE)
+
+
