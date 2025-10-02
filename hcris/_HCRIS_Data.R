@@ -15,12 +15,13 @@ pacman::p_load(tidyverse, ggplot2, dplyr, lubridate)
 # Import data -------------------------------------------------------------
 
 ## create v1996 and v2010 data
-source('data-code/H1_HCRISv1996.R')
-source('data-code/H2_HCRISv2010.R')
+source('data/HCRIS_v1996.R')
+source('data/HCRIS_v2010.R')
+
 
 ## create missing variables for columns introduced in v2010 of hcris forms
 final.hcris.v1996 = final.hcris.v1996 %>%
-  mutate(hvbp_payment=NA, hrrp_payment=NA, tot_uncomp_care_charges=NA, tot_uncomp_care_partial_pmts=NA, bad_debt=NA)
+  mutate(hvbp_payment=NA, hrrp_payment=NA, tot_uncomp_care_charges=NA, tot_uncomp_care_partial_pmts=NA, bad_debt=NA, get_dsh_supp=NA, net_med_all_dsh=NA, dsh_from_mcaid=NA, rev_cost_mcaid=NA, tot_sal=NA, tot_sal_paid_hrs=NA, sum_1426=NA)
 
 ## create missing variables for columns in v1996 that we have to compute in v2010
 final.hcris.v2010 = final.hcris.v2010 %>%
