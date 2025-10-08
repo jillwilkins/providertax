@@ -2,33 +2,34 @@
 ## Author:        Jill Wilkins
 ## Date Created:  10/2/2025
 ## Date Edited:   10/7/2025
-## Goal:         fmap vs number of states with tax        
+## Goal:          Figures that show relationship of tax adoption and outcome variable        
 ##  
 
 library(ggplot2)
-fmap_tax <- fmap_tax %>% filter(!is.na(year)) 
 
+# FMAP and TAX ----------------------------------------------------------------
 # figure of tax adoption over time
-sum_data <- fmap_tax %>%
+plot1data <- hospdata %>%
+  filter(year > 2003 & year < 2024, !is.na(totaltax)) %>%
   group_by(year) %>%
   summarise(
-    states_with_tax = sum(year >= firsttax, na.rm = TRUE),  # states with tax in that year
-    avg_fmap = mean(fmap, na.rm = TRUE),                   # average FMAP across states
+    avg_fmap = mean(fmap, na.rm = TRUE),
+    totaltax = first(totaltax),  # same value for all hospitals that year
     .groups = "drop"
   )
 
-scale_factor <- max(sum_data$states_with_tax) / max(sum_data$avg_fmap)
-
-taxfmapcorr <- ggplot(sum_data, aes(x = year)) +
+scale <- max(plot1data$totaltax) / max(plot1data$avg_fmap)
+ 
+taxfmapcorr <- ggplot(plot1data, aes(x = year)) +
   # Left axis: number of states with tax
-  geom_line(aes(y = states_with_tax), color = "blue", size = 1.2) +
-  geom_point(aes(y = states_with_tax), color = "blue", size = 2) +
+  geom_line(aes(y = totaltax), color = "blue", size = 1.2) +
+  geom_point(aes(y = totaltax), color = "blue", size = 2) +
   # Right axis: average FMAP (scaled)
-  geom_line(aes(y = avg_fmap * scale_factor), color = "red", size = 1.2) +
-  geom_point(aes(y = avg_fmap * scale_factor), color = "red", size = 2) +
+  geom_line(aes(y = avg_fmap * scale), color = "red", size = 1.2) +
+  geom_point(aes(y = avg_fmap * scale), color = "red", size = 2) +
   scale_y_continuous(
-    name = "States with Tax",
-    sec.axis = sec_axis(~ . / scale_factor, name = "Average FMAP")
+    name = "Number of States with Tax",
+    sec.axis = sec_axis(~ . / scale, name = "Average FMAP")
   ) +
   labs(
     x = "Year",
@@ -46,16 +47,95 @@ taxfmapcorr <- ggplot(sum_data, aes(x = year)) +
 setwd("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/providertax")
 ggsave("sumplots/taxfmapcorr.png", plot = taxfmapcorr, width = 8, height = 8, dpi = 300)
 
-
-# correlation test 
+# correlations 
 fmap_tax <- fmap_tax %>%
-  mutate(firsttax = ifelse(is.na(firsttax), "never", firsttax)) %>%
-  mutate(tax_adopted_num = ifelse(firsttax != "never", 1, 0))
-
-cor(fmap_tax$fmap, fmap_tax$tax_adopted_num, use = "complete.obs")
-
+  mutate(yes_adopt = ifelse(!is.na(firsttax) & year >= firsttax, 1, 0))
 state_corr <- fmap_tax %>%
+  group_by(state) %>%
+  summarise(
+    correlation = cor(fmap, yes_adopt, use = "complete.obs")
+  )
+# confirm that fmap does not fully explain tax adoption
+# ----------------------------------------------------------------
+
+
+# Tax adoption and payer mix 
+hospdata <- hospdata %>%
+  mutate(mcaid_prop = mcaid_charges / tot_charges) %>%
+  mutate(mcaid_prop_discharges = mcaid_discharges / tot_discharges)
+
+summary(hospdata$mcaid_prop_discharges)
+
+# payer mix over time plot
+#note: ill wnat to figure out how to remove outliers here
+ggplot(filter(hospdata, !is.na(mcaid_prop) & mcaid_prop < 1),aes(x = year, y = mcaid_prop)) +
+  stat_summary(
+    fun = mean, geom = "line", color = "blue", size = 1.2) +
+  stat_summary(
+    fun = mean, geom = "point", color = "blue", size = 2) +
+  labs(
+    x = "Year",
+    y = "Average Medicaid Proportion",
+    title = "Average Medicaid Proportion Over Time"
+  ) +
+  theme_minimal()
+
+
+# dual axis: Mcaid Charges prop and total states with tax
+plot2 <- hospdata %>%
+  filter(!is.na(mcaid_prop) & mcaid_prop < 1 & year < 2025 & year > 2003) %>%
   group_by(year) %>%
-  summarise(correlation = cor(fmap, tax_adopted_num, use = "complete.obs"))
-View(state_corr)
-# conclusion: correlation is low suggesting that the reason a state adopted a tax is not explained by FMAP
+  summarise(
+    avg_mcaid_prop = mean(mcaid_prop, na.rm = TRUE),
+    totaltax = first(totaltax[!is.na(totaltax)]),
+    .groups = "drop"
+  )
+View(plot2)
+scale2 <- max(plot2$totaltax) / max(plot2$avg_mcaid_prop)
+
+mcaidpropplot <- ggplot(plot2, aes(x = year)) +
+  geom_line(aes(y = avg_mcaid_prop), color = "blue", size = 1.2) +
+  geom_point(aes(y = avg_mcaid_prop), color = "blue", size = 2) +
+  geom_line(aes(y = totaltax / scale2), color = "red", size = 1.2) +
+  geom_point(aes(y = totaltax / scale2), color = "red", size = 2) +
+  scale_y_continuous(
+    name = "Average Medicaid Charges Proportion",
+    sec.axis = sec_axis(~ . / scale2, name = "Cumulative Provider Taxes")
+  ) +
+  labs(
+    x = "Year",
+    title = "Average Medicaid Charges Proportion and Cumulative Provider Taxes Over Time"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/mcaidpropplot.png", plot = mcaidpropplot, width = 8, height = 8, dpi = 300)
+
+# dual axis: Mcaid Discharges prop and total states with tax
+plot3 <- hospdata %>%
+  filter(!is.na(mcaid_prop_discharges) & mcaid_prop_discharges < 1 & year < 2025 & year > 2003) %>%
+  group_by(year) %>%
+  summarise(
+    avg_mcaid_prop = mean(mcaid_prop_discharges, na.rm = TRUE),
+    totaltax = first(totaltax[!is.na(totaltax)]),
+    .groups = "drop"
+  )
+
+scale3 <- max(plot3$totaltax) / max(plot3$avg_mcaid_prop)
+
+mcaiddispropplot <- ggplot(plot3, aes(x = year)) +
+  geom_line(aes(y = avg_mcaid_prop), color = "blue", size = 1.2) +
+  geom_point(aes(y = avg_mcaid_prop), color = "blue", size = 2) +
+  geom_line(aes(y = totaltax / scale3), color = "red", size = 1.2) +
+  geom_point(aes(y = totaltax / scale3), color = "red", size = 2) +
+  scale_y_continuous(
+    name = "Average Medicaid Discharges Proportion",
+    sec.axis = sec_axis(~ . / scale3, name = "Cumulative Provider Taxes")
+  ) +
+  labs(
+    x = "Year",
+    title = "Average Medicaid Discharges Proportion and Cumulative Provider Taxes Over Time"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/mcaiddispropplot.png", plot = mcaiddispropplot, width = 8, height = 8, dpi = 300)
+

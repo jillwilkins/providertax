@@ -10,14 +10,36 @@ library(stringr)
 
 #load in  hcris data for net patient revenue  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
-View(hcris)
+
+# clean state names
+unique(hcris$state)
+hcris <- hcris %>%
+  mutate(
+    state = str_trim(toupper(state)),
+    state = recode(state,
+      "TENNESSEE" = "TN",
+      "TE" = "TN",
+      "MICHIGAN" = "MI",
+      "ILLINOIS" = "IL",
+      "CALIFORNIA" = "CA",
+      "ARIZONA" = "AZ",
+      "MONTANA" = "MT", 
+      "NORTH CAROLINA" = "NC",
+      "WISCONSIN" = "WI", 
+      "KA" = "KS",
+      "P." = "PR",
+      "AX" = "AZ"))
+
+#remove states NA 
+hcris <- hcris %>%
+  filter(!is.na(state))
+
 
 # load state provider tax data
 tax <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/statetaxadopt_kff.csv", skip = 2)
 # remove footnotes column and notes in extra rows 
 tax <- tax %>% select(-Footnotes)
-tax <- tax[1:52, ]
-
+tax <- tax[2:52, ]
 
 # convert full state names (statename) to abbreviations (state)
 tax <- tax %>% rename(statename = Location)
@@ -30,19 +52,19 @@ tax <- tax %>%
 
 #find first year with tax 
 tax <- tax %>%
-  select(state, starts_with("20")) %>%
-  filter(state != "NA")
+  select(state, starts_with("20"))
 
 tax <- tax %>%
   mutate(firsttax = apply(select(., starts_with("20")), 1, function(row) {
     years <- names(row)[str_detect(as.character(row), regex("yes|^Y$", ignore_case = TRUE))]
-    if (length(years) == 0) NA_integer_ else min(as.integer(years))
-  }))
+    if (length(years) == 0 || any(is.na(as.integer(years)))) {"never"} 
+    else {min(as.integer(years))}}))
+
 
 #load in FMAP data 
 fmap <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/fmaps_kff.csv", skip = 2)
 fmap <- fmap %>% select(-Footnotes)
-fmap <- fmap[1:52, ]
+fmap <- fmap[2:52, ]
 fmap <- fmap %>% rename(statename = Location)
 fmap$state <- state.abb[match(fmap$statename, state.name)]
 fmap$state[fmap$statename == "District of Columbia"] <- "DC"
@@ -68,20 +90,36 @@ fmap <- fmap %>%
   rename(multiplier = m) %>%
   mutate(year = as.integer(year))
 
-#rename USA
+#remove NA rows from titles 
 fmap <- fmap %>%
-  mutate(state = if_else(is.na(state) | state == "NA", "USA", state))
+  filter(!is.na(fmap) & !is.na(multiplier))
 
-# join tax, fmap, and hcris data by state and year 
+# create cumulative count of states with a tax each year 
+tax_totals <- tax %>%
+  pivot_longer(
+    cols = matches("^20\\d{2}$"), # all year columns like 2004, 2005, ...
+    names_to = "year",
+    values_to = "has_tax"
+  ) %>%
+  mutate(
+    year = as.integer(year),
+    has_tax = tolower(has_tax) %in% c("yes", "y") # convert to logical TRUE/FALSE
+  ) %>%
+  group_by(year) %>%
+  summarise(totaltax = sum(has_tax, na.rm = TRUE), .groups = "drop")
+
+
+# join tax and fmap
 fmap_tax <- fmap %>%
-  left_join(
-    tax %>% select(state, firsttax),
-    by = c("state" = "state")
-  )
+  left_join(tax %>% select(state, firsttax),
+    by = c("state" = "state")) %>%
+  left_join(tax_totals,
+    by = c("year" = "year"))
 
+# join fmap_tax into hcris
 hcris <- hcris %>%
   left_join(
-    fmap_tax %>% select(state, year, fmap, multiplier, firsttax),
+    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax),
     by = c("state" = "state", "year" = "year")
   )
 
@@ -100,4 +138,9 @@ hospdata <- hcris %>%
     by = c("provider_number" = "MCRNUM", "year" = "YEAR")
   )
 
+# when i do this, i only get years after 2008. 
+hospdata_10 <- hospdata %>%
+  filter(SERV == 10)
 
+
+View(hospdata)
