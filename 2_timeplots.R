@@ -22,11 +22,11 @@ scale <- max(plot1data$totaltax) / max(plot1data$avg_fmap)
  
 taxfmapcorr <- ggplot(plot1data, aes(x = year)) +
   # Left axis: number of states with tax
-  geom_line(aes(y = totaltax), color = "blue", size = 1.2) +
-  geom_point(aes(y = totaltax), color = "blue", size = 2) +
+  geom_line(aes(y = totaltax), color = "red", size = 1.2) +
+  geom_point(aes(y = totaltax), color = "red", size = 2) +
   # Right axis: average FMAP (scaled)
-  geom_line(aes(y = avg_fmap * scale), color = "red", size = 1.2) +
-  geom_point(aes(y = avg_fmap * scale), color = "red", size = 2) +
+  geom_line(aes(y = avg_fmap * scale), color = "blue", size = 1.2) +
+  geom_point(aes(y = avg_fmap * scale), color = "blue", size = 2) +
   scale_y_continuous(
     name = "Number of States with Tax",
     sec.axis = sec_axis(~ . / scale, name = "Average FMAP")
@@ -37,10 +37,10 @@ taxfmapcorr <- ggplot(plot1data, aes(x = year)) +
   ) +
   theme_minimal() +
   theme(
-    axis.title.y.left = element_text(color = "blue", size = 12),
-    axis.text.y.left = element_text(color = "blue"),
-    axis.title.y.right = element_text(color = "red", size = 12),
-    axis.text.y.right = element_text(color = "red"),
+    axis.title.y.left = element_text(color = "red", size = 12),
+    axis.text.y.left = element_text(color = "red"),
+    axis.title.y.right = element_text(color = "blue", size = 12),
+    axis.text.y.right = element_text(color = "blue"),
     plot.title = element_text(face = "bold", size = 14, hjust = 0.5)
   )
 
@@ -83,7 +83,7 @@ ggplot(filter(hospdata, !is.na(mcaid_prop) & mcaid_prop < 1),aes(x = year, y = m
 
 # dual axis: Mcaid Charges prop and total states with tax
 plot2 <- hospdata %>%
-  filter(!is.na(mcaid_prop) & mcaid_prop < 1 & year < 2025 & year > 2003) %>%
+  filter(!is.na(mcaid_prop) & mcaid_prop < 1 & year < 2025 & year > 2003 ) %>%
   group_by(year) %>%
   summarise(
     avg_mcaid_prop = mean(mcaid_prop, na.rm = TRUE),
@@ -97,9 +97,10 @@ mcaidpropplot <- ggplot(plot2, aes(x = year)) +
   geom_line(aes(y = avg_mcaid_prop), color = "blue", size = 1) +
   geom_line(aes(y = totaltax * scale_factor), color = "red", size = 1) +
   scale_y_continuous(
-    name = "Average Medicaid Proportion",
+    name = "Average Proportion of Medicaid Charges",
     sec.axis = sec_axis(~ . / scale_factor, name = "Number of States Adopted Tax")
   ) +
+   labs(title = "Average Medicaid Charges and State Tax Adoption Over Time") +
   theme_minimal() +
   theme(
     axis.title.y.left = element_text(color = "blue"),
@@ -128,6 +129,7 @@ mcaiddispropplot <- ggplot(plot3, aes(x = year)) +
     name = "Average Medicaid Discharges Proportion",
     sec.axis = sec_axis(~ . / scale3, name = "Number of States Adopted Tax")
   ) +
+  labs(title = "Average Medicaid Discharges and State Tax Adoption Over Time") +
   theme_minimal() +
   theme(
     axis.title.y.left = element_text(color = "blue"),
@@ -136,9 +138,9 @@ mcaiddispropplot <- ggplot(plot3, aes(x = year)) +
 
 ggsave("sumplots/mcaiddispropplot.png", plot = mcaiddispropplot, width = 8, height = 8, dpi = 300)
 
-# dual axis: uncompensated care charrges and total states with tax
+# dual axis: uncompensated care charges and total states with tax
 plot4 <- hospdata %>%
-  filter(!is.na(tot_uncomp_care_charges) & year < 2025 & year > 2003) %>%
+  filter(!is.na(tot_uncomp_care_charges) & year < 2025 & year > 2011) %>%
   group_by(year) %>%
   summarise(
     avg_uc_charges = mean(tot_uncomp_care_charges, na.rm = TRUE),
@@ -148,20 +150,21 @@ plot4 <- hospdata %>%
 
 scale4 <- max(plot4$avg_uc_charges, na.rm = TRUE) / max(plot4$totaltax, na.rm = TRUE)
 
-uncompplot <- ggplot(plot4, aes(x = year)) +
+post_uncompplot <- ggplot(plot4, aes(x = year)) +
   geom_line(aes(y = avg_uc_charges), color = "blue", size = 1) +
   geom_line(aes(y = totaltax * scale4), color = "red", size = 1) +
   scale_y_continuous(
-    name = "Average Uncompensated Care Charges",
+    name = "Average Uncompensated Care Charges ",
     sec.axis = sec_axis(~ . / scale4, name = "Number of States Adopted Tax")
   ) +
   theme_minimal() +
+  labs(title = "Post 2011: Average Uncompensated Care Charges and State Tax Adoption Over Time") +
   theme(
     axis.title.y.left = element_text(color = "blue"),
     axis.title.y.right = element_text(color = "red")
   )
 
-ggsave("sumplots/uncompplot.png", plot = uncompplot, width = 8, height = 8, dpi = 300)
+ggsave("sumplots/post_uncompplot.png", plot = post_uncompplot, width = 8, height = 8, dpi = 300)
 
 # dual axis: cost to charge ratio and total states with tax
 plot5 <- hospdata %>%
@@ -182,9 +185,40 @@ ccrplot <- ggplot(plot5, aes(x = year)) +
     name = "Average Cost to Charge Ratio",
     sec.axis = sec_axis(~ . / scale5, name = "Number of States Adopted Tax")
   ) +
+  labs(title = "Average Cost to Charge Ratio and State Tax Adoption Over Time") +
   theme_minimal() +
   theme(
     axis.title.y.left = element_text(color = "blue"),
     axis.title.y.right = element_text(color = "red")
   )
 ggsave("sumplots/ccrplot.png", plot = ccrplot, width = 8, height = 8, dpi = 300)
+
+# dual axis: uncompensated care charges to gross patient revenue and total states w tax 
+colnames(hospdata)
+plot6 <- hospdata %>%
+  filter(!is.na(tot_uncomp_care_charges) & tot_uncomp_care_charges > 0 & !is.na(tot_charges) & year < 2025 & year > 2011) %>%
+  group_by(year) %>%
+  summarise(
+    avg_ucc_tc = mean((tot_uncomp_care_charges / tot_charges), na.rm = TRUE),
+    totaltax = first(totaltax[!is.na(totaltax)]),
+    .groups = "drop"
+  )
+
+scale6 <- max(plot6$avg_ucc_tc, na.rm = TRUE) / max(plot6$totaltax, na.rm = TRUE)
+
+ucctcplot <- ggplot(plot6, aes(x = year)) +
+  geom_line(aes(y = avg_ucc_tc), color = "blue", size = 1) +
+  geom_line(aes(y = totaltax * scale6), color = "red", size = 1) +
+  scale_y_continuous(
+    name = "Average UCC to Total Charges",
+    sec.axis = sec_axis(~ . / scale6, name = "Number of States Adopted Tax")
+  ) +
+  labs(title = "Average UCC to Total Charges and State Tax Adoption Over Time") +
+  theme_minimal() +
+  theme(
+    axis.title.y.left = element_text(color = "blue"),
+    axis.title.y.right = element_text(color = "red")
+  )
+ggsave("sumplots/ucctcplot.png", plot = ucctcplot, width = 8, height = 8, dpi = 300)
+
+# Pre Post Adoption Averages --------------------------------------------------------------

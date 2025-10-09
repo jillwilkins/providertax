@@ -131,7 +131,7 @@ hcris <- hcris %>% mutate(year = as.numeric(year))
 aha   <- aha %>% mutate(YEAR = as.numeric(YEAR))
 
 # join in aha variables 
-hospdata <- hcris %>%
+hospdatafull <- hcris %>%
   mutate(provider_number = as.character(provider_number)) %>%
   left_join(
     aha %>% select(MCRNUM, YEAR, SERV),
@@ -139,8 +139,6 @@ hospdata <- hcris %>%
   )
 
 # when i do this, i only get years after 2008. 
-hospdata_10 <- hospdata %>%
+hospdata <- hospdatafull %>%
   filter(SERV == 10)
-
-
-View(hospdata)
+View(hospdatafull)
