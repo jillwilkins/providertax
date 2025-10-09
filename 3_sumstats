@@ -1,0 +1,76 @@
+library(knitr)
+library(kableExtra)
+
+# add dependent variable calculations 
+hospdata <- hospdata %>%
+  mutate(
+    ucc_prop = tot_uncomp_care_charges / tot_charges, 
+    cost_per_discharge = tot_charges / tot_discharges, 
+    mcaid_ccr = mcaid_cost / mcaid_charges
+)
+
+# TABLE: SUMMARY STATISTICS 
+# key variables
+sum_vars <- c("mcaid_prop", "mcaid_prop_discharges", "ucc_prop", 
+                   "cost_per_discharge", "cost_to_charge", 
+                   "rev_cost_mcaid", "mcaid_ccr")
+
+# remove outliers
+hospdata_clean <- hospdata
+
+for (var in sum_vars) {
+  threshold <- quantile(hospdata[[var]], 0.99, na.rm = TRUE)
+  hospdata_clean <- hospdata_clean %>%
+    filter(.data[[var]] <= threshold)
+}
+
+# take means at hospital level
+hospmeans <- filter(hospdata_clean, year > 2004, year < 2025) %>%
+  group_by(provider_number) %>%
+  summarise(
+    `Medicaid Proportion` = mean(mcaid_prop, na.rm = TRUE),
+    `Medicaid Proportion of Discharges` = mean(mcaid_prop_discharges, na.rm = TRUE),
+    `Uncompensated Care Proportion` = mean(ucc_prop, na.rm = TRUE),
+    `Cost per Discharge` = mean(cost_per_discharge, na.rm = TRUE),
+    `Cost to Charge Ratio` = mean(cost_to_charge, na.rm = TRUE),
+    `Revenue to Cost Medicaid` = mean(rev_cost_mcaid, na.rm = TRUE),
+    `Medicaid CCR` = mean(mcaid_ccr, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+hospmeans_clean <- hospmeans %>%
+  filter(complete.cases(.))
+
+hosp_sum <- hospmeans_clean %>%
+  summarise(across(-provider_number,
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(), names_to = c("variable", "stat"), names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(
+    mean = as.numeric(mean),
+    sd = as.numeric(sd),
+    stat_string = sprintf("%.2f (%.2f)", mean, sd)
+  ) %>%
+  select(variable, stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Total Hospitals",
+      stat_string = as.character(nrow(hospmeans_clean))
+    )
+  )
+
+
+kable(hosp_sum, format = "latex", booktabs = TRUE,
+      caption = "Summary Statistics by Treatment Status",
+      align = "lcc")
+
+kable(hosp_sum, format = "latex", booktabs = TRUE,
+      caption = "Summary Statistics by Treatment Status",
+      col.names = c("Dependent Variable", "Mean (SD)"),
+      align = "lc")
+
+
+
+

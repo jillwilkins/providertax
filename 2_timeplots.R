@@ -221,4 +221,13 @@ ucctcplot <- ggplot(plot6, aes(x = year)) +
   )
 ggsave("sumplots/ucctcplot.png", plot = ucctcplot, width = 8, height = 8, dpi = 300)
 
-# Pre Post Adoption Averages --------------------------------------------------------------
+
+# Basic scatter plot
+ggplot(hospdata, aes(x = year, y = mcaid_charges)) +
+  geom_point(color = "blue") +
+  labs(
+    title = "Scatter Plot of Medicaid Charges",
+    x = "Year",
+    y = "Medicaid Charges"
+  ) +
+  theme_minimal()

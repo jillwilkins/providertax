@@ -134,7 +134,7 @@ aha   <- aha %>% mutate(YEAR = as.numeric(YEAR))
 hospdatafull <- hcris %>%
   mutate(provider_number = as.character(provider_number)) %>%
   left_join(
-    aha %>% select(MCRNUM, YEAR, SERV),
+    aha %>% select(MCRNUM, YEAR, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS),
     by = c("provider_number" = "MCRNUM", "year" = "YEAR")
   )
 
