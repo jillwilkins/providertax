@@ -1,6 +1,9 @@
 library(knitr)
 library(kableExtra)
 
+hospdata <- hospdata %>%
+  mutate(yes_tax = ifelse(!is.na(firsttax) & year >= firsttax, 1, 0))
+
 # add dependent variable calculations 
 hospdata <- hospdata %>%
   mutate(
@@ -15,6 +18,16 @@ sum_vars <- c("mcaid_prop", "mcaid_prop_discharges", "ucc_prop",
                    "cost_per_discharge", "cost_to_charge", 
                    "rev_cost_mcaid", "mcaid_ccr")
 
+var_names <- c(
+  mcaid_prop = "Medicaid Proportion",
+  mcaid_prop_discharges = "Medicaid Proportion of Discharges",
+  ucc_prop = "Uncompensated Care Proportion",
+  cost_per_discharge = "Cost per Discharge",
+  cost_to_charge = "Cost to Charge Ratio",
+  rev_cost_mcaid = "Revenue to Cost Medicaid",
+  mcaid_ccr = "Medicaid Cost to Charge Ratio"
+)
+
 # remove outliers
 hospdata_clean <- hospdata
 
@@ -24,25 +37,20 @@ for (var in sum_vars) {
     filter(.data[[var]] <= threshold)
 }
 
-# take means at hospital level
-hospmeans <- filter(hospdata_clean, year > 2004, year < 2025) %>%
-  group_by(provider_number) %>%
-  summarise(
-    `Medicaid Proportion` = mean(mcaid_prop, na.rm = TRUE),
-    `Medicaid Proportion of Discharges` = mean(mcaid_prop_discharges, na.rm = TRUE),
-    `Uncompensated Care Proportion` = mean(ucc_prop, na.rm = TRUE),
-    `Cost per Discharge` = mean(cost_per_discharge, na.rm = TRUE),
-    `Cost to Charge Ratio` = mean(cost_to_charge, na.rm = TRUE),
-    `Revenue to Cost Medicaid` = mean(rev_cost_mcaid, na.rm = TRUE),
-    `Medicaid CCR` = mean(mcaid_ccr, na.rm = TRUE),
-    .groups = "drop"
-  )
+hospdata_clean <- hospdata_clean %>%
+  filter(if_any(all_of(names(var_names)), ~ !is.na(.)))
 
-hospmeans_clean <- hospmeans %>%
-  filter(complete.cases(.))
+# FULL SAMPLE: hospital level means
+hospmeans <- hospdata_clean %>%
+   filter(year > 2004, year < 2025) %>%
+   group_by(provider_number) %>%
+   summarise(across(all_of(names(var_names)),  # variables to summarise
+                   ~mean(.x, na.rm = TRUE),
+                   .names = "{.col}")) %>%
+   ungroup()
 
-hosp_sum <- hospmeans_clean %>%
-  summarise(across(-provider_number,
+hosp_sum <- hospmeans %>%
+  summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE),
                         sd = ~sd(.x, na.rm = TRUE)),
                    .names = "{.col}_{.fn}")) %>%
@@ -51,26 +59,73 @@ hosp_sum <- hospmeans_clean %>%
   mutate(
     mean = as.numeric(mean),
     sd = as.numeric(sd),
-    stat_string = sprintf("%.2f (%.2f)", mean, sd)
+    stat_string = sprintf("%.3f (%.3f)", mean, sd), 
+    variable = ifelse(variable %in% names(var_names), var_names[variable], variable)
   ) %>%
   select(variable, stat_string) %>%
   bind_rows(
     tibble(
       variable = "Total Hospitals",
-      stat_string = as.character(nrow(hospmeans_clean))
+      stat_string = as.character(nrow(hospmeans))
     )
   )
-
-
-kable(hosp_sum, format = "latex", booktabs = TRUE,
-      caption = "Summary Statistics by Treatment Status",
-      align = "lcc")
 
 kable(hosp_sum, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Treatment Status",
       col.names = c("Dependent Variable", "Mean (SD)"),
       align = "lc")
 
+# Treatment Group Means 
+tax_sum <- hospdata_clean %>%
+  filter(year > 2004, year < 2025, yes_tax == 1) %>%
+  summarise(across(names(var_names),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.3f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, Treated = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Total Hospitals",
+      Treated = as.character(n_distinct(hospdata_clean$provider_number[hospdata_clean$yes_tax == 1])))
+  )
 
+View(tax_sum)
+  
+# Control summary
+notax_sum <- hospdata_clean %>%
+  filter(year > 2004, year < 2025, yes_tax == 0) %>%
+  summarise(across(names(var_names),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.3f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, Control = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Total Hospitals",
+      Control = as.character(n_distinct(hospdata_clean$provider_number[hospdata_clean$yes_tax == 0]))
+    )
+  )
+View(notax_sum)
+# Combine with hosp_sum
+all_sum <- hosp_sum %>%
+    left_join(tax_sum, by = "variable") %>%
+    left_join(notax_sum, by = "variable")
+
+kable(all_sum, format = "latex", booktabs = TRUE,
+      caption = "Summary Statistics by Treatment Status",
+      col.names = c("Dependent Variable", "All Hospitals", "With Tax", "Without Tax"),
+      align = "lc")
 
 
