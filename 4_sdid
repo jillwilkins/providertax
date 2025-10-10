@@ -1,0 +1,30 @@
+hospdata_clean <- hospdata_clean %>%
+  mutate(
+    # Make numeric version (if firsttax is a character column)
+    firsttax_num = suppressWarnings(as.numeric(firsttax)),  # converts years to numbers, "never" -> NA
+    # version for Callaway–Sant’Anna
+    firsttax0 = if_else(is.na(firsttax_num), 0L, firsttax_num),
+    # version for Sun–Abraham
+    firsttax_na = firsttax_num
+  )
+
+hospdata_clean <- hospdata_clean %>%
+  mutate(
+    post = if_else(!is.na(firsttax_num) & year >= firsttax_num, 1L, 0L),
+    event_time = if_else(is.na(firsttax_num), NA_integer_, year - firsttax_num)
+  )
+
+
+ggplot(filter(hospdata_clean, post == 0), aes(x = cost_to_charge)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Cost to Charge Ratio",
+       x = "Cost to Charge Ratio", y = "Density") +
+  theme_minimal()
+
+library(fixest)
+est_sa <- feols(mcaid_prop ~ sunab(firsttax_na, year) | provider_number + year, data = filter(hospdata_clean, year < 2020), cluster = "provider_number")
+summary(est_sa)
+iplot(est_sa, main = "Event Study: Effect of Tax Introduction", 
+      xlab = "Years Since First Tax", ylab = "Treatment Effect (θₗ)",
+      ref.line = 0)
+

@@ -8,7 +8,7 @@
 library(dplyr)
 library(stringr)
 
-#load in  hcris data for net patient revenue  
+#load in hcris data  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
 
 # clean state names
@@ -30,13 +30,14 @@ hcris <- hcris %>%
       "P." = "PR",
       "AX" = "AZ"))
 
-#remove states NA 
+#remove states with NA name 
 hcris <- hcris %>%
   filter(!is.na(state))
 
 
-# load state provider tax data
+# load in tax data
 tax <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/statetaxadopt_kff.csv", skip = 2)
+
 # remove footnotes column and notes in extra rows 
 tax <- tax %>% select(-Footnotes)
 tax <- tax[2:52, ]
@@ -138,7 +139,91 @@ hospdatafull <- hcris %>%
     by = c("provider_number" = "MCRNUM", "year" = "YEAR")
   )
 
+# identify treatment groups 
+always_st <- hospdatafull %>%
+  filter(firsttax < 2008) %>%
+  distinct(state) %>%
+  pull(state)
+print(always_st)
+
+never_st <- hospdatafull %>%
+  filter(firsttax == "never") %>%
+  distinct(state) %>%
+  pull(state)
+never_st
+
+hospdatafull <- hospdatafull %>%
+  mutate(
+    always = case_when(
+      state %in% always_st ~ 1,    # 1 if state is in always_st
+      state %in% never_st  ~ NA,   # NA if state is in never_st
+      TRUE                 ~ 0     # 0 otherwise
+      )
+  ) %>%
+  mutate(
+    never = case_when(
+      state %in% never_st  ~ 1,    # 1 if state is in never_st
+      state %in% always_st ~ NA,   # NA if state is in always_st
+      TRUE                 ~ 0     # 0 otherwise
+    )
+  ) %>%
+  mutate(
+    treated = case_when(
+      state %in% never_st  ~ 0,    # 0 if state is in never_st
+      state %in% always_st ~ 0,    # 0 if state is in always_st
+      TRUE                 ~ 1     # 1 otherwise
+    )
+  )
+
+View(hospdatafull)
+
+hospdatafull %>%
+  group_by(provider_number, state) %>%
+  summarise(
+    always = first(always),
+    never  = first(never),
+    treated = first(treated),
+    .groups = "drop"
+  ) %>%
+  summarise(
+    always_states = n_distinct(state[always == 1]),
+    never_states  = n_distinct(state[never == 1]),
+    treated_states = n_distinct(state[treated == 1])
+  )
+
+unique(hospdatafull$state[hospdatafull$always == 1])
+unique(hospdatafull$state[hospdatafull$never == 1])
+unique(hospdatafull$state[hospdatafull$treated == 1])
+
+# remove territories and correct error 
+hospdatafull <- hospdatafull %>%
+  mutate(state = case_when(
+    state == "UTAH" ~ "UT",   
+    TRUE ~ state              
+  )) %>%
+  filter(!state %in% c("AS", "GU", "MP", "PR", "VI"))   
+
+hospdatafull <- hospdatafull %>%
+  mutate(treated_group = case_when(
+    treated == 1 ~ "Treated",
+    always   == 1 ~ "Always",
+    never    == 1 ~ "Never",
+    TRUE          ~ "Other"
+  ))
+
 # when i do this, i only get years after 2008. 
 hospdata <- hospdatafull %>%
   filter(SERV == 10)
-View(hospdatafull)
+
+# add variables
+hospdata <- hospdata %>%
+  mutate(yes_tax = ifelse(!is.na(firsttax) & year >= firsttax, 1, 0))
+
+# add dependent variable calculations 
+hospdata <- hospdata %>%
+  mutate(
+    ucc_prop = tot_uncomp_care_charges / tot_charges, 
+    cost_per_discharge = tot_charges / tot_discharges, 
+    mcaid_ccr = mcaid_cost / mcaid_charges,
+    mcaid_prop = mcaid_charges / tot_charges, 
+    mcaid_prop_discharges = mcaid_discharges / tot_discharges)

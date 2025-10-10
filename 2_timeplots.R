@@ -57,13 +57,6 @@ state_corr <- fmap_tax %>%
   )
 # confirm that fmap does not fully explain tax adoption
 # ----------------------------------------------------------------
-
-
-# Tax adoption and payer mix 
-hospdata <- hospdata %>%
-  mutate(mcaid_prop = mcaid_charges / tot_charges) %>%
-  mutate(mcaid_prop_discharges = mcaid_discharges / tot_discharges)
-
 summary(hospdata$mcaid_prop_discharges)
 
 # payer mix over time plot
@@ -193,7 +186,7 @@ ccrplot <- ggplot(plot5, aes(x = year)) +
   )
 ggsave("sumplots/ccrplot.png", plot = ccrplot, width = 8, height = 8, dpi = 300)
 
-# dual axis: uncompensated care charges to gross patient revenue and total states w tax 
+# dual axis: uncompensated care charges to total charges and total states w tax
 colnames(hospdata)
 plot6 <- hospdata %>%
   filter(!is.na(tot_uncomp_care_charges) & tot_uncomp_care_charges > 0 & !is.na(tot_charges) & year < 2025 & year > 2011) %>%
@@ -222,12 +215,108 @@ ucctcplot <- ggplot(plot6, aes(x = year)) +
 ggsave("sumplots/ucctcplot.png", plot = ucctcplot, width = 8, height = 8, dpi = 300)
 
 
-# Basic scatter plot
-ggplot(hospdata, aes(x = year, y = mcaid_charges)) +
-  geom_point(color = "blue") +
+# ----------------------------------------------------------------
+# PLots but by treatment status
+# ----------------------------------------------------------------
+# mcaid charge proportion 
+tmnt_mcaid_prop <- ggplot(
+  filter(hospdata, !is.na(mcaid_prop) & mcaid_prop < 1),
+  aes(x = year, y = mcaid_prop, color = factor(treated_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treated_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treated_group)) +
   labs(
-    title = "Scatter Plot of Medicaid Charges",
     x = "Year",
-    y = "Medicaid Charges"
+    y = "Average Medicaid Charges Proportion",
+    color = "Group",
+    title = "Average Medicaid Charges Proportion Over Time by Group"
   ) +
   theme_minimal()
+
+ggsave("sumplots/tmnt_mcaid_prop.png", plot = tmnt_mcaid_prop, width = 8, height = 8, dpi = 300)
+
+# mcaid discharges proportion
+tmnt_mcaid_dis_prop <- ggplot(
+  filter(hospdata, !is.na(mcaid_prop_discharges)),
+  aes(x = year, y = mcaid_prop_discharges, color = factor(treated_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treated_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treated_group)) +
+  labs(
+    x = "Year",
+    y = "Average Medicaid Discharges Proportion",
+    color = "Group",
+    title = "Average Medicaid Discharges Proportion Over Time by Group"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/tmnt_mcaid_dis_prop.png", plot = tmnt_mcaid_dis_prop, width = 8, height = 8, dpi = 300)
+
+# uncompensated care charges proportion
+tmnt_ucc_prop <- ggplot(
+  filter(hospdata, !is.na(ucc_prop) & ucc_prop < 1),
+  aes(x = year, y = ucc_prop, color = factor(treated_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treated_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treated_group)) +
+  labs(
+    x = "Year",
+    y = "Average Uncompensated Care Charges Proportion",
+    color = "Group",
+    title = "Average Uncompensated Care to Total Charges Over Time by Group"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/tmnt_ucc_prop.png", plot = tmnt_ucc_prop, width = 8, height = 8, dpi = 300)
+
+# cost to charge ratio
+tmnt_ccr <- ggplot(
+  filter(hospdata, !is.na(cost_to_charge) & cost_to_charge < 10),
+  aes(x = year, y = cost_to_charge, color = factor(treated_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treated_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treated_group)) +
+  labs(
+    x = "Year",
+    y = "Average Cost to Charge Ratio",
+    color = "Group",
+    title = "Average Cost to Charge Ratio Over Time by Group"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/tmnt_ccr.png", plot = tmnt_ccr, width = 8, height = 8, dpi = 300)
+
+# mcaid cost to charge ratio 
+tmnt_mcaid_ccr <- ggplot(
+  filter(hospdata, !is.na(mcaid_ccr) & mcaid_ccr < 10),
+  aes(x = year, y = mcaid_ccr, color = factor(treated_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treated_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treated_group)) +
+  labs(
+    x = "Year",
+    y = "Average Medicaid Cost to Charge Ratio",
+    color = "Group",
+    title = "Average Medicaid Cost to Charge Ratio Over Time by Group"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/tmnt_mcaid_ccr.png", plot = tmnt_mcaid_ccr, width = 8, height = 8, dpi = 300)
+# is mcaid ccr different than ccr? 
+
+# cost per discharge 
+tmnt_cost_per_discharge <- ggplot(
+  filter(hospdata, !is.na(cost_per_discharge) & cost_per_discharge < 100000),
+  aes(x = year, y = cost_per_discharge, color = factor(treated_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treated_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treated_group)) +
+  labs(
+    x = "Year",
+    y = "Average Cost per Discharge",
+    color = "Group",
+    title = "Average Cost per Discharge Over Time by Group"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/tmnt_cost_per_discharge.png", plot = tmnt_cost_per_discharge, width = 8, height = 8, dpi = 300)
