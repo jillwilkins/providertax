@@ -8,45 +8,63 @@
 library(fixest)
 library(did)
 
-# CS event study 
+# make mcrnum numeric
+hospdata <- hospdata %>% mutate(mcrnum = as.numeric(mcrnum))
 
-hospdata_clean <- hospdata_clean %>%
-  mutate(provider_number = as.numeric(factor(provider_number)))
-
-# Years 2008 -- 2024
-hospdata_clean <- hospdata_clean %>%
-  mutate(
-    treatment_year = case_when(
-      treated == 1  ~ firsttax, # year tax instituted 
-      never == 1  ~ 0,            # never treated 
-      always == 1 ~ NA_real_      # always treated → NA
-    )
-  )
-
-colSums(is.na(hospdata_clean[, c("mcaid_prop", "year", "provider_number", "treatment_year")]))
-
-
+# Event Study for mcaid_prop
 att_mcaid_prop <- att_gt(yname = "mcaid_prop",
                 tname = "year",
-                idname = "provider_number",
-                gname = "treatment_year",                  # the column we created
-                data = hospdata_clean,
-                control_group = "nevertreated",  # or "notyettreated"
+                idname = "mcrnum",
+                gname = "treatment_num",                  # the column we created
+                data = hospdata,
+                control_group = "notyettreated",  # or "notyettreated"
                 xformla = ~ 1,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
-summary(hospdata_clean$cost_to_charge)
 summary(att_mcaid_prop)
+ggdid(att_mcaid_prop)
+
+overall_att_mcaid_prop <- aggte(att_mcaid_prop, type = "dynamic", na.rm = TRUE)
+ggdid(overall_att_mcaid_prop)
+summary(hospdata$mcaid_prop)
+
+# Event Study for mcaid_prop_discharges
+att_mcaid_prop_dis <- att_gt(yname = "mcaid_prop_discharges",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "treatment_num",                  # the column we created
+                data = hospdata,
+                control_group = "notyettreated",  # or "notyettreated"
+                xformla = ~ 1,                # covariates (use ~1 if none)
+                est_method = "dr",            # doubly-robust (optional)
+                allow_unbalanced = TRUE
+                )
+summary(att_mcaid_prop_dis)
+ggdid(att_mcaid_prop_dis)
+
+overall_att_mcaid_prop_dis <- aggte(att_mcaid_prop_dis, type = "dynamic", na.rm = TRUE)
+summary(overall_att_mcaid_prop_dis)
+ggdid(overall_att_mcaid_prop_dis)
+summary(hospdata$mcaid_prop_discharges)
+
+# Event Study for ucc_prop
+att_ucc_prop <- att_gt(yname = "ucc_prop",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "treatment_num",                  # the column we created
+                data = hospdata,
+                control_group = "notyettreated",  # or "notyettreated"
+                xformla = ~ 1,                # covariates (use ~1 if none)
+                est_method = "dr",            # doubly-robust (optional)
+                allow_unbalanced = TRUE
+                )
+summary(att_ucc_prop)
+ggdid(att_ucc_prop)
+
+overall_att_ucc_prop <- aggte(att_ucc_prop, type = "dynamic", na.rm = TRUE)
+summary(overall_att_ucc_prop)
+ggdid(overall_att_ucc_prop)
+summary(hospdata$ucc_prop)
 
 
-
-event_study <- aggte(example_attgt, type = "dynamic", na.rm = TRUE)
-summary(event_study)
-ggdid(event_study)
-
-overall_att <- aggte(att_mcaid_prop, type = "group", na.rm = TRUE)
-summary(overall_att)
-table(hospdata_clean$treatment_year)
-
-)

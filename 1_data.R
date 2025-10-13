@@ -259,3 +259,28 @@ aha_og %>%
 hospdata %>%
   filter(year == 2007, serv == 10) %>%
   summarise(n_providers = n_distinct(mcrnum))
+
+# Treatment group for plots 
+hospdata <- hospdata %>%
+  mutate(
+    treatment_group = case_when(
+      always == 1 ~ "always",
+      treated_by_2020 == 1 ~ "treated",
+      TRUE ~ "not yet by 2020"
+    )
+  )
+
+# make firsttax numeric for event study
+hospdata <- hospdata %>%
+  mutate(firsttax = as.numeric(firsttax))
+
+# treatment group numerically for event study
+hospdata <- hospdata %>%
+  mutate(
+    treatment_num = case_when(
+      treatment_group == "always" ~ NA_real_,
+      treatment_group == "treated" ~ firsttax,
+      treatment_group == "not yet by 2020" ~ 0
+    )
+  )
+unique(hospdata$treatment_num)
