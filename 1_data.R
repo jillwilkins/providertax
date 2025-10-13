@@ -7,6 +7,8 @@
 
 library(dplyr)
 library(stringr)
+library(tidyr)
+library(readr)
 
 #load in hcris data  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
@@ -25,14 +27,16 @@ hcris <- hcris %>%
       "ARIZONA" = "AZ",
       "MONTANA" = "MT", 
       "NORTH CAROLINA" = "NC",
-      "WISCONSIN" = "WI", 
+      "WISCONSIN" = "WI",
+      "UTAH" = "UT",
       "KA" = "KS",
       "P." = "PR",
       "AX" = "AZ"))
 
 #remove states with NA name 
 hcris <- hcris %>%
-  filter(!is.na(state))
+  filter(!is.na(state)) %>%
+  filter(!state %in% c("AS", "GU", "MP", "PR", "VI"))
 
 
 # load in tax data
@@ -60,7 +64,7 @@ tax <- tax %>%
     years <- names(row)[str_detect(as.character(row), regex("yes|^Y$", ignore_case = TRUE))]
     if (length(years) == 0 || any(is.na(as.integer(years)))) {"never"} 
     else {min(as.integer(years))}}))
-
+View(tax)
 
 #load in FMAP data 
 fmap <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/fmaps_kff.csv", skip = 2)
@@ -98,7 +102,7 @@ fmap <- fmap %>%
 # create cumulative count of states with a tax each year 
 tax_totals <- tax %>%
   pivot_longer(
-    cols = matches("^20\\d{2}$"), # all year columns like 2004, 2005, ...
+    cols = matches("^20\\d{2}$"), # all year columns like 2004, 2005, 
     names_to = "year",
     values_to = "has_tax"
   ) %>%
@@ -118,67 +122,100 @@ fmap_tax <- fmap %>%
     by = c("year" = "year"))
 
 # join fmap_tax into hcris
-hcris <- hcris %>%
+hcris_tax <- hcris %>%
   left_join(
     fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax),
     by = c("state" = "state", "year" = "year")
   )
 
+hcris_tax <- hcris_tax %>%
+  mutate(provider_number = as.character(provider_number)) %>%
+  filter(year >= 2005)
+View(hcris_tax %>% filter(is.na(provider_number)))
+
+# note: had to do alot of work here 10/13 to make sure i had serv 
 # load in AHA data 
 aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
 
-# convert year columns to numeric
-hcris <- hcris %>% mutate(year = as.numeric(year))
-aha   <- aha %>% mutate(YEAR = as.numeric(YEAR))
+# limit aha to SERV = 10 (general medical and surgical hospitals), no NA in MCRNUM
+aha <- aha %>%
+  mutate(YEAR = as.numeric(YEAR)) %>%
+  filter(SERV == 10) %>%
+  filter (!is.na(MCRNUM)) %>%
+  select(MCRNUM, YEAR, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS)
 
-# join in aha variables 
-hospdatafull <- hcris %>%
-  mutate(provider_number = as.character(provider_number)) %>%
-  left_join(
-    aha %>% select(MCRNUM, YEAR, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS),
-    by = c("provider_number" = "MCRNUM", "year" = "YEAR")
-  )
+# join aha and hcris_tax
+hospdata <- aha %>%
+  left_join(hcris_tax, by = c("MCRNUM" = "provider_number", "YEAR" = "year"))
+View(hospdata)
+colnames(hospdata)
 
-# identify treatment groups 
-always_st <- hospdatafull %>%
-  filter(firsttax < 2008) %>%
-  distinct(state) %>%
-  pull(state)
-print(always_st)
+# remove providers with NA in key variables
+cols_to_check <- c(
+  "TRAUMHOS", "TRAUMSYS", "PSYEMHOS", "PSYEMSYS", "ALCHHOS", "ALCHSYS", "beds",
+  "tot_charges", "net_pat_rev", "tot_discounts", "tot_operating_exp",
+  "ip_charges", "icu_charges", "ancillary_charges", "tot_discharges",
+  "mcare_discharges", "mcaid_discharges", "tot_mcare_payment",
+  "secondary_mcare_payment", "street", "city", "state", "zip", "county",
+  "name", "uncomp_care", "cost_to_charge", "new_cap_ass", "cash",
+  "net_mcaid_rev", "mcaid_charges", "mcaid_cost", "hvbp_payment",
+  "hrrp_payment", "tot_uncomp_care_charges", "tot_uncomp_care_partial_pmts",
+  "bad_debt", "get_dsh_supp", "net_med_all_dsh", "dsh_from_mcaid",
+  "rev_cost_mcaid"
+)
 
-never_st <- hospdatafull %>%
-  filter(firsttax == "never") %>%
-  distinct(state) %>%
-  pull(state)
-never_st
+providers_to_drop <- hospdata %>%
+  group_by(MCRNUM) %>%
+  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
+  filter(all_na) %>%
+  select(MCRNUM)
 
-hospdatafull <- hospdatafull %>%
+hospdata <- hospdata %>%
+  anti_join(providers_to_drop, by = "MCRNUM")
+
+# check that it worked
+hospdata %>%
+  group_by(MCRNUM) %>%
+  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
+  summarise(n_providers = sum(all_na))
+
+# make variables lowercase 
+colnames(hospdata) <- tolower(colnames(hospdata))
+
+# GROUPS: 
+# yes_tax: observation with tax in that year (1 if year >= firsttax, 0 otherwise)
+hospdata <- hospdata %>%
+  mutate(yes_tax = ifelse(!is.na(firsttax) & year >= firsttax, 1, 0))
+
+# identify always states, never states, treated states
+# always states: firsttax <= 2005
+always_state <- tax %>% filter(firsttax < 2005) %>% pull(state)
+never_state <- tax %>% filter(firsttax == "never") %>% pull(state)
+
+
+hospdata <- hospdata %>%
   mutate(
     always = case_when(
-      state %in% always_st ~ 1,    # 1 if state is in always_st
-      state %in% never_st  ~ NA,   # NA if state is in never_st
+      state %in% always_state ~ 1,    # 1 if state is in always_state
       TRUE                 ~ 0     # 0 otherwise
       )
   ) %>%
   mutate(
     never = case_when(
-      state %in% never_st  ~ 1,    # 1 if state is in never_st
-      state %in% always_st ~ NA,   # NA if state is in always_st
+      state %in% never_state  ~ 1,    # 1 if state is in never_st
       TRUE                 ~ 0     # 0 otherwise
     )
   ) %>%
   mutate(
     treated = case_when(
-      state %in% never_st  ~ 0,    # 0 if state is in never_st
-      state %in% always_st ~ 0,    # 0 if state is in always_st
+      state %in% never_state  ~ 0,    # 0 if state is in never_st
+      state %in% always_state ~ 0,    # 0 if state is in always_st
       TRUE                 ~ 1     # 1 otherwise
     )
   )
 
-View(hospdatafull)
-
-hospdatafull %>%
-  group_by(provider_number, state) %>%
+hospdata %>%
+  group_by(mcrnum, state) %>%
   summarise(
     always = first(always),
     never  = first(never),
@@ -191,33 +228,18 @@ hospdatafull %>%
     treated_states = n_distinct(state[treated == 1])
   )
 
-unique(hospdatafull$state[hospdatafull$always == 1])
-unique(hospdatafull$state[hospdatafull$never == 1])
-unique(hospdatafull$state[hospdatafull$treated == 1])
 
-# remove territories and correct error 
-hospdatafull <- hospdatafull %>%
-  mutate(state = case_when(
-    state == "UTAH" ~ "UT",   
-    TRUE ~ state              
-  )) %>%
-  filter(!state %in% c("AS", "GU", "MP", "PR", "VI"))   
-
-hospdatafull <- hospdatafull %>%
-  mutate(treated_group = case_when(
-    treated == 1 ~ "Treated",
-    always   == 1 ~ "Always",
-    never    == 1 ~ "Never",
-    TRUE          ~ "Other"
-  ))
-
-# when i do this, i only get years after 2008. 
-hospdata <- hospdatafull %>%
-  filter(SERV == 10)
-
-# add variables
 hospdata <- hospdata %>%
-  mutate(yes_tax = ifelse(!is.na(firsttax) & year >= firsttax, 1, 0))
+  mutate(
+    treated_by_2020 = case_when(
+      !is.na(firsttax) & firsttax >= 2005 & firsttax <= 2019 ~ 1,
+      TRUE ~ 0  # includes firsttax < 2005, > 2019, or NA
+    ))
+
+unique(hospdata$state[hospdata$always == 1])
+unique(hospdata$state[hospdata$never == 1])
+unique(hospdata$state[hospdata$treated == 1])
+unique(hospdata$state[hospdata$treated_by_2020 == 1])
 
 # add dependent variable calculations 
 hospdata <- hospdata %>%

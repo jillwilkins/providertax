@@ -1,30 +1,52 @@
-hospdata_clean <- hospdata_clean %>%
-  mutate(
-    # Make numeric version (if firsttax is a character column)
-    firsttax_num = suppressWarnings(as.numeric(firsttax)),  # converts years to numbers, "never" -> NA
-    # version for Callaway–Sant’Anna
-    firsttax0 = if_else(is.na(firsttax_num), 0L, firsttax_num),
-    # version for Sun–Abraham
-    firsttax_na = firsttax_num
-  )
-
-hospdata_clean <- hospdata_clean %>%
-  mutate(
-    post = if_else(!is.na(firsttax_num) & year >= firsttax_num, 1L, 0L),
-    event_time = if_else(is.na(firsttax_num), NA_integer_, year - firsttax_num)
-  )
-
-
-ggplot(filter(hospdata_clean, post == 0), aes(x = cost_to_charge)) +
-  geom_density(fill = "steelblue", alpha = 0.6) +
-  labs(title = "Density of Cost to Charge Ratio",
-       x = "Cost to Charge Ratio", y = "Density") +
-  theme_minimal()
+# Meta --------------------------------------------------------------------
+## Author:        Jill Wilkins
+## Date Created:  10/9/2025
+## Date Edited:   10//2025
+## Goal:          Event Study Analysis         
+## 
 
 library(fixest)
-est_sa <- feols(mcaid_prop ~ sunab(firsttax_na, year) | provider_number + year, data = filter(hospdata_clean, year < 2020), cluster = "provider_number")
-summary(est_sa)
-iplot(est_sa, main = "Event Study: Effect of Tax Introduction", 
-      xlab = "Years Since First Tax", ylab = "Treatment Effect (θₗ)",
-      ref.line = 0)
+library(did)
 
+# CS event study 
+
+hospdata_clean <- hospdata_clean %>%
+  mutate(provider_number = as.numeric(factor(provider_number)))
+
+# Years 2008 -- 2024
+hospdata_clean <- hospdata_clean %>%
+  mutate(
+    treatment_year = case_when(
+      treated == 1  ~ firsttax, # year tax instituted 
+      never == 1  ~ 0,            # never treated 
+      always == 1 ~ NA_real_      # always treated → NA
+    )
+  )
+
+colSums(is.na(hospdata_clean[, c("mcaid_prop", "year", "provider_number", "treatment_year")]))
+
+
+att_mcaid_prop <- att_gt(yname = "mcaid_prop",
+                tname = "year",
+                idname = "provider_number",
+                gname = "treatment_year",                  # the column we created
+                data = hospdata_clean,
+                control_group = "nevertreated",  # or "notyettreated"
+                xformla = ~ 1,                # covariates (use ~1 if none)
+                est_method = "dr",            # doubly-robust (optional)
+                allow_unbalanced = TRUE
+                )
+summary(hospdata_clean$cost_to_charge)
+summary(att_mcaid_prop)
+
+
+
+event_study <- aggte(example_attgt, type = "dynamic", na.rm = TRUE)
+summary(event_study)
+ggdid(event_study)
+
+overall_att <- aggte(att_mcaid_prop, type = "group", na.rm = TRUE)
+summary(overall_att)
+table(hospdata_clean$treatment_year)
+
+)

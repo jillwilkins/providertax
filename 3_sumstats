@@ -23,6 +23,7 @@ var_names <- c(
   mcaid_ccr = "Medicaid Cost to Charge Ratio"
 )
 
+# recall hospdata is only for SERV == 10, and so Years > 2008 basically? 
 # remove outliers
 hospdata_clean <- hospdata
 
@@ -34,6 +35,11 @@ for (var in sum_vars) {
 
 hospdata_clean <- hospdata_clean %>%
   filter(if_any(all_of(names(var_names)), ~ !is.na(.)))
+
+hospdata_clean %>%
+  filter(year == 2011, SERV == 10) %>%
+  summarise(n_providers = n_distinct(provider_number))
+View(hospdata_clean)
 
 # TABLE: SUMMARY STATISTICS (full, with tax, no tax) 
 # FULL SAMPLE: hospital level means
@@ -71,9 +77,9 @@ kable(hosp_sum, format = "latex", booktabs = TRUE,
       col.names = c("Dependent Variable", "Mean (SD)"),
       align = "lc")
 
-# Treatment Group Means 
+# Observation with Tax: Group Means 
 tax_sum <- hospdata_clean %>%
-  filter(year > 2004, year < 2025, yes_tax == 1) %>%
+  filter(yes_tax == 1) %>%
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE),
                         sd = ~sd(.x, na.rm = TRUE)),
@@ -92,10 +98,10 @@ tax_sum <- hospdata_clean %>%
   )
 
 View(tax_sum)
-  
-# Control summary
+
+# Observation without Tax: Group Means
 notax_sum <- hospdata_clean %>%
-  filter(year > 2004, year < 2025, yes_tax == 0) %>%
+  filter(yes_tax == 0) %>%
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE),
                         sd = ~sd(.x, na.rm = TRUE)),
@@ -127,7 +133,7 @@ kable(all_sum, format = "latex", booktabs = TRUE,
 # TABLE: SUMMARY STATISTICS (by treatment status)
 # treated hospitals only
 treated_hos <- hospdata_clean %>%
-  filter(year > 2004, year < 2025, treated == 1) %>%
+  filter(treated == 1) %>%
   group_by(provider_number) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -158,10 +164,9 @@ hospdata_clean %>%
 setdiff(names(var_names), names(hospdata_clean))
 
 
-
 # always hospitals only 
-always_hos <- hospdata_clean %>%
-  filter(year > 2004, year < 2025, always == 1) %>%
+always_hos <- hospdata %>%
+  filter(always == 1) %>%
   group_by(provider_number) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -186,8 +191,8 @@ always_hos <- hospdata_clean %>%
   )
 View(always_hos)
 # never hospitals only
-never_hos <- hospdata_clean %>%
-  filter(year > 2004, year < 2025, never == 1) %>%
+never_hos <- hospdata %>%
+  filter(never == 1) %>%
   group_by(provider_number) %>%  # group by hospital
   summarise(across(names(var_names),    
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -227,3 +232,10 @@ kable(all_groups, format = "latex", booktabs = TRUE,
       align = "lccc")
 
 View(hospdata_clean)
+
+# DENSITY PLOTS
+ggplot(filter(hospdata_clean, post == 0), aes(x = cost_to_charge)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Cost to Charge Ratio",
+       x = "Cost to Charge Ratio", y = "Density") +
+  theme_minimal()
