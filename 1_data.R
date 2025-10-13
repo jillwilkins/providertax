@@ -249,3 +249,13 @@ hospdata <- hospdata %>%
     mcaid_ccr = mcaid_cost / mcaid_charges,
     mcaid_prop = mcaid_charges / tot_charges, 
     mcaid_prop_discharges = mcaid_discharges / tot_discharges)
+
+# verification that serv is right 
+aha_og <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
+aha_og %>%
+  filter(SERV == 10, YEAR == 2008) %>%
+  summarise(n_providers = n_distinct(MCRNUM))
+
+hospdata %>%
+  filter(year == 2007, serv == 10) %>%
+  summarise(n_providers = n_distinct(mcrnum))

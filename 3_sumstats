@@ -33,19 +33,19 @@ for (var in sum_vars) {
     filter(.data[[var]] <= threshold)
 }
 
-hospdata_clean <- hospdata_clean %>%
-  filter(if_any(all_of(names(var_names)), ~ !is.na(.)))
+#hospdata_clean <- hospdata_clean %>%
+# filter(if_any(all_of(names(var_names)), ~ !is.na(.)))
 
 hospdata_clean %>%
   filter(year == 2011, SERV == 10) %>%
-  summarise(n_providers = n_distinct(provider_number))
+  summarise(n_providers = n_distinct(mcrnum))
 View(hospdata_clean)
 
 # TABLE: SUMMARY STATISTICS (full, with tax, no tax) 
 # FULL SAMPLE: hospital level means
 hospmeans <- hospdata_clean %>%
    filter(year > 2004, year < 2025) %>%
-   group_by(provider_number) %>%
+   group_by(mcrnum) %>%
    summarise(across(all_of(names(var_names)),  # variables to summarise
                    ~mean(.x, na.rm = TRUE),
                    .names = "{.col}")) %>%
@@ -94,7 +94,7 @@ tax_sum <- hospdata_clean %>%
   bind_rows(
     tibble(
       variable = "Total Hospitals",
-      Treated = as.character(n_distinct(hospdata_clean$provider_number[hospdata_clean$yes_tax == 1])))
+      Treated = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$yes_tax == 1])))
   )
 
 View(tax_sum)
@@ -116,7 +116,7 @@ notax_sum <- hospdata_clean %>%
   bind_rows(
     tibble(
       variable = "Total Hospitals",
-      Control = as.character(n_distinct(hospdata_clean$provider_number[hospdata_clean$yes_tax == 0]))
+      Control = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$yes_tax == 0]))
     )
   )
 View(notax_sum)
@@ -134,7 +134,7 @@ kable(all_sum, format = "latex", booktabs = TRUE,
 # treated hospitals only
 treated_hos <- hospdata_clean %>%
   filter(treated == 1) %>%
-  group_by(provider_number) %>%  # group by hospital
+  group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
                    .names = "{.col}")) %>%
@@ -153,7 +153,7 @@ treated_hos <- hospdata_clean %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_clean$provider_number[hospdata_clean$treated == 1]))
+      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$treated == 1]))
     )
   )
 View(treated_hos)
@@ -167,7 +167,7 @@ setdiff(names(var_names), names(hospdata_clean))
 # always hospitals only 
 always_hos <- hospdata %>%
   filter(always == 1) %>%
-  group_by(provider_number) %>%  # group by hospital
+  group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
                    .names = "{.col}")) %>%
@@ -186,14 +186,14 @@ always_hos <- hospdata %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_clean$provider_number[hospdata_clean$always == 1]))
+      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$always == 1]))
     )
   )
 View(always_hos)
 # never hospitals only
 never_hos <- hospdata %>%
   filter(never == 1) %>%
-  group_by(provider_number) %>%  # group by hospital
+  group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),    
                    list(mean = ~mean(.x, na.rm = TRUE)),
                    .names = "{.col}")) %>%
@@ -212,7 +212,7 @@ never_hos <- hospdata %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_clean$provider_number[hospdata_clean$never == 1]))
+      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$never == 1]))
     )
   )
 View(never_hos)
@@ -234,8 +234,8 @@ kable(all_groups, format = "latex", booktabs = TRUE,
 View(hospdata_clean)
 
 # DENSITY PLOTS
-ggplot(filter(hospdata_clean, post == 0), aes(x = cost_to_charge)) +
+ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
-  labs(title = "Density of Cost to Charge Ratio",
-       x = "Cost to Charge Ratio", y = "Density") +
+  labs(title = "Density of Medicaid Proportion of Discharges",
+       x = "Medicaid Proportion of Discharges", y = "Density") +
   theme_minimal()
