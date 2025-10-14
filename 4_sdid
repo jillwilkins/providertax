@@ -26,7 +26,9 @@ summary(att_mcaid_prop)
 ggdid(att_mcaid_prop)
 
 overall_att_mcaid_prop <- aggte(att_mcaid_prop, type = "dynamic", na.rm = TRUE)
-ggdid(overall_att_mcaid_prop)
+summary(overall_att_mcaid_prop)
+overall_mcaid_prop <- ggdid(overall_att_mcaid_prop)
+ggsave("sumplots/event/overall_mcaid_prop.png", plot = overall_mcaid_prop, width = 8, height = 8, dpi = 300)
 summary(hospdata$mcaid_prop)
 
 # Event Study for mcaid_prop_discharges
