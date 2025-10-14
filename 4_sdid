@@ -1,7 +1,7 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
 ## Date Created:  10/9/2025
-## Date Edited:   10//2025
+## Date Edited:   10/14/2025
 ## Goal:          Event Study Analysis         
 ## 
 
@@ -27,9 +27,21 @@ ggdid(att_mcaid_prop)
 
 overall_att_mcaid_prop <- aggte(att_mcaid_prop, type = "dynamic", na.rm = TRUE)
 summary(overall_att_mcaid_prop)
+
+# Overall Event Study Plot 
 overall_mcaid_prop <- ggdid(overall_att_mcaid_prop)
-ggsave("sumplots/event/overall_mcaid_prop.png", plot = overall_mcaid_prop, width = 8, height = 8, dpi = 300)
+
+# title 
+overall_mcaid_prop <- overall_mcaid_prop +
+  ggtitle("Event Study: Effect of Implementing Tax on Medicaid Proportion of Charges") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "ATT (Average Treatment Effect on the Treated)"
+  ) +
+  theme_minimal()
+ggsave("sumplots/events/overall_mcaid_prop.png", plot = overall_mcaid_prop, width = 8, height = 8, dpi = 300)
 summary(hospdata$mcaid_prop)
+
 
 # Event Study for mcaid_prop_discharges
 att_mcaid_prop_dis <- att_gt(yname = "mcaid_prop_discharges",
@@ -47,8 +59,16 @@ ggdid(att_mcaid_prop_dis)
 
 overall_att_mcaid_prop_dis <- aggte(att_mcaid_prop_dis, type = "dynamic", na.rm = TRUE)
 summary(overall_att_mcaid_prop_dis)
-ggdid(overall_att_mcaid_prop_dis)
-summary(hospdata$mcaid_prop_discharges)
+ 
+# overall event study plot & title 
+overall_mcaid_prop_dis <- ggdid(overall_att_mcaid_prop_dis)
+overall_mcaid_prop_dis <- overall_mcaid_prop_dis + 
+  ggtitle("Event Study: Effect of Implementing Tax on Medicaid Proportion of Discharges") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "ATT (Average Treatment Effect on the Treated)"
+  ) + theme_minimal()
+ggsave("sumplots/events/overall_mcaid_prop_dis.png", plot = overall_mcaid_prop_dis, width = 8, height = 8, dpi = 300)
 
 # Event Study for ucc_prop
 att_ucc_prop <- att_gt(yname = "ucc_prop",
@@ -66,7 +86,41 @@ ggdid(att_ucc_prop)
 
 overall_att_ucc_prop <- aggte(att_ucc_prop, type = "dynamic", na.rm = TRUE)
 summary(overall_att_ucc_prop)
-ggdid(overall_att_ucc_prop)
+
+# overall event study and title 
+overall_ucc_prop <- ggdid(overall_att_ucc_prop)
+overall_ucc_prop <- overall_ucc_prop + 
+  ggtitle("Event Study: Effect of Implementing Tax on Uncompensated Care (% total charges)") +
+  labs( 
+    x = "Years Relative to Treatment",
+    y = "ATT (Average Treatment Effect on the Treated)"
+  ) + theme_minimal()
+ggsave("sumplots/events/overall_ucc_prop.png", plot = overall_ucc_prop, width = 8, height = 8, dpi = 300)  
 summary(hospdata$ucc_prop)
 
+# Event study for cost to charge 
+att_ccr <- att_gt(yname = "cost_to_charge",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "treatment_num",                  # the column we created
+                data = hospdata,
+                control_group = "notyettreated",  # or "notyettreated"
+                xformla = ~ 1,                # covariates (use ~1 if none)
+                est_method = "dr",            # doubly-robust (optional)
+                allow_unbalanced = TRUE
+                )
+summary(att_ccr)
+ggdid(att_ccr)
 
+overall_att_ccr <- aggte(att_ccr, type = "dynamic", na.rm = TRUE)
+summary(overall_att_ccr)
+
+# overall event study and title 
+overall_ccr <- ggdid(overall_att_ccr)
+overall_ccr <- overall_ccr + 
+  ggtitle("Event Study: Effect of Implementing Tax on Cost to Charge Ratio") +
+  labs( 
+    x = "Years Relative to Treatment",
+    y = "ATT (Average Treatment Effect on the Treated)"
+  ) + theme_minimal()
+ggsave("sumplots/events/overall_ccr.png", plot = overall_ccr, width = 8, height = 8, dpi = 300) 
