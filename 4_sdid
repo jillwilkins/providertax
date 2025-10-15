@@ -7,9 +7,12 @@
 
 library(fixest)
 library(did)
+View(tax)
 
 # make mcrnum numeric
 hospdata <- hospdata %>% mutate(mcrnum = as.numeric(mcrnum))
+table(unique(hospdata[c("mcrnum", "treatment_num")])$treatment_num)
+
 
 # Event Study for mcaid_prop
 att_mcaid_prop <- att_gt(yname = "mcaid_prop",
@@ -18,7 +21,7 @@ att_mcaid_prop <- att_gt(yname = "mcaid_prop",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ 1,                # covariates (use ~1 if none)
+                xformla = ~ 1,                # covariates (use ~1 if none) ## Should i add state? 
                 est_method = "dr",            # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )

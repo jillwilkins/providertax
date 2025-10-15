@@ -36,10 +36,10 @@ for (var in sum_vars) {
 #hospdata_clean <- hospdata_clean %>%
 # filter(if_any(all_of(names(var_names)), ~ !is.na(.)))
 
-hospdata_clean %>%
-  filter(year == 2011, SERV == 10) %>%
-  summarise(n_providers = n_distinct(mcrnum))
-View(hospdata_clean)
+#hospdata_clean %>%
+ # filter(year == 2011, SERV == 10) %>%
+ # summarise(n_providers = n_distinct(mcrnum))
+#View(hospdata_clean)
 
 # TABLE: SUMMARY STATISTICS (full, with tax, no tax) 
 # FULL SAMPLE: hospital level means
@@ -128,7 +128,7 @@ all_sum <- hosp_sum %>%
 kable(all_sum, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Presence of Provider Tax",
       col.names = c("Dependent Variable", "All Hospitals", "With Tax", "Without Tax"),
-      align = "lc")
+      align = "lccc")
 
 # TABLE: SUMMARY STATISTICS (by treatment status)
 # treated hospitals only
@@ -163,6 +163,31 @@ hospdata_clean %>%
   summarise(across(all_of(names(var_names)), ~sum(!is.na(.x))))
 setdiff(names(var_names), names(hospdata_clean))
 
+# treated before 2020
+treated_hos2020 <- hospdata_clean %>%
+  filter(treated_by_2020 == 1) %>%
+  group_by(mcrnum) %>%  # group by hospital
+  summarise(across(names(var_names),
+                   list(mean = ~mean(.x, na.rm = TRUE)),
+                   .names = "{.col}")) %>%
+  ungroup() %>%
+  summarise(across(everything(),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.2f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, est = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Number of Hospitals",
+      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$treated_by_2020 == 1]))
+    )
+  )
 
 # always hospitals only 
 always_hos <- hospdata %>%
@@ -189,7 +214,7 @@ always_hos <- hospdata %>%
       est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$always == 1]))
     )
   )
-View(always_hos)
+
 # never hospitals only
 never_hos <- hospdata %>%
   filter(never == 1) %>%
@@ -215,21 +240,17 @@ never_hos <- hospdata %>%
       est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$never == 1]))
     )
   )
-View(never_hos)
+rm(all_groups)
 # Combine all 
 all_groups <- treated_hos %>%
+    left_join(treated_hos2020, by = "variable") %>%
     left_join(always_hos, by = "variable") %>%
     left_join(never_hos, by = "variable") 
-
-kable(all_groups, format = "latex", booktabs = TRUE,
-      caption = "Summary Statistics by Treatment Group",
-      col.names = c("Dependent Variable", "Treated Hospitals", "Always Have Tax", "Never Have Tax"),
-      align = "lc")
-
+View(all_groups)
 kable(all_groups, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Treatment Status",
-      col.names = c("Dependent Variable", "Treated Hospitals", "Always Have Tax", "Never Have Tax"),
-      align = "lccc")
+      col.names = c("Dependent Variable", "Treated Hospitals", "Treated by 2020", "Always Have Tax", "Never Have Tax"),
+      align = "lcccc")
 
 View(hospdata_clean)
 
@@ -239,3 +260,95 @@ ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +
   labs(title = "Density of Medicaid Proportion of Discharges",
        x = "Medicaid Proportion of Discharges", y = "Density") +
   theme_minimal()
+
+
+# now i want observations of eventually treated pre, post, and not yet treated by 2020 pre, post 
+#########IGNORE
+# Observation with Tax: Group Means 
+pre_treated <- hospdata_clean %>%
+  filter(yes_tax == 0 & treated_by_2020 == 1) %>%
+  summarise(across(names(var_names),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.3f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, Treated = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Total Hospitals",
+      Treated = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$yes_tax == 0 & hospdata_clean$treated_by_2020 == 1])))
+  )
+View(hospdata_clean %>%
+  filter(yes_tax == 0 & treated_by_2020 == 1))
+
+pre_notyet <- hospdata_clean %>%
+  filter(yes_tax == 0 & notyet2020 == 1) %>%
+  summarise(across(names(var_names),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.3f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, Treated = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Total Hospitals",
+      Treated = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$yes_tax == 0 & hospdata_clean$notyet2020 == 1])))
+  )
+
+post_treated <- hospdata_clean %>%
+  filter(yes_tax == 1 & treated_by_2020 == 1) %>%
+  summarise(across(names(var_names),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.3f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, Treated = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Total Hospitals",
+      Treated = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$yes_tax == 1 & hospdata_clean$treated_by_2020 == 1])))
+  )
+
+post_notyet <- hospdata_clean %>%
+  filter(yes_tax == 1 & notyet2020 == 1) %>%
+  summarise(across(names(var_names),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.3f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, Treated = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Total Hospitals",
+      Treated = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$yes_tax == 1 & hospdata_clean$notyet2020 == 1])))
+  )
+rm(time_treat_sum)
+time_treat_sum <- pre_treated %>%
+    left_join(pre_notyet, by = "variable") %>%
+    left_join(post_treated, by = "variable") %>%
+    left_join(post_notyet, by = "variable")
+
+kable(time_treat_sum, format = "latex", booktabs = TRUE,
+      caption = "Summary Statistics by Pre/Post Treated/Not Yet Treated",
+      col.names = c("Dependent Variable", "Pre Treatment Group", "Pre Not Yet Treated", "Post Treatment Group", "Post Not Yet Treated"),
+      align = "lcccc")

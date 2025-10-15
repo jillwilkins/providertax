@@ -245,7 +245,7 @@ unique(hospdata$state[hospdata$treated_by_2020 == 1])
 hospdata <- hospdata %>%
   mutate(
     ucc_prop = tot_uncomp_care_charges / tot_charges, 
-    cost_per_discharge = tot_charges / tot_discharges, 
+    cost_per_discharge = (cost_to_charge * tot_charges) / tot_discharges, 
     mcaid_ccr = mcaid_cost / mcaid_charges,
     mcaid_prop = mcaid_charges / tot_charges, 
     mcaid_prop_discharges = mcaid_discharges / tot_discharges)
@@ -282,5 +282,10 @@ hospdata <- hospdata %>%
       treatment_group == "treated" ~ firsttax,
       treatment_group == "not yet by 2020" ~ 0
     )
+  )
+
+hospdata <- hospdata %>%
+  mutate(
+    notyet2020 = ifelse(!is.na(firsttax) & firsttax > 2020, 1, 0)
   )
 unique(hospdata$treatment_num)
