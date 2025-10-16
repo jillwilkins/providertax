@@ -302,3 +302,22 @@ tmnt_cost_per_discharge <- ggplot(
   theme_minimal()
 
 ggsave("sumplots/tmnt_cost_per_discharge.png", plot = tmnt_cost_per_discharge, width = 8, height = 8, dpi = 300)
+
+# private (proxy) 
+group_private_prop_discharge <- ggplot(
+  filter(hospdata, !is.na(mm_prop_discharges)),
+  aes(x = year, y = private_prop_discharges, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Proportion of Non Public Payers",
+    color = "Group",
+    title = "Average Case Mix Over Time by Group"
+  ) +
+  theme_minimal()
+ggsave("sumplots/group_casemix.png", plot = group_private_prop_discharge, width = 8, height = 8, dpi = 300)
+
+summary(hospdata$private_prop_discharges)
+unique(hospdata$treatment_group)

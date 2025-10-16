@@ -9,7 +9,7 @@ library(dplyr)
 library(stringr)
 library(tidyr)
 library(readr)
-
+View(hcris)
 #load in hcris data  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
 
@@ -36,8 +36,8 @@ hcris <- hcris %>%
 #remove states with NA name 
 hcris <- hcris %>%
   filter(!is.na(state)) %>%
-  filter(!state %in% c("AS", "GU", "MP", "PR", "VI"))
-
+  filter(!state %in% c("AS", "GU", "MP", "PR", "VI")) %>% 
+  filter(!is.na(provider_number))
 
 # load in tax data
 tax <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/statetaxadopt_kff.csv", skip = 2)
@@ -64,7 +64,7 @@ tax <- tax %>%
     years <- names(row)[str_detect(as.character(row), regex("yes|^Y$", ignore_case = TRUE))]
     if (length(years) == 0 || any(is.na(as.integer(years)))) {"never"} 
     else {min(as.integer(years))}}))
-View(tax)
+
 
 #load in FMAP data 
 fmap <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/fmaps_kff.csv", skip = 2)
@@ -127,28 +127,58 @@ hcris_tax <- hcris %>%
     fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax),
     by = c("state" = "state", "year" = "year")
   )
-
+class(hcris_tax$provider_number)
 hcris_tax <- hcris_tax %>%
-  mutate(provider_number = as.character(provider_number)) %>%
   filter(year >= 2005)
-View(hcris_tax %>% filter(is.na(provider_number)))
 
-# note: had to do alot of work here 10/13 to make sure i had serv 
+# note: had to do alot of work here 10/13 to make sure i had serv & then 10/16 with na mcrnum pre 2008. 
 # load in AHA data 
 aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
 
-# limit aha to SERV = 10 (general medical and surgical hospitals), no NA in MCRNUM
-aha <- aha %>%
-  mutate(YEAR = as.numeric(YEAR)) %>%
-  filter(SERV == 10) %>%
-  filter (!is.na(MCRNUM)) %>%
-  select(MCRNUM, YEAR, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS)
 
+View(aha %>% filter(STCD == 86))
+# note that i prefer hcris to aha for the discharges and charges 
+# limit aha to SERV = 10 (general medical and surgical hospitals), no NA in MCRNUM, no territories, 
+aha <- aha %>%
+  filter(SERV == 10) %>%
+  filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
+  select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, STCD, MCRDCH, MCDDCH, DCTOTH)
+
+
+# Fill MCRNUM with later years. Later, I can come back and manually add more. 
+aha_filled <- aha %>%
+  group_by(MNAME) %>%  # group hospitals by name
+  mutate(
+    MCRNUM = ifelse(
+      is.na(MCRNUM),
+      first(na.omit(MCRNUM)),  # get first non-missing mcrnum within hospital name
+      MCRNUM
+    )
+  ) %>%
+  ungroup()
+
+# View whats not matched. 
+aha_filled %>%
+  filter(is.na(MCRNUM)) %>%
+  distinct(MNAME)
+
+#For now Oct 16, proceed by dropping what is left unfilled. 
+aha_orig <- aha
+aha <- aha_filled  
+
+# Convert mcrnum to a number
+aha <- aha %>%
+  mutate(MCRNUM = as.integer(MCRNUM))
+
+#verify working arizona
+aha %>% filter(MCRNUM == 30001)
+hcris_tax %>% filter(provider_number == 30001)
+
+# mcrnum and provider_number now matching
 # join aha and hcris_tax
 hospdata <- aha %>%
   left_join(hcris_tax, by = c("MCRNUM" = "provider_number", "YEAR" = "year"))
-View(hospdata)
-colnames(hospdata)
+
 
 # remove providers with NA in key variables
 cols_to_check <- c(
@@ -169,7 +199,7 @@ providers_to_drop <- hospdata %>%
   summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
   filter(all_na) %>%
   select(MCRNUM)
-
+View(providers_to_drop)
 hospdata <- hospdata %>%
   anti_join(providers_to_drop, by = "MCRNUM")
 
@@ -240,7 +270,7 @@ unique(hospdata$state[hospdata$always == 1])
 unique(hospdata$state[hospdata$never == 1])
 unique(hospdata$state[hospdata$treated == 1])
 unique(hospdata$state[hospdata$treated_by_2020 == 1])
-
+View(hospdata)
 # add dependent variable calculations 
 hospdata <- hospdata %>%
   mutate(
@@ -248,17 +278,11 @@ hospdata <- hospdata %>%
     cost_per_discharge = (cost_to_charge * tot_charges) / tot_discharges, 
     mcaid_ccr = mcaid_cost / mcaid_charges,
     mcaid_prop = mcaid_charges / tot_charges, 
-    mcaid_prop_discharges = mcaid_discharges / tot_discharges)
+    mcaid_prop_discharges = mcaid_discharges / tot_discharges, 
+    mcare_prop_discharges = mcare_discharges / tot_discharges, 
+    mm_prop_discharges = (mcaid_discharges + mcare_discharges)/ tot_discharges, 
+    private_prop_discharges = 1 - mm_prop_discharges)
 
-# verification that serv is right 
-aha_og <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
-aha_og %>%
-  filter(SERV == 10, YEAR == 2008) %>%
-  summarise(n_providers = n_distinct(MCRNUM))
-
-hospdata %>%
-  filter(year == 2007, serv == 10) %>%
-  summarise(n_providers = n_distinct(mcrnum))
 
 # Treatment group for plots 
 hospdata <- hospdata %>%
@@ -289,3 +313,4 @@ hospdata <- hospdata %>%
     notyet2020 = ifelse(!is.na(firsttax) & firsttax > 2020, 1, 0)
   )
 unique(hospdata$treatment_num)
+View(tax)

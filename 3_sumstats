@@ -11,7 +11,7 @@ library(kableExtra)
 # key variables
 sum_vars <- c("mcaid_prop", "mcaid_prop_discharges", "ucc_prop", 
                    "cost_per_discharge", "cost_to_charge", 
-                   "rev_cost_mcaid", "mcaid_ccr")
+                   "private_prop_discharges")
 
 var_names <- c(
   mcaid_prop = "Medicaid Proportion",
@@ -19,10 +19,9 @@ var_names <- c(
   ucc_prop = "Uncompensated Care Proportion",
   cost_per_discharge = "Cost per Discharge",
   cost_to_charge = "Cost to Charge Ratio",
-  rev_cost_mcaid = "Revenue to Cost Medicaid",
-  mcaid_ccr = "Medicaid Cost to Charge Ratio"
+  private_prop_discharges = "Non Public Proportion of Discharges"
 )
-
+View(hospdata_clean)
 # recall hospdata is only for SERV == 10, and so Years > 2008 basically? 
 # remove outliers
 hospdata_clean <- hospdata
@@ -33,14 +32,7 @@ for (var in sum_vars) {
     filter(.data[[var]] <= threshold)
 }
 
-#hospdata_clean <- hospdata_clean %>%
-# filter(if_any(all_of(names(var_names)), ~ !is.na(.)))
-
-#hospdata_clean %>%
- # filter(year == 2011, SERV == 10) %>%
- # summarise(n_providers = n_distinct(mcrnum))
-#View(hospdata_clean)
-
+rm(hospdata_clean)
 # TABLE: SUMMARY STATISTICS (full, with tax, no tax) 
 # FULL SAMPLE: hospital level means
 hospmeans <- hospdata_clean %>%
