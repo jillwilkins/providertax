@@ -285,31 +285,14 @@ group_ccr <- ggplot(
 
 ggsave("sumplots/group_ccr.png", plot = group_ccr, width = 8, height = 8, dpi = 300)
 
-# mcaid cost to charge ratio 
-group_mcaid_ccr <- ggplot(
-  filter(hospdata, !is.na(mcaid_ccr) & mcaid_ccr < 10),
-  aes(x = year, y = mcaid_ccr, color = factor(treatment_group))
-) +
-  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
-  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
-  labs(
-    x = "Year",
-    y = "Average Medicaid Cost to Charge Ratio",
-    color = "Group",
-    title = "Average Medicaid Cost to Charge Ratio Over Time by Group"
-  ) +
-  theme_minimal()
-
-ggsave("sumplots/group_mcaid_ccr.png", plot = group_mcaid_ccr, width = 8, height = 8, dpi = 300)
-# is mcaid ccr different than ccr?
 
 # cost per discharge 
 tmnt_cost_per_discharge <- ggplot(
   filter(hospdata, !is.na(cost_per_discharge) & cost_per_discharge < 100000),
-  aes(x = year, y = cost_per_discharge, color = factor(treated_group))
+  aes(x = year, y = cost_per_discharge, color = factor(treatment_group))
 ) +
-  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treated_group)) +
-  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treated_group)) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
   labs(
     x = "Year",
     y = "Average Cost per Discharge",

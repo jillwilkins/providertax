@@ -12,19 +12,20 @@ View(tax)
 # make mcrnum numeric
 hospdata <- hospdata %>% mutate(mcrnum = as.numeric(mcrnum))
 table(unique(hospdata[c("mcrnum", "treatment_num")])$treatment_num)
-
+View(hospdata)
 
 # Event Study for mcaid_prop
 att_mcaid_prop <- att_gt(yname = "mcaid_prop",
                 tname = "year",
                 idname = "mcrnum",
-                gname = "treatment_num",                  # the column we created
+                gname = "treatment_num",                  # year of tax, 0 if not yet treated by 2020, NA if always had a tax
                 data = hospdata,
-                control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ 1,                # covariates (use ~1 if none) ## Should i add state? 
-                est_method = "dr",            # doubly-robust (optional)
+                control_group = "notyettreated",  
+                xformla = ~ 1,                # covariates (use ~1 if none) ## what should i add here 
+                est_method = "dr",            
                 allow_unbalanced = TRUE
                 )
+
 summary(att_mcaid_prop)
 ggdid(att_mcaid_prop)
 
@@ -127,3 +128,28 @@ overall_ccr <- overall_ccr +
     y = "ATT (Average Treatment Effect on the Treated)"
   ) + theme_minimal()
 ggsave("sumplots/events/overall_ccr.png", plot = overall_ccr, width = 8, height = 8, dpi = 300) 
+
+# Event study for cost to discharge 
+att_cpd <- att_gt(yname = "cost_per_discharge",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "treatment_num",                  # the column we created
+                data = hospdata,
+                control_group = "notyettreated",  # or "notyettreated"
+                xformla = ~ 1,                # covariates (use ~1 if none)
+                est_method = "dr",            # doubly-robust (optional)
+                allow_unbalanced = TRUE
+                )
+
+overall_att_cpd<- aggte(att_cpd, type = "dynamic", na.rm = TRUE)
+summary(overall_att_cpd)
+
+# overall event study and title 
+overall_cpd <- ggdid(overall_att_cpd)
+overall_cpd <- overall_cpd + 
+  ggtitle("Event Study: Effect of Implementing Tax on Cost per Discharge (calc)") +
+  labs( 
+    x = "Years Relative to Treatment",
+    y = "ATT (Average Treatment Effect on the Treated)"
+  ) + theme_minimal()
+ggsave("sumplots/events/overall_cpd.png", plot = overall_cpd, width = 8, height = 8, dpi = 300) 
