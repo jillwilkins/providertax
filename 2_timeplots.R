@@ -61,15 +61,15 @@ summary(hospdata$mcaid_prop_discharges)
 
 # payer mix over time plot
 #note: ill wnat to figure out how to remove outliers here
-ggplot(filter(hospdata, !is.na(mcaid_prop) & mcaid_prop < 1),aes(x = year, y = mcaid_prop)) +
+ggplot(filter(hospdata),aes(x = year, y = private_prop_discharges)) +
   stat_summary(
     fun = mean, geom = "line", color = "blue", size = 1.2) +
   stat_summary(
     fun = mean, geom = "point", color = "blue", size = 2) +
   labs(
     x = "Year",
-    y = "Average Medicaid Proportion",
-    title = "Average Medicaid Proportion Over Time"
+    y = "Average Non Public Payer Proportion",
+    title = "Average Non Public Payer % Over Time"
   ) +
   theme_minimal()
 
@@ -215,7 +215,7 @@ ggsave("sumplots/ucctcplot.png", plot = ucctcplot, width = 8, height = 8, dpi = 
 
 
 # ----------------------------------------------------------------
-# PLots but by treatment status
+# Plots but by treatment status
 # ----------------------------------------------------------------
 # mcaid charge proportion 
 group_mcaid_prop <- ggplot(
