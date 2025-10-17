@@ -9,7 +9,7 @@ library(dplyr)
 library(stringr)
 library(tidyr)
 library(readr)
-View(hcris)
+
 #load in hcris data  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
 
@@ -313,4 +313,4 @@ hospdata <- hospdata %>%
     notyet2020 = ifelse(!is.na(firsttax) & firsttax > 2020, 1, 0)
   )
 unique(hospdata$treatment_num)
-View(tax)
+

@@ -9,19 +9,18 @@ library(kableExtra)
 
 # set up  
 # key variables
-sum_vars <- c("mcaid_prop", "mcaid_prop_discharges", "ucc_prop", 
-                   "cost_per_discharge", "cost_to_charge", 
-                   "private_prop_discharges")
+sum_vars <- c("private_prop_discharges", "mcaid_prop_discharges", "mcaid_prop", "ucc_prop", 
+                   "cost_per_discharge", "cost_to_charge")
 
 var_names <- c(
-  mcaid_prop = "Medicaid Proportion",
+  private_prop_discharges = "Non Public Proportion of Discharges",
   mcaid_prop_discharges = "Medicaid Proportion of Discharges",
+  mcaid_prop = "Medicaid Proportion",
   ucc_prop = "Uncompensated Care Proportion",
   cost_per_discharge = "Cost per Discharge",
-  cost_to_charge = "Cost to Charge Ratio",
-  private_prop_discharges = "Non Public Proportion of Discharges"
+  cost_to_charge = "Cost to Charge Ratio"
 )
-View(hospdata_clean)
+
 # recall hospdata is only for SERV == 10, and so Years > 2008 basically? 
 # remove outliers
 hospdata_clean <- hospdata
@@ -32,7 +31,7 @@ for (var in sum_vars) {
     filter(.data[[var]] <= threshold)
 }
 
-rm(hospdata_clean)
+
 # TABLE: SUMMARY STATISTICS (full, with tax, no tax) 
 # FULL SAMPLE: hospital level means
 hospmeans <- hospdata_clean %>%
@@ -232,19 +231,18 @@ never_hos <- hospdata %>%
       est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$never == 1]))
     )
   )
-rm(all_groups)
+
 # Combine all 
 all_groups <- treated_hos %>%
     left_join(treated_hos2020, by = "variable") %>%
     left_join(always_hos, by = "variable") %>%
     left_join(never_hos, by = "variable") 
-View(all_groups)
+
 kable(all_groups, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Treatment Status",
       col.names = c("Dependent Variable", "Treated Hospitals", "Treated by 2020", "Always Have Tax", "Never Have Tax"),
       align = "lcccc")
 
-View(hospdata_clean)
 
 # DENSITY PLOTS
 ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +

@@ -7,7 +7,6 @@
 
 library(fixest)
 library(did)
-View(tax)
 
 # make mcrnum numeric
 hospdata <- hospdata %>% mutate(mcrnum = as.numeric(mcrnum))
@@ -181,75 +180,4 @@ overall_casemix <- overall_casemix +
 ggsave("sumplots/events/overall_casemix.png", plot = overall_casemix, width = 8, height = 8, dpi = 300) 
 summary(hospdata_clean$private_prop_discharges)
 
-summary(hospdata_clean$treatment_num)
-summary(hcris$year)
-summary(hospdata$year)
-summary(aha$YEAR)
-summary(aha_og$YEAR)
-early_aha <- aha_og %>% filter(YEAR < 2008 & SERV == 10)
-View(early_aha)
-library(dplyr)
-unique(early_aha$NAME)
 
-# Step 1: count how many unique MCRNUMs appear in both datasets
-matches <- early_aha %>%
-  summarise(
-    total_mcrnum = n_distinct(MCRNUM),
-    matched = n_distinct(MCRNUM[MCRNUM %in% aha_og]),
-    unmatched = total_mcrnum - matched
-  )
-View(early_aha)
-
-matches
-
-summary(early_aha$YEAR)
-table(early_aha$SERV)
-n_distinct(aha_og$MCRNUM)
-
-aha_small <- aha %>%
-  select(MCRNUM, MNAME, SERV)
-View(early_aha_small)
-aha_og %>%
-  summarise(num_missing_mcrnum = sum(is.na(MCRNUM)))
-
-aha_filled <- aha_og %>%
-  group_by(MNAME) %>%  # group hospitals by name
-  mutate(
-    MCRNUM = ifelse(
-      is.na(MCRNUM),
-      first(na.omit(MCRNUM)),  # get first non-missing mcrnum within hospital name
-      MCRNUM
-    )
-  ) %>%
-  ungroup()
-aha_filled %>%
-  filter(is.na(MCRNUM)) %>%
-  distinct(MNAME)
-
-# Step 1: Make a copy before filling
-aha_before <- aha_og
-
-# Step 2: Fill missing mcrnum values within hospital name
-aha_filled <- aha_before %>%
-  group_by(MNAME) %>%
-  mutate(
-    MCRNUM = ifelse(
-      is.na(MCRNUM),
-      first(na.omit(MCRNUM)),
-      MCRNUM
-    )
-  ) %>%
-  ungroup()
-
-# Step 3: Identify which rows were filled
-filled_rows <- aha_filled %>%
-  filter(is.na(aha_before$MCRNUM) & !is.na(MCRNUM))
-
-# Step 4: View distinct hospitals whose mcrnum was filled
-filled_hospitals <- filled_rows %>%
-  distinct(MNAME, MCRNUM)
-View(filled_hospitals)
-View(aha_og)
-View()
-
-View(hospdata)

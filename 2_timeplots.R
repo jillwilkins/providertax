@@ -305,7 +305,7 @@ ggsave("sumplots/tmnt_cost_per_discharge.png", plot = tmnt_cost_per_discharge, w
 
 # private (proxy) 
 group_private_prop_discharge <- ggplot(
-  filter(hospdata, !is.na(mm_prop_discharges)),
+  filter(hospdata_clean, !is.na(mm_prop_discharges)),
   aes(x = year, y = private_prop_discharges, color = factor(treatment_group))
 ) +
   stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
@@ -321,3 +321,19 @@ ggsave("sumplots/group_casemix.png", plot = group_private_prop_discharge, width 
 
 summary(hospdata$private_prop_discharges)
 unique(hospdata$treatment_group)
+
+# ACROSS AND WITHIN VARIATION 
+# DENSITY PLOTS
+dens_mcaid_dis <- ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Medicaid Proportion of Discharges",
+       x = "Medicaid Proportion of Discharges", y = "Density") +
+  theme_minimal()
+print(dens_mcaid_dis)
+
+dens_casemix <- ggplot(filter(hospdata_clean, treated == 1), aes(x = private_prop_discharges)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Non Public Proportion of Discharges",
+       x = "Non Public Proportion of Discharges", y = "Density") +
+  theme_minimal()
+print(dens_casemix)
