@@ -303,9 +303,11 @@ tmnt_cost_per_discharge <- ggplot(
 
 ggsave("sumplots/tmnt_cost_per_discharge.png", plot = tmnt_cost_per_discharge, width = 8, height = 8, dpi = 300)
 
+unique(hospdata$treatment_group)
+
 # private (proxy) 
 group_private_prop_discharge <- ggplot(
-  filter(hospdata_clean, !is.na(mm_prop_discharges)),
+  filter(hospdata, !is.na(mm_prop_discharges)),
   aes(x = year, y = private_prop_discharges, color = factor(treatment_group))
 ) +
   stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +

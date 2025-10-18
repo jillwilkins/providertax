@@ -232,6 +232,32 @@ never_hos <- hospdata %>%
     )
   )
 
+# not treated by 2020 
+notby2020 <- hospdata %>%
+  filter(notyet2020 == 1) %>%
+  group_by(mcrnum) %>%  # group by hospital
+  summarise(across(names(var_names),    
+                   list(mean = ~mean(.x, na.rm = TRUE)),
+                   .names = "{.col}")) %>%
+  ungroup() %>%
+  summarise(across(everything(),
+                   list(mean = ~mean(.x, na.rm = TRUE),
+                        sd = ~sd(.x, na.rm = TRUE)),
+                   .names = "{.col}_{.fn}")) %>%
+  pivot_longer(cols = everything(),
+               names_to = c("variable", "stat"),
+               names_pattern = "(.+)_([^_]+)") %>%      
+  pivot_wider(names_from = stat, values_from = value) %>%
+  mutate(stat_string = sprintf("%.3f (%.2f)", mean, sd),
+         variable = var_names[variable]) %>%
+  select(variable, est = stat_string) %>%
+  bind_rows(
+    tibble(
+      variable = "Number of Hospitals",
+      est = as.character(n_distinct(hospdata$mcrnum[hospdata$notyet2020 == 1]))
+    )
+  )
+View(notby2020)
 # Combine all 
 all_groups <- treated_hos %>%
     left_join(treated_hos2020, by = "variable") %>%

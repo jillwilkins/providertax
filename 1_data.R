@@ -9,6 +9,7 @@ library(dplyr)
 library(stringr)
 library(tidyr)
 library(readr)
+library(lubridate)
 
 #load in hcris data  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
@@ -113,18 +114,36 @@ tax_totals <- tax %>%
   group_by(year) %>%
   summarise(totaltax = sum(has_tax, na.rm = TRUE), .groups = "drop")
 
+# load in state expansion status 
+expansion <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/expansion.csv", skip = 2)
+
+#drop excess rows and rename states
+expansion <- expansion %>% select(-Footnotes)
+expansion <- expansion[2:52, ]
+expansion <- expansion %>% rename(statename = Location) 
+expansion <- expansion %>% rename(expdate = Expansion.Implementation.Date) 
+expansion$state <- state.abb[match(expansion$statename, state.name)]
+expansion$state[expansion$statename == "District of Columbia"] <- "DC"
+expansion <- expansion %>%
+  mutate(
+    expyear = case_when(
+      expdate %in% c("N/A", "", NA) ~ NA_real_,   # keep NAs for non-expansion states
+      TRUE ~ year(mdy(expdate))                   # extract the year (month/day/year)
+    )) %>% select(state, expdate, expyear)
 
 # join tax and fmap
 fmap_tax <- fmap %>%
   left_join(tax %>% select(state, firsttax),
     by = c("state" = "state")) %>%
   left_join(tax_totals,
-    by = c("year" = "year"))
+    by = c("year" = "year")) %>%
+  left_join(expansion, 
+    by = c("state" = "state"))
 
 # join fmap_tax into hcris
 hcris_tax <- hcris %>%
   left_join(
-    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax),
+    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax, expyear),
     by = c("state" = "state", "year" = "year")
   )
 class(hcris_tax$provider_number)
