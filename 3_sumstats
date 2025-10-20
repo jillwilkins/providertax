@@ -156,7 +156,7 @@ setdiff(names(var_names), names(hospdata_clean))
 
 # treated before 2020
 treated_hos2020 <- hospdata_clean %>%
-  filter(treated_by_2020 == 1) %>%
+  filter(treated_by_2020 == 1, year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -182,7 +182,7 @@ treated_hos2020 <- hospdata_clean %>%
 
 # always hospitals only 
 always_hos <- hospdata %>%
-  filter(always == 1) %>%
+  filter(always == 1, year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -234,7 +234,7 @@ never_hos <- hospdata %>%
 
 # not treated by 2020 
 notby2020 <- hospdata %>%
-  filter(notyet2020 == 1) %>%
+  filter(notyet2020 == 1, year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),    
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -269,6 +269,16 @@ kable(all_groups, format = "latex", booktabs = TRUE,
       col.names = c("Dependent Variable", "Treated Hospitals", "Treated by 2020", "Always Have Tax", "Never Have Tax"),
       align = "lcccc")
 
+
+# table for treated by 2020, not treated by 2020, and always 
+table3 <- treated_hos2020 %>%
+  left_join(notby2020, by = "variable") %>%
+  left_join(always, by= "variable")
+
+kable(table3, format = "latex", booktabs = TRUE,
+      caption = "Summary Statistics by Treatment Status",
+      col.names = c("Dependent Variable", "Treated Hospitals", "Not Yet Treated by 2020", "Always Have Tax"),
+      align = "lccc")
 
 # DENSITY PLOTS
 ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +
@@ -368,3 +378,4 @@ kable(time_treat_sum, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Pre/Post Treated/Not Yet Treated",
       col.names = c("Dependent Variable", "Pre Treatment Group", "Pre Not Yet Treated", "Post Treatment Group", "Post Not Yet Treated"),
       align = "lcccc")
+

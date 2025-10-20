@@ -5,7 +5,10 @@
 ## Goal:          Figures that show relationship of tax adoption and outcome variable        
 ##  
 
+install.packages("panelView")
+library(panelView)
 library(ggplot2)
+
 
 # FMAP and TAX ----------------------------------------------------------------
 # figure of tax adoption over time
@@ -236,7 +239,7 @@ ggsave("sumplots/group_mcaid_prop.png", plot = group_mcaid_prop, width = 8, heig
 
 # mcaid discharges proportion
 group_mcaid_dis_prop <- ggplot(
-  filter(hospdata, !is.na(mcaid_prop_discharges)),
+  filter(hospdata, !is.na(mcaid_prop_discharges), year < 2020),
   aes(x = year, y = mcaid_prop_discharges, color = factor(treatment_group))
 ) +
   stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
@@ -249,11 +252,32 @@ group_mcaid_dis_prop <- ggplot(
   ) +
   theme_minimal()
 
-ggsave("sumplots/group_mcaid_dis_prop.png", plot = group_mcaid_dis_prop, width = 8, height = 8, dpi = 300)
+group_mcaid_dis_prop2 <- ggplot(
+  filter(
+    hospdata,
+    !is.na(mcaid_prop_discharges),
+    year < 2020,
+    mcaid_prop_discharges >= quantile(mcaid_prop_discharges, 0.01, na.rm = TRUE),
+    mcaid_prop_discharges <= quantile(mcaid_prop_discharges, 0.99, na.rm = TRUE)
+  ),
+  aes(x = year, y = mcaid_prop_discharges, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Medicaid Discharges Proportion",
+    color = "Group",
+    title = "Average Medicaid Discharges Proportion Over Time by Group"
+  ) +
+  theme_minimal()
+
+print(group_mcaid_dis_prop)
+ggsave("sumplots/group_mcaid_dis_prop2.png", plot = group_mcaid_dis_prop2, width = 8, height = 8, dpi = 300)
 
 # uncompensated care charges proportion
 group_ucc_prop <- ggplot(
-  filter(hospdata, !is.na(ucc_prop) & ucc_prop < 1),
+  filter(hospdata, !is.na(ucc_prop) & ucc_prop < 1, year < 2020),
   aes(x = year, y = ucc_prop, color = factor(treatment_group))
 ) +
   stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
@@ -265,8 +289,29 @@ group_ucc_prop <- ggplot(
     title = "Average Uncompensated Care to Total Charges Over Time by Group"
   ) +
   theme_minimal()
+print(group_ucc_prop2)
 
-ggsave("sumplots/group_ucc_prop.png", plot = group_ucc_prop, width = 8, height = 8, dpi = 300)
+group_ucc_prop2 <- ggplot(
+  filter(
+    hospdata,
+    !is.na(ucc_prop),
+    year < 2020,
+    ucc_prop >= quantile(ucc_prop, 0.01, na.rm = TRUE),
+    ucc_prop <= quantile(ucc_prop, 0.99, na.rm = TRUE)
+  ),
+  aes(x = year, y = ucc_prop, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Uncompensated Care Charges Proportion",
+    color = "Group",
+    title = "Average Uncompensated Care Charges Proportion Over Time by Group"
+  ) +
+  theme_minimal()
+
+ggsave("sumplots/group_ucc_prop2.png", plot = group_ucc_prop2, width = 8, height = 8, dpi = 300)
 
 # cost to charge ratio
 group_ccr <- ggplot(
@@ -306,8 +351,8 @@ ggsave("sumplots/tmnt_cost_per_discharge.png", plot = tmnt_cost_per_discharge, w
 unique(hospdata$treatment_group)
 
 # private (proxy) 
-group_private_prop_discharge <- ggplot(
-  filter(hospdata, !is.na(mm_prop_discharges)),
+group_payermix <- ggplot(
+  filter(hospdata, !is.na(mm_prop_discharges), year < 2020),
   aes(x = year, y = private_prop_discharges, color = factor(treatment_group))
 ) +
   stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
@@ -319,23 +364,56 @@ group_private_prop_discharge <- ggplot(
     title = "Average Case Mix Over Time by Group"
   ) +
   theme_minimal()
-ggsave("sumplots/group_casemix.png", plot = group_private_prop_discharge, width = 8, height = 8, dpi = 300)
+  print(group_private_prop_discharge)
+
+group_payermix_2 <- ggplot(
+  filter(
+    hospdata,
+    !is.na(mcaid_prop_discharges),
+    year < 2020,
+    private_prop_discharges >= quantile(private_prop_discharges, 0.01, na.rm = TRUE),
+    private_prop_discharges <= quantile(private_prop_discharges, 0.99, na.rm = TRUE)
+  ),
+  aes(x = year, y = private_prop_discharges, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Non Public Payer Proportion",
+    color = "Group",
+    title = "Average Payer Mix Over Time by Group"
+  ) +
+  theme_minimal()
+  print(group_payermix_2)
+ggsave("sumplots/group_payermix2.png", plot = group_payermix_2, width = 8, height = 8, dpi = 300)
 
 summary(hospdata$private_prop_discharges)
 unique(hospdata$treatment_group)
 
 # ACROSS AND WITHIN VARIATION 
 # DENSITY PLOTS
-dens_mcaid_dis <- ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +
+dens_mcaid_dis <- ggplot(filter(hospdata, treatment_group == "treated", year < 2020), aes(x = mcaid_prop_discharges)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   labs(title = "Density of Medicaid Proportion of Discharges",
        x = "Medicaid Proportion of Discharges", y = "Density") +
   theme_minimal()
 print(dens_mcaid_dis)
 
-dens_casemix <- ggplot(filter(hospdata_clean, treated == 1), aes(x = private_prop_discharges)) +
+dens_casemix <- ggplot(filter(hospdata, treatment_group == "not yet by 2020", year < 2020), aes(x = private_prop_discharges)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   labs(title = "Density of Non Public Proportion of Discharges",
        x = "Non Public Proportion of Discharges", y = "Density") +
   theme_minimal()
 print(dens_casemix)
+
+dens_uccprop <- ggplot(filter(hospdata, treatment_group == "not yet by 2020", year < 2020, ucc_prop >= 0), aes(x = ucc_prop)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Uncompensated Care Proportion",
+       x = "Uncompensated Care Proportion of Charges", y = "Density") +
+  theme_minimal()
+print(dens_uccprop)
+
+# PANEL VIEW 
+View(hospdata)
+summary(hospdata$hrrp_payment)

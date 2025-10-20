@@ -333,3 +333,6 @@ hospdata <- hospdata %>%
   )
 unique(hospdata$treatment_num)
 
+View(hospdata)
+View(hcris)
+View(hospdata)
