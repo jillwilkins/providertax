@@ -102,6 +102,32 @@ overall_ucc_prop <- overall_ucc_prop +
 ggsave("sumplots/events/overall_ucc_prop.png", plot = overall_ucc_prop, width = 8, height = 8, dpi = 300)  
 summary(hospdata$ucc_prop)
 
+
+overall_ucc_pretty <- overall_ucc_prop +
+  ggtitle("Event Study: Effect of Implementing Tax on Uncompensated Care Charges") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "ATT: Uncompensated Care Charges to Total Charges"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 16,
+      hjust = 0.5,
+      margin = margin(b = 10)
+    ),
+    axis.title.x = element_text(size = 13, margin = margin(t = 10)),
+    axis.title.y = element_text(size = 13, margin = margin(r = 10)),
+    axis.text = element_text(size = 11, color = "black"),
+    panel.grid.major = element_line(color = "grey85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4)
+print(overall_ucc_pretty)
+ggsave("sumplots/events/overall_ucc_pretty.png", plot = overall_ucc_pretty, width = 10, height = 8, dpi = 300)
+
 # Event study for cost to charge 
 att_ccr <- att_gt(yname = "cost_to_charge",
                 tname = "year",
@@ -109,7 +135,7 @@ att_ccr <- att_gt(yname = "cost_to_charge",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ 1,                # covariates (use ~1 if none)
+                xformla = ~ beds,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
@@ -162,7 +188,7 @@ att_ppd <- att_gt(yname = "private_prop_discharges",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ beds,                # covariates (use ~1 if none)
+                xformla = ~ beds,                 # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
@@ -175,13 +201,38 @@ summary(overall_att_ppd)
 # overall event study and title 
 overall_casemix <- ggdid(overall_att_ppd)
 overall_casemix <- overall_casemix + 
-  ggtitle("Event Study: Effect of Implementing Tax on Case Mix (calc)") +
+  ggtitle("Event Study: Effect of Implementing Tax on Payer Mix") +
   labs( 
     x = "Years Relative to Treatment",
-    y = "ATT (Average Treatment Effect on the Treated)"
+    y = "ATT: Non Public Proportion of Discharges"
   ) + theme_minimal()
-  print(overall_casemix)
-ggsave("sumplots/events/overall_casemix.png", plot = overall_casemix, width = 8, height = 8, dpi = 300) 
+
+overall_casemix_pretty <- overall_casemix +
+  ggtitle("Event Study: Effect of Implementing Tax on Payer Mix") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "ATT: Non-Public Proportion of Discharges"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 16,
+      hjust = 0.5,
+      margin = margin(b = 10)
+    ),
+    axis.title.x = element_text(size = 13, margin = margin(t = 10)),
+    axis.title.y = element_text(size = 13, margin = margin(r = 10)),
+    axis.text = element_text(size = 11, color = "black"),
+    panel.grid.major = element_line(color = "grey85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4)
+
+print(overall_casemix_pretty)
+
+ggsave("sumplots/events/overall_casemix_pretty.png", plot = overall_casemix_pretty, width = 10, height = 8, dpi = 300) 
 summary(hospdata_clean$private_prop_discharges)
 
 
