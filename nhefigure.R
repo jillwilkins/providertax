@@ -5,15 +5,55 @@
 ## Goal:         Create motivational figure of total health expenditure     
 ##  
 
-nhe <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/nhetable2.csv")
-View(nhe)
+# National Spending Chart
+nhe <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/nhe_table2.csv")
+
  nhe <- nhe %>% 
  mutate(total = nhe2023dol / 1000000000) %>%
- mutate(percent_hosp = as.numeric(gsub("%", "", percent_hosp)))
+ mutate(hospbil = percent_hosp * total)
 
+library(ggplot2)
+library(ggrepel)   # for smart label placement
 
+nhe_plot <- ggplot(nhe, aes(x = year)) +
+  # Lines
+  geom_line(aes(y = total), color = "#1f77b4", size = 1.2) +
+  geom_line(aes(y = hospbil), color = "#d62728", linetype = "dashed", size = 1.2) +
+  
+  # End-of-line labels
+  geom_text_repel(
+    data = nhe |> dplyr::filter(year == max(year)),
+    aes(y = total, label = "Total Spending"),
+    color = "#1f77b4", hjust = 0, nudge_x = 0.3, nudge_y = 20, size = 4
+  ) +
+  geom_text_repel(
+    data = nhe |> dplyr::filter(year == max(year)),
+    aes(y = hospbil, label = "Hospital Spending"),
+    color = "#d62728", hjust = 0, nudge_x = 0.3, nudge_y = 20, size = 4
+  ) +
+  
+  # Titles & labels
+  labs(
+    title = "National Health Expenditure Over Time",
+    subtitle = "Total vs. Hospital Spending (Billions of Dollars)",
+    x = "Year",
+    y = "Spending (Billions)"
+  ) +
+  
+  # Theme tweaks
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12, color = "gray30"),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    plot.margin = margin(10, 40, 10, 10)  # make room for labels
+  ) +
+  # Extend x-axis slightly to make room for labels
+  expand_limits(x = max(nhe$year) + 1)
 
-
+nhe_plot
+ggsave("nhe_plot.png", plot = nhe_plot, width = 7, height = 5, dpi = 300)
 
 # PANEL VIEW 
 # if not already installed
@@ -42,6 +82,6 @@ panelview <- panelview(
   xlab = "Year",
   ylab = "State"
 )
-ggsave("panelview.png", plot = panelview, width = 8, height = 8, dpi = 300)
+ggsave("panelview.png", plot = panelview, width = 10, height = 8, dpi = 300)
 
 

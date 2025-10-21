@@ -80,7 +80,7 @@ att_ucc_prop <- att_gt(yname = "ucc_prop",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ 1,                # covariates (use ~1 if none)
+                xformla = ~ beds,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
@@ -98,6 +98,7 @@ overall_ucc_prop <- overall_ucc_prop +
     x = "Years Relative to Treatment",
     y = "ATT (Average Treatment Effect on the Treated)"
   ) + theme_minimal()
+  print(overall_ucc_prop)
 ggsave("sumplots/events/overall_ucc_prop.png", plot = overall_ucc_prop, width = 8, height = 8, dpi = 300)  
 summary(hospdata$ucc_prop)
 

@@ -288,6 +288,7 @@ unique(hospdata$state[hospdata$never == 1])
 unique(hospdata$state[hospdata$treated == 1])
 unique(hospdata$state[hospdata$treated_by_2020 == 1])
 
+
 # add dependent variable calculations 
 hospdata <- hospdata %>%
   mutate(
@@ -327,9 +328,15 @@ hospdata <- hospdata %>%
 
 hospdata <- hospdata %>%
   mutate(
-    notyet2020 = ifelse(!is.na(firsttax) & firsttax > 2020, 1, 0)
+    notyet2020 = case_when(
+      is.na(firsttax) ~ 1,                 # missing firsttax
+      firsttax == "never" ~ 1,             # never treated
+      as.numeric(firsttax) >= 2020 ~ 1,    # treated 2020 or later
+      TRUE ~ 0                             # treated before 2020
+    )
   )
-unique(hospdata$treatment_num)
+
+unique(hospdata$treatment_group)
 
 View(hospdata)
 View(hcris)
