@@ -154,8 +154,6 @@ hcris_tax <- hcris_tax %>%
 # load in AHA data 
 aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
 
-
-View(aha %>% filter(STCD == 86))
 # note that i prefer hcris to aha for the discharges and charges 
 # limit aha to SERV = 10 (general medical and surgical hospitals), no NA in MCRNUM, no territories, 
 aha <- aha %>%
@@ -289,7 +287,7 @@ unique(hospdata$state[hospdata$always == 1])
 unique(hospdata$state[hospdata$never == 1])
 unique(hospdata$state[hospdata$treated == 1])
 unique(hospdata$state[hospdata$treated_by_2020 == 1])
-View(hospdata)
+
 # add dependent variable calculations 
 hospdata <- hospdata %>%
   mutate(

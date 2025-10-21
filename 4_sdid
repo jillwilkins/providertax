@@ -43,7 +43,8 @@ overall_mcaid_prop <- overall_mcaid_prop +
 ggsave("sumplots/events/overall_mcaid_prop.png", plot = overall_mcaid_prop, width = 8, height = 8, dpi = 300)
 summary(hospdata$mcaid_prop)
 
-
+table(hospdata$expyear, hospdata$treatment_num)
+View(hospdata)
 # Event Study for mcaid_prop_discharges
 att_mcaid_prop_dis <- att_gt(yname = "mcaid_prop_discharges",
                 tname = "year",
@@ -51,7 +52,7 @@ att_mcaid_prop_dis <- att_gt(yname = "mcaid_prop_discharges",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ 1,                # covariates (use ~1 if none)
+                xformla = ~ beds,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
@@ -69,6 +70,7 @@ overall_mcaid_prop_dis <- overall_mcaid_prop_dis +
     x = "Years Relative to Treatment",
     y = "ATT (Average Treatment Effect on the Treated)"
   ) + theme_minimal()
+print(overall_mcaid_prop_dis)
 ggsave("sumplots/events/overall_mcaid_prop_dis.png", plot = overall_mcaid_prop_dis, width = 8, height = 8, dpi = 300)
 
 # Event Study for ucc_prop
@@ -157,9 +159,9 @@ att_ppd <- att_gt(yname = "private_prop_discharges",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "treatment_num",                  # the column we created
-                data = hospdata_clean,
+                data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ 1,                # covariates (use ~1 if none)
+                xformla = ~ beds,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
@@ -177,6 +179,7 @@ overall_casemix <- overall_casemix +
     x = "Years Relative to Treatment",
     y = "ATT (Average Treatment Effect on the Treated)"
   ) + theme_minimal()
+  print(overall_casemix)
 ggsave("sumplots/events/overall_casemix.png", plot = overall_casemix, width = 8, height = 8, dpi = 300) 
 summary(hospdata_clean$private_prop_discharges)
 
