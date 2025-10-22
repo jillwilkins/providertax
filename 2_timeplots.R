@@ -270,9 +270,10 @@ group_mcaid_dis_prop2 <- ggplot(
     color = "Group",
     title = "Average Medicaid Discharges Proportion Over Time by Group"
   ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal()
 
-print(group_mcaid_dis_prop)
+print(group_mcaid_dis_prop2)
 ggsave("sumplots/group_mcaid_dis_prop2.png", plot = group_mcaid_dis_prop2, width = 8, height = 8, dpi = 300)
 
 # uncompensated care charges proportion
@@ -307,8 +308,9 @@ group_ucc_prop2 <- ggplot(
     x = "Year",
     y = "Average Uncompensated Care Charges Proportion",
     color = "Group",
-    title = "Average Uncompensated Care Charges Proportion Over Time by Group"
+    title = "Average Uncompensated Care Charges Proportion Over Time"
   ) +
+  scale_x_continuous(breaks = seq(2011, 2019, 2), limits = c(2011, 2019)) +
   theme_minimal()
 
 ggsave("sumplots/group_ucc_prop2.png", plot = group_ucc_prop2, width = 8, height = 8, dpi = 300)
@@ -361,10 +363,10 @@ group_payermix <- ggplot(
     x = "Year",
     y = "Average Proportion of Non Public Payers",
     color = "Group",
-    title = "Average Case Mix Over Time by Group"
+    title = "Average Case Mix Over Tim"
   ) +
   theme_minimal()
-  print(group_private_prop_discharge)
+print(group_payermix)
 
 group_payermix_2 <- ggplot(
   filter(
@@ -382,14 +384,44 @@ group_payermix_2 <- ggplot(
     x = "Year",
     y = "Average Non Public Payer Proportion",
     color = "Group",
-    title = "Average Payer Mix Over Time by Group"
+    title = "Average Payer Mix Over Time"
   ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal()
   print(group_payermix_2)
 ggsave("sumplots/group_payermix2.png", plot = group_payermix_2, width = 8, height = 8, dpi = 300)
 
 summary(hospdata$private_prop_discharges)
 unique(hospdata$treatment_group)
+
+# Private for EMORY system only 
+library(stringr)
+group_payermix_emory <- ggplot(
+  filter(
+    hospdata,
+    str_detect(name, regex("Emory", ignore_case = TRUE)),  # only hospitals with "EMORY"
+    !is.na(private_prop_discharges),
+    year < 2020
+  ),
+  aes(x = year, y = private_prop_discharges, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Proportion of Non-Public Payers",
+    color = "Group",
+    title = "Average Case Mix Over Time: EMORY Hospitals"
+  ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
+    axis.text = element_text(size = 12, color = "black"),
+    legend.position = "bottom"
+  )
+
+print(group_payermix_emory)
 
 # ACROSS AND WITHIN VARIATION 
 # DENSITY PLOTS

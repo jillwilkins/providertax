@@ -73,6 +73,32 @@ overall_mcaid_prop_dis <- overall_mcaid_prop_dis +
 print(overall_mcaid_prop_dis)
 ggsave("sumplots/events/overall_mcaid_prop_dis.png", plot = overall_mcaid_prop_dis, width = 8, height = 8, dpi = 300)
 
+# medicaid discharges proportion pretty 
+overall_med_dis_pretty <- overall_mcaid_prop_dis +
+  ggtitle("Event Study: Effect of Implementing Tax on Medicaid Discharges") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "ATT: Medicaid Proportion of Discharges"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 16,
+      hjust = 0.5,
+      margin = margin(b = 10)
+    ),
+    axis.title.x = element_text(size = 13, margin = margin(t = 10)),
+    axis.title.y = element_text(size = 13, margin = margin(r = 10)),
+    axis.text = element_text(size = 11, color = "black"),
+    panel.grid.major = element_line(color = "grey85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4)
+print(overall_med_dis_pretty)
+ggsave("sumplots/events/overall_med_dis_pretty.png", plot = overall_med_dis_pretty, width = 10, height = 8, dpi = 300)
+
 # Event Study for ucc_prop
 att_ucc_prop <- att_gt(yname = "ucc_prop",
                 tname = "year",
@@ -109,6 +135,7 @@ overall_ucc_pretty <- overall_ucc_prop +
     x = "Years Relative to Treatment",
     y = "ATT: Uncompensated Care Charges to Total Charges"
   ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(
@@ -154,6 +181,32 @@ overall_ccr <- overall_ccr +
     y = "ATT (Average Treatment Effect on the Treated)"
   ) + theme_minimal()
 ggsave("sumplots/events/overall_ccr.png", plot = overall_ccr, width = 8, height = 8, dpi = 300) 
+
+# cost per charge pretty 
+overall_ccr_pretty <- overall_ccr +
+  ggtitle("Event Study: Effect of Implementing Tax on Cost to Charge Ratio") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "ATT: Cost to Charge Ratio"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 16,
+      hjust = 0.5,
+      margin = margin(b = 10)
+    ),
+    axis.title.x = element_text(size = 13, margin = margin(t = 10)),
+    axis.title.y = element_text(size = 13, margin = margin(r = 10)),
+    axis.text = element_text(size = 11, color = "black"),
+    panel.grid.major = element_line(color = "grey85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4)
+print(overall_ccr_pretty)
+ggsave("sumplots/events/overall_ccr_pretty.png", plot = overall_ccr_pretty, width = 10, height = 8, dpi = 300)
 
 # Event study for cost to discharge 
 att_cpd <- att_gt(yname = "cost_per_discharge",
@@ -213,6 +266,7 @@ overall_casemix_pretty <- overall_casemix +
     x = "Years Relative to Treatment",
     y = "ATT: Non-Public Proportion of Discharges"
   ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal(base_size = 14) +
   theme(
     plot.title = element_text(

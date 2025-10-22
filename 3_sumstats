@@ -134,7 +134,7 @@ kable(all_sum, format = "latex", booktabs = TRUE,
 
 # TABLE: SUMMARY STATISTICS (by treatment status)
 # treated hospitals only
-treated_hos <- hospdata_clean %>%
+treated_hos <- hospdata %>%
   filter(treated == 1) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
@@ -155,7 +155,7 @@ treated_hos <- hospdata_clean %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$treated == 1]))
+      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treated == 1]))
     )
   )
 View(treated_hos)
@@ -166,8 +166,8 @@ hospdata_clean %>%
 setdiff(names(var_names), names(hospdata_clean))
 
 # treated before 2020
-treated_hos2020 <- hospdata_clean %>%
-  filter(treated_by_2020 == 1) %>%
+treated_hos2020 <- hospdata %>%
+  filter(treatment_group == "treated") %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -187,12 +187,12 @@ treated_hos2020 <- hospdata_clean %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$treated_by_2020 == 1]))
+      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treatment_group == "treated"]))
     )
   )
 
 # always hospitals only 
-always_hos <- hospdata_clean %>%
+always_hos <- hospdata %>%
   filter(always == 1, year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
@@ -213,7 +213,7 @@ always_hos <- hospdata_clean %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$always == 1]))
+      est = as.character(n_distinct(hospdata$mcrnum[hospdata$always == 1]))
     )
   )
 
@@ -244,8 +244,8 @@ never_hos <- hospdata %>%
   )
 
 # not treated by 2020 
-notby2020 <- hospdata_clean %>%
-  filter(notyet2020 == 1, year < 2020) %>%
+notby2020 <- hospdata %>%
+  filter(treatment_group == "not yet by 2020", year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),    
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -265,7 +265,7 @@ notby2020 <- hospdata_clean %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$notyet2020 == 1]))
+      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treatment_group == "not yet by 2020"]))
     )
   )
 
@@ -283,10 +283,12 @@ kable(all_groups, format = "latex", booktabs = TRUE,
 unique(hospdata_clean$state[hospdata_clean$notyet2020 == 1])
 unique(hospdata$state[hospdata$notyet2020 == 1])
 
+rm(table3)
 # table for treated by 2020, not treated by 2020, and always 
 table3 <- treated_hos2020 %>%
   left_join(notby2020, by = "variable") %>%
   left_join(always_hos, by= "variable")
+  View(table3)
 
 kable(table3, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Treatment Status",
@@ -299,6 +301,7 @@ ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +
   labs(title = "Density of Medicaid Proportion of Discharges",
        x = "Medicaid Proportion of Discharges", y = "Density") +
   theme_minimal()
+
 
 
 # now i want observations of eventually treated pre, post, and not yet treated by 2020 pre, post 
