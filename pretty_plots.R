@@ -1,10 +1,20 @@
 
+# number of hosp per group 
+hospdata %>%
+  group_by(treatment_num) %>%
+  summarise(
+    n_hospitals = n_distinct(mcrnum),
+    .groups = "drop"
+  ) %>%
+  arrange(treatment_num) 
+
 # Medicaid Discharges Proportion 
 group_mcaid_dis_prop2 <- ggplot(
   filter(
     hospdata,
     !is.na(mcaid_prop_discharges),
     year < 2020,
+    treatment_group != "always",
     mcaid_prop_discharges >= quantile(mcaid_prop_discharges, 0.01, na.rm = TRUE),
     mcaid_prop_discharges <= quantile(mcaid_prop_discharges, 0.99, na.rm = TRUE)
   ),
@@ -24,10 +34,11 @@ group_mcaid_dis_prop2 <- ggplot(
 print(group_mcaid_dis_prop2)
 ggsave("sumplots/group_mcaid_dis_prop2.png", plot = group_mcaid_dis_prop2, width = 8, height = 8, dpi = 300)
 
-# Privae Payer Proportion of Discharges
+# Private Payer Proportion of Discharges
 group_payermix_2 <- ggplot(
   filter(
     hospdata,
+    treatment_group != "always",
     !is.na(mcaid_prop_discharges),
     year < 2020,
     private_prop_discharges >= quantile(private_prop_discharges, 0.01, na.rm = TRUE),
@@ -53,6 +64,7 @@ group_ucc_prop2 <- ggplot(
   filter(
     hospdata,
     !is.na(ucc_prop),
+    treatment_group != "always",
     year < 2020,
     ucc_prop >= quantile(ucc_prop, 0.01, na.rm = TRUE),
     ucc_prop <= quantile(ucc_prop, 0.99, na.rm = TRUE)
@@ -73,6 +85,86 @@ group_ucc_prop2 <- ggplot(
 ggsave("sumplots/group_ucc_prop2.png", plot = group_ucc_prop2, width = 8, height = 8, dpi = 300)
 
 
-hospdata_clean %>%
-  filter(treatment_group == "not yet by 2020", !is.na(mcaid_prop_discharges), year < 2020, year > 2005) %>%
-  summarise(mean_mcaid_prop = mean(mcaid_prop_discharges, na.rm = TRUE))
+hospdata %>%
+  filter(treatment_group == "treated", !is.na(cost_to_charge), year < 2020, year > 2005, cost_to_charge >= quantile(cost_to_charge, 0.01, na.rm = TRUE),
+    cost_to_charge <= quantile(cost_to_charge, 0.99, na.rm = TRUE)) %>%
+  summarise(sd_cost_to_charge = sd(cost_to_charge, na.rm = TRUE))
+
+# 2011 Examples 
+# Medicaid Discharges Proportion 
+group_mcaid_dis_2011 <- ggplot(
+  hospdata %>%
+    filter(
+      !is.na(mcaid_prop_discharges),
+      year < 2020,
+      mcaid_prop_discharges >= quantile(mcaid_prop_discharges, 0.01, na.rm = TRUE),
+      mcaid_prop_discharges <= quantile(mcaid_prop_discharges, 0.99, na.rm = TRUE),
+      (treatment_num == 2011 | treatment_group == "not yet by 2020")
+    ),
+  aes(x = year, y = mcaid_prop_discharges, color = treatment_group, group = treatment_group)
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2) +
+  stat_summary(fun = mean, geom = "point", size = 2) +
+  labs(
+    x = "Year",
+    y = "Share of Medicaid Discharges",
+    color = "Group",
+    title = "Average Share of Medicaid Discharges Over Time"
+  ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
+  theme_minimal()
+
+ggsave("sumplots/plots2011/mcaid_dis.png", plot = group_mcaid_dis_2011, width = 10, height = 8, dpi = 300)
+
+
+# Commercial Proportion 
+group_payermix_2011 <- ggplot(
+  hospdata %>%
+    filter(
+      !is.na(private_prop_discharges),
+      year < 2020,
+      private_prop_discharges >= quantile(private_prop_discharges, 0.01, na.rm = TRUE),
+      private_prop_discharges <= quantile(private_prop_discharges, 0.99, na.rm = TRUE),
+      (treatment_num == 2011 | treatment_group == "not yet by 2020")
+    ),
+  aes(x = year, y = private_prop_discharges, color = treatment_group, group = treatment_group)
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2) +
+  stat_summary(fun = mean, geom = "point", size = 2) +
+  labs(
+    x = "Year",
+    y = "Share of Commercial Payers",
+    color = "Group",
+    title = "Average Share of Commercial Payers Over Time"
+  ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
+  theme_minimal()
+
+print(group_payermix_2011)
+ggsave("sumplots/plots2011/payermix.png", plot = group_payermix_2011, width = 10, height = 8, dpi = 300)
+
+# Uncompensated Care Proportion 
+group_ucc_prop_2011 <- ggplot(
+  hospdata %>%
+    filter(
+      !is.na(ucc_prop),
+      year < 2020,
+      ucc_prop >= quantile(ucc_prop, 0.01, na.rm = TRUE),
+      ucc_prop <= quantile(ucc_prop, 0.99, na.rm = TRUE),
+      (treatment_num == 2012 | treatment_group == "not yet by 2020")
+    ),
+  aes(x = year, y = ucc_prop, color = treatment_group, group = treatment_group)
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2) +
+  stat_summary(fun = mean, geom = "point", size = 2) +
+  labs(
+    x = "Year",
+    y = "Average Uncompensated Care Charges ",
+    color = "Group",
+    title = "Average Uncompensated Care Charges Over Time"
+  ) +
+  scale_x_continuous(breaks = seq(2008, 2019, 2), limits = c(2008, 2019)) +
+  theme_minimal()
+
+print(group_ucc_prop_2011)
+ggsave("sumplots/plots2011/ucc_prop.png", plot = group_ucc_prop_2011, width = 8, height = 8, dpi = 300)

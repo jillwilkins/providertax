@@ -133,32 +133,6 @@ kable(all_sum, format = "latex", booktabs = TRUE,
       align = "lccc")
 
 # TABLE: SUMMARY STATISTICS (by treatment status)
-# treated hospitals only
-treated_hos <- hospdata %>%
-  filter(treated == 1) %>%
-  group_by(mcrnum) %>%  # group by hospital
-  summarise(across(names(var_names),
-                   list(mean = ~mean(.x, na.rm = TRUE)),
-                   .names = "{.col}")) %>%
-  ungroup() %>%
-  summarise(across(everything(),
-                   list(mean = ~mean(.x, na.rm = TRUE),
-                        sd = ~sd(.x, na.rm = TRUE)),
-                   .names = "{.col}_{.fn}")) %>%
-  pivot_longer(cols = everything(),
-               names_to = c("variable", "stat"),
-               names_pattern = "(.+)_([^_]+)") %>%
-  pivot_wider(names_from = stat, values_from = value) %>%
-  mutate(stat_string = sprintf("%.3f (%.2f)", mean, sd),
-         variable = var_names[variable]) %>%
-  select(variable, est = stat_string) %>%
-  bind_rows(
-    tibble(
-      variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treated == 1]))
-    )
-  )
-View(treated_hos)
 
 hospdata_clean %>%
   filter(year > 2004, treated == 1) %>%
@@ -167,7 +141,7 @@ setdiff(names(var_names), names(hospdata_clean))
 
 # treated before 2020
 treated_hos2020 <- hospdata %>%
-  filter(treatment_group == "treated") %>%
+  filter(treatment_group == "treated", yes_tax == 1) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -187,9 +161,10 @@ treated_hos2020 <- hospdata %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treatment_group == "treated"]))
-    )
-  )
+      est <- as.character(
+  n_distinct(hospdata$mcrnum[hospdata$treatment_group == "treated" & hospdata$yes_tax == 1])
+    )))
+View(treated_hos2020)    
 
 # always hospitals only 
 always_hos <- hospdata %>%
