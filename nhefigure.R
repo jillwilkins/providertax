@@ -34,8 +34,6 @@ nhe_plot <- ggplot(nhe, aes(x = year)) +
   
   # Titles & labels
   labs(
-    title = "National Health Expenditure Over Time",
-    subtitle = "Total vs. Hospital Spending (Billions of Dollars)",
     x = "Year",
     y = "Spending (Billions)"
   ) +
@@ -43,8 +41,7 @@ nhe_plot <- ggplot(nhe, aes(x = year)) +
   # Theme tweaks
   theme_minimal(base_size = 13) +
   theme(
-    plot.title = element_text(face = "bold", size = 16),
-    plot.subtitle = element_text(size = 12, color = "gray30"),
+    plot.title = element_text(size = 16),
     axis.title = element_text(face = "bold"),
     panel.grid.minor = element_blank(),
     plot.margin = margin(10, 40, 10, 10)  # make room for labels
@@ -85,3 +82,4 @@ panelview <- panelview(
 ggsave("panelview.png", plot = panelview, width = 10, height = 8, dpi = 300)
 
 
+View(hospdata)
