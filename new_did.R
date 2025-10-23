@@ -12,7 +12,7 @@ library(did)
 payer_did <- hospdata %>% 
     filter(!is.na(private_prop_discharges), 
     private_prop_discharges >= quantile(private_prop_discharges, 0.01, na.rm = TRUE),
-    private_prop_discharges <= quantile(private_prop_discharges, 0.99, na.rm = TRUE))
+    private_prop_discharges <= quantile(private_prop_discharges, 0.98, na.rm = TRUE))
     
 att_payermix <- att_gt(yname = "private_prop_discharges",
                 tname = "year",

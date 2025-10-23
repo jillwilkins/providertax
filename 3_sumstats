@@ -35,14 +35,6 @@ hospdata_clean <- hospdata %>%
     ucc_prop <= quantile(ucc_prop, 0.99, na.rm = TRUE)
   )
 
-
-#for (var in sum_vars) {
-# threshold <- quantile(hospdata[[var]], 0.99, na.rm = TRUE)
-# hospdata_clean <- hospdata_clean %>%
-#   filter(.data[[var]] <= threshold)
-#}
-
-
 # TABLE: SUMMARY STATISTICS (full, with tax, no tax) 
 # FULL SAMPLE: hospital level means
 hospmeans <- hospdata_clean %>%
@@ -161,8 +153,7 @@ treated_hos2020 <- hospdata %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est <- as.character(
-  n_distinct(hospdata$mcrnum[hospdata$treatment_group == "treated" & hospdata$yes_tax == 1])
+      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treatment_group == "treated" & hospdata$yes_tax == 1])
     )))
 View(treated_hos2020)    
 
@@ -261,14 +252,15 @@ unique(hospdata$state[hospdata$notyet2020 == 1])
 rm(table3)
 # table for treated by 2020, not treated by 2020, and always 
 table3 <- treated_hos2020 %>%
-  left_join(notby2020, by = "variable") %>%
-  left_join(always_hos, by= "variable")
+  left_join(notby2020, by = "variable") 
+  # %>%
+  # left_join(always_hos, by= "variable")
   View(table3)
 
 kable(table3, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Treatment Status",
-      col.names = c("Dependent Variable", "Treated Hospitals", "Not Yet Treated by 2020", "Always Have Tax"),
-      align = "lccc")
+      col.names = c("Dependent Variable", "Treated Hospitals", "Not Yet Treated by 2020"),
+      align = "lcc")
 
 # DENSITY PLOTS
 ggplot(filter(hospdata_clean, treated == 1), aes(x = mcaid_prop_discharges)) +
@@ -370,3 +362,12 @@ kable(time_treat_sum, format = "latex", booktabs = TRUE,
       col.names = c("Dependent Variable", "Pre Treatment Group", "Pre Not Yet Treated", "Post Treatment Group", "Post Not Yet Treated"),
       align = "lcccc")
 
+
+summary(hospdata$cost_to_charge[hospdata$treatment_group == "treated" & hospdata$yes_tax == 1 & hospdata$year < 2020])
+subset_data <- hospdata$cost_to_charge[
+  hospdata$treatment_group == "treated" &
+  hospdata$cost_to_charge >= quantile(hospdata$cost_to_charge, 0.01, na.rm = TRUE) &
+  hospdata$cost_to_charge <= quantile(hospdata$cost_to_charge, 0.99, na.rm = TRUE) &
+  hospdata$year < 2020
+]
+c(mean = mean(subset_data, na.rm = TRUE), sd = sd(subset_data, na.rm = TRUE))
