@@ -19,7 +19,8 @@ att_mcaid_prop <- att_gt(yname = "mcaid_prop",
                 data = hospdata,
                 control_group = "notyettreated",  
                 xformla = ~ 1,                # covariates (use ~1 if none) ## what should i add here 
-                est_method = "dr",            
+                est_method = "dr",
+                clustervars = "state",        # doubly-robust (optional)            
                 allow_unbalanced = TRUE
                 )
 
@@ -42,8 +43,12 @@ overall_mcaid_prop <- overall_mcaid_prop +
   theme_minimal()
 ggsave("sumplots/events/overall_mcaid_prop.png", plot = overall_mcaid_prop, width = 8, height = 8, dpi = 300)
 summary(hospdata$mcaid_prop)
+unique(hospdata$state[hospdata$treatment_group == "not yet by 2020"])
+unique(hospdata$state[hospdata$treatment_group == "treated"])
+
 
 table(hospdata$expyear, hospdata$treatment_num)
+
 View(hospdata)
 # Event Study for mcaid_prop_discharges
 att_mcaid_prop_dis <- att_gt(yname = "mcaid_prop_discharges",
@@ -240,20 +245,15 @@ hospdata_early <- hospdata %>% filter(year < 2020)
 att_ppd <- att_gt(yname = "private_prop_discharges",
                 tname = "year",
                 idname = "mcrnum",
-                gname = "treatment_num",                  # the column we created
-                data = hospdata_early,
-                control_group = "nevertreated",  # or "notyettreated"
+                gname = "tmnt20plus",                  # the column we created
+                data = hospdata,
+                control_group = "notyettreated",  # or "notyettreated"
                 xformla = ~ beds,               # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
+                clustervars = "state",
                 allow_unbalanced = TRUE
                 )
 
-hospdata %>%
-  group_by(year) %>%
-  summarise(
-    beds_var = var(beds, na.rm = TRUE),
-    expyear_var = var(expyear, na.rm = TRUE)
-  )
 
 summary(att_ppd)
 ggdid(att_ppd)

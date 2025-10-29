@@ -210,7 +210,7 @@ never_hos <- hospdata %>%
   )
 
 # not treated by 2020 
-notby2020 <- hospdata %>%
+notby2020 <- hospdata_st %>%
   filter(treatment_group == "not yet by 2020", year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),    
@@ -231,10 +231,10 @@ notby2020 <- hospdata %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treatment_group == "not yet by 2020"]))
+      est = as.character(n_distinct(hospdata_st$mcrnum[hospdata_st$treatment_group == "not yet by 2020"]))
     )
   )
-
+View(notby2020)
 # Combine all 
 all_groups <- treated_hos %>%
     left_join(treated_hos2020, by = "variable") %>%
@@ -371,3 +371,13 @@ subset_data <- hospdata$cost_to_charge[
   hospdata$year < 2020
 ]
 c(mean = mean(subset_data, na.rm = TRUE), sd = sd(subset_data, na.rm = TRUE))
+
+
+# mean of alchhos among treated and not yet treated 
+hospdata %>%
+  filter(treatment_group == "treated", !is.na(psyemhos), year < 2020) %>%
+  summarise(sd_psyemhos = sd(psyemhos, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "not yet by 2020", !is.na(psyemhos), year < 2020) %>%
+  summarise(sd_psyemhos = sd(psyemhos, na.rm = TRUE))

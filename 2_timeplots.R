@@ -446,6 +446,128 @@ dens_uccprop <- ggplot(filter(hospdata, treatment_group == "not yet by 2020", ye
   theme_minimal()
 print(dens_uccprop)
 
-# PANEL VIEW 
-View(hospdata)
-summary(hospdata$hrrp_payment)
+dens_taxyr <- ggplot(filter(hospdata, treatment_group == "treated", year < 2020), aes(x = event_time)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Years Since Tax Adoption",
+       x = "Years Since Tax Adoption", y = "Density") +
+  theme_minimal()
+print(dens_taxyr)
+
+# hist version 
+dens_taxyr_hist <- ggplot(
+  filter(hospdata, treatment_group == "treated", year < 2020), 
+  aes(x = event_time)
+) +
+  geom_histogram(
+    binwidth = 1,             # width of each bin; adjust as needed
+    fill = "steelblue", 
+    color = "black",          # adds a border to each bar
+    alpha = 0.6
+  ) +
+  labs(
+    title = "Histogram of Years Since Tax Adoption",
+    x = "Years Since Tax Adoption", 
+    y = "Count"
+  ) +
+  theme_minimal()
+dens_taxyr_hist
+
+ cor(
+  hospdata$rural,
+  hospdata$yes_tax,
+  use = "complete.obs"   # ignores NAs
+)
+# Count of rural vs non-rural hospitals in 2013
+hospdata %>%
+  filter(year == 2013) %>%
+  count(rural)
+
+payer_did %>%
+  group_by(treatment_num) %>%
+  summarise(
+    rural_var = var(rural, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_num == 2013, rural == 1) %>%
+  summarise(n_rural0 = n())
+
+hospdata %>%
+  filter(firsttax == 2006) %>%
+  pull(state) %>%
+  unique()
+
+
+# prob of having alchhos 
+group_psyemhos <- ggplot(
+  filter(hospdata, !is.na(psyemhos), year < 2020, rural == 1),
+  aes(x = year, y = psyemhos, color = factor(treatment_group), 
+  (treatment_num == 2011 | treatment_group == "not yet by 2020"))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Probability of Having Psychiatric Emergency Services",
+    color = "Group",
+    title = "Average Probability of Having Psychiatric Emergency Services Over Time by Group"
+  ) +
+  theme_minimal()
+print(group_psyemhos)
+
+group_psyemhos_2011 <- ggplot(
+  hospdata_st %>%
+    filter(
+      !is.na(psyemhos),
+      year < 2020,
+      (treatment_num == 2011 | treatment_group == "not yet by 2020")
+    ),
+  aes(x = year, y = psyemhos, color = treatment_group, group = treatment_group)
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2) +
+  stat_summary(fun = mean, geom = "point", size = 2) +
+  labs(
+    x = "Year",
+    y = "Share of Psychiatric Emergency Services",
+    color = "Group",
+    title = "Average Share of Psychiatric Emergency Services Over Time"
+  ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
+  theme_minimal()
+print(group_psyemhos_2011)
+
+# prob of having alchhosp 
+group_alchhos <- ggplot(
+  filter(hospdata, !is.na(alchhos), year < 2020),
+  aes(x = year, y = alchhos, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Probability of Having Alcohol and Drug Services",
+    color = "Group",
+    title = "Average Probability of Having Alcohol and Drug Services Over Time by Group"
+  ) +
+  theme_minimal()
+print(group_alchhos)
+
+group_alchhos_2011 <- ggplot(
+  hospdata_st %>%
+    filter(
+      !is.na(alchhos),
+      year < 2020,
+      (treatment_num == 2011 | treatment_group == "not yet by 2020")
+    ),
+  aes(x = year, y = alchhos, color = treatment_group, group = treatment_group)
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2) +
+  stat_summary(fun = mean, geom = "point", size = 2) +
+  labs(
+    x = "Year",
+    y = "Share of Alcohol and Drug Services",
+    color = "Group",
+    title = "Average Share of Alcohol and Drug Services Over Time"
+  ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
+  theme_minimal()
+print(group_alchhos_2011)

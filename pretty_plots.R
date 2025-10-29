@@ -11,7 +11,7 @@ hospdata %>%
 # Medicaid Discharges Proportion 
 group_mcaid_dis_prop2 <- ggplot(
   filter(
-    hospdata,
+    hospdata_st,
     !is.na(mcaid_prop_discharges),
     year < 2020,
     treatment_group != "always",
@@ -93,7 +93,7 @@ hospdata %>%
 # 2011 Examples 
 # Medicaid Discharges Proportion 
 group_mcaid_dis_2011 <- ggplot(
-  hospdata %>%
+  hospdata_st %>%
     filter(
       !is.na(mcaid_prop_discharges),
       year < 2020,
@@ -113,7 +113,7 @@ group_mcaid_dis_2011 <- ggplot(
   ) +
   scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal()
-
+print(group_mcaid_dis_2011)
 ggsave("sumplots/plots2011/mcaid_dis.png", plot = group_mcaid_dis_2011, width = 10, height = 8, dpi = 300)
 
 
@@ -151,7 +151,7 @@ group_ucc_prop_2011 <- ggplot(
       year < 2020,
       ucc_prop >= quantile(ucc_prop, 0.01, na.rm = TRUE),
       ucc_prop <= quantile(ucc_prop, 0.99, na.rm = TRUE),
-      (treatment_num == 2012 | treatment_group == "not yet by 2020")
+      !(treatment_group == "always"),
     ),
   aes(x = year, y = ucc_prop, color = treatment_group, group = treatment_group)
 ) +
@@ -163,8 +163,8 @@ group_ucc_prop_2011 <- ggplot(
     color = "Group",
     title = "Average Uncompensated Care Charges Over Time"
   ) +
-  scale_x_continuous(breaks = seq(2008, 2019, 2), limits = c(2008, 2019)) +
+  scale_x_continuous(breaks = seq(2011, 2019, 2), limits = c(2011, 2019)) +
   theme_minimal()
 
 print(group_ucc_prop_2011)
-ggsave("sumplots/plots2011/ucc_prop.png", plot = group_ucc_prop_2011, width = 8, height = 8, dpi = 300)
+ggsave("sumplots/group_ucc_prop.png", plot = group_ucc_prop_2011, width = 10, height = 8, dpi = 300)

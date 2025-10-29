@@ -336,8 +336,24 @@ hospdata <- hospdata %>%
     )
   )
 
-unique(hospdata$treatment_group)
+unique(hospdata$cbsatype)
 
-View(hospdata)
-View(hcris)
-View(hospdata)
+
+hospdata <- hospdata %>%
+  mutate(tmnt20plus = case_when(
+    firsttax == 2004 ~ NA_real_,   # Assign NA if firsttax == 2004
+    is.na(firsttax) ~ 0,           # Assign 0 if firsttax is missing (never treated)
+    TRUE ~ firsttax                # Otherwise, equal to the firsttax value
+  ))
+
+hospdata <- hospdata %>%
+  mutate(rural = if_else(cbsatype == "Rural", 1, 0))
+
+# create event time variable 
+hospdata <- hospdata %>%
+  mutate(
+    event_time = case_when(
+      treatment_num == 0 ~ NA_real_,  # never treated
+      TRUE ~ year - treatment_num     # years since treatment
+    )
+  )
