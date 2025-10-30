@@ -4,7 +4,7 @@
 ## Date Edited:   10/7/2025
 ## Goal:         Clean data and create the working data set for analysis       
 ##  
-
+View(fmap_tax)
 library(dplyr)
 library(stringr)
 library(tidyr)

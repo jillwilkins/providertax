@@ -21,8 +21,8 @@ att_payermix <- att_gt(yname = "private_prop_discharges",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ beds,               # covariates (use ~1 if none)
-                est_method = "dr",# doubly-robust (optional)
+                xformla = ~ 1,               # covariates (use ~1 if none)
+                est_method = "ipw",# doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
                 )
@@ -69,8 +69,8 @@ att_urb_payermix <- att_gt(yname = "private_prop_discharges",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata %>% filter(rural == 0),
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ beds,               # covariates (use ~1 if none)
-                est_method = "dr",# doubly-robust (optional)
+                xformla = ~ 1,               # covariates (use ~1 if none)
+                est_method = "ipw",# doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
                 )
@@ -106,7 +106,7 @@ overall_urb_payermix_pretty <- overall_urb_payermix +
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
   guides(colour = "none", fill = "none") 
 print(overall_urb_payermix_pretty)
-ggsave("sumplots/events/overall_urb_payermix_pretty.png", plot = overall_urb_payermix_pretty, width = 10, height = 8, dpi = 300) 
+ggsave("sumplots/events/overall_urb_payermix_prettywbeds.png", plot = overall_urb_payermix_pretty, width = 10, height = 8, dpi = 300) 
 
 # rural 
 att_rural_payermix <- att_gt(yname = "private_prop_discharges",
@@ -115,8 +115,8 @@ att_rural_payermix <- att_gt(yname = "private_prop_discharges",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata %>% filter(rural == 1),
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ beds,               # covariates (use ~1 if none)
-                est_method = "dr",# doubly-robust (optional)
+                xformla = ~ 1,               # covariates (use ~1 if none)
+                est_method = "ipw",# doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
                 )
@@ -152,7 +152,7 @@ overall_rural_payermix_pretty <- overall_rural_payermix +
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
   guides(colour = "none", fill = "none") 
 print(overall_rural_payermix_pretty)
-ggsave("sumplots/events/overall_rural_payermix_pretty.png", plot = overall_rural_payermix_pretty, width = 10, height = 8, dpi = 300) 
+ggsave("sumplots/events/overall_rural_payermix_prettywbeds.png", plot = overall_rural_payermix_pretty, width = 10, height = 8, dpi = 300) 
 
 # Event Study for Medicaid Discharges 
 dis_did <- hospdata %>% 
@@ -166,8 +166,8 @@ att_mcaid_prop_dis <- att_gt(yname = "mcaid_prop_discharges",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata %>% filter(year != 2013),
                 control_group = "notyettreated",          # or "nevertreated"
-                xformla = ~ beds,                        # covariates (use ~1 if none)
-                est_method = "dr",                        # doubly-robust (optional)
+                xformla = ~ 1,                        # covariates (use ~1 if none)
+                est_method = "ipw",                        # doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
                 )
@@ -214,14 +214,13 @@ att_ucc_prop <- att_gt(yname = "ucc_prop",
                 gname = "treatment_num",                  # the column we created
                 data = hospdata,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ beds + rural,                # covariates (use ~1 if none)
-                est_method = "dr",            # doubly-robust (optional)
+                xformla = ~ 1,                # covariates (use ~1 if none)
+                est_method = "ipw",            # doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
                 )
 summary(att_ucc_prop, type = "group")
 ggdid(att_ucc_prop)
-
 
 overall_att_ucc_prop <- aggte(att_ucc_prop, type = "dynamic", na.rm = TRUE, min_e = -8, max_e = 8)
 summary(overall_att_ucc_prop)
@@ -250,8 +249,7 @@ overall_ucc_pretty <- overall_ucc_prop +
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
   guides(colour = "none", fill = "none") 
 print(overall_ucc_pretty)
-ggsave("sumplots/events/overall_ucc_pretty2.png", plot = overall_ucc_pretty, width = 10, height = 8, dpi = 300)
-
+ggsave("sumplots/events/overall_ucc_pretty.png", plot = overall_ucc_pretty, width = 10, height = 8, dpi = 300)
 
 
 # alchhos 
