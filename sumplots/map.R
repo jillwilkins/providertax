@@ -46,7 +46,7 @@ scale_fill_viridis(
   na.value = "grey90"
 )
 
-ggplot(map_merged, aes(long, lat, group = group, fill = first_tax_year)) +
+adopt_map <- ggplot(map_merged, aes(long, lat, group = group, fill = first_tax_year)) +
   geom_polygon(color = "white", size = 0.3) +
   coord_fixed(1.3) +
   scale_fill_gradient(
@@ -63,5 +63,5 @@ ggplot(map_merged, aes(long, lat, group = group, fill = first_tax_year)) +
     plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
     legend.position = "right"
   )
-
+ggsave("adopt_map.png", plot = adopt_map, width = 10, height = 6, dpi = 300)
 
