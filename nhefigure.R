@@ -134,7 +134,7 @@ mutate(category = case_when(
 ))
 
 hospshare <- hospshare %>%
-  arrange(desc(category)) %>%
+  arrange(desc(category)) %>%  # <-- change this line
   mutate(
     fraction = total / sum(total),
     ymax = cumsum(fraction),
@@ -143,13 +143,13 @@ hospshare <- hospshare %>%
     label_text = paste0(category, "\n", round(fraction * 100, 1), "%"),
     outside = category %in% c("Home Health", "Dental", "Nursing Care", "Other Professional Services", "Retail Prescription Drugs")
   )
- 
+
 # Set fill colors (Hospitals = bright blue, others = lighter gradient)
-n_non_hosp <- sum(hospshare$category != "Hospitals")
-non_hosp_colors <- scales::seq_gradient_pal("#c3cbd0", "#b0dcf2e7")(seq(0, 1, length.out = n_non_hosp))
+n_non_hosp <- sum(hospshare$category != "Hospitals", na.rm = TRUE)
+non_hosp_colors <- scales::seq_gradient_pal("#c6dce7", "#738e9ce7")(seq(0, 1, length.out = n_non_hosp))
 donut_colors <- hospshare %>%
   mutate(
-    fill_color = ifelse(category == "Hospitals", "#308bc8", non_hosp_colors),
+    fill_color = ifelse(category == "Hospitals", "#53baff", non_hosp_colors),
     # make Hospitals label larger
     label_size = ifelse(category == "Hospitals", 5, 3)
   )
@@ -185,6 +185,43 @@ donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5
   labs(title = "Share of Total Health Spending by Category") +
   theme(
     plot.title = element_text(hjust = 0.5, vjust = -10, size = 12, face = "plain"),
+    legend.position = "none"
+  )
+
+# create donut
+donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5, fill = fill_color)) +
+  geom_rect(color = "white") +
+  coord_polar(theta = "y") +
+  xlim(c(2, 4.5)) +  # extend x-axis to give space for outside labels
+  # Labels inside the donut (bold "Hospitals")
+  geom_text(
+    data = filter(donut_colors, !outside),
+    aes(
+      x = 3.25,
+      y = label_pos,
+      label = label_text,
+      fontface = ifelse(category == "Hospitals", "bold", "plain")
+    ),
+    size = 3,
+    color = "black"
+  ) +
+  # Labels outside the donut
+  geom_text(
+    data = filter(donut_colors, outside),
+    aes(x = 4.5, y = label_pos, label = label_text),
+    size = 2.5,
+    hjust = 0.5
+  ) +
+  # Lines connecting outside labels to slices
+  geom_segment(
+    data = filter(donut_colors, outside),
+    aes(x = 4, xend = 4.4, y = label_pos, yend = label_pos),
+    color = "#7f7f7f5b",
+    size = 0.5
+  ) +
+  theme_void() +
+  scale_fill_identity() +
+  theme(
     legend.position = "none"
   )
 
