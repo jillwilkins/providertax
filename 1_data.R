@@ -159,7 +159,8 @@ aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/inp
 aha <- aha %>%
   filter(SERV == 10) %>%
   filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
-  select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE)
+  select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE, 
+  OBBD, ALCHBD, PSYBD)
 
 
 # Fill MCRNUM with later years. Later, I can come back and manually add more. 

@@ -184,7 +184,7 @@ donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5
   scale_fill_identity() +
   labs(title = "Share of Total Health Spending by Category") +
   theme(
-    plot.title = element_text(hjust = 0.5, size = 12, face = "plain"),
+    plot.title = element_text(hjust = 0.5, vjust = -10, size = 12, face = "plain"),
     legend.position = "none"
   )
 

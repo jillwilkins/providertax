@@ -339,3 +339,49 @@ overall_psyemhos_pretty <- overall_psyemhos +
   guides(colour = "none", fill = "none") 
 print(overall_psyemhos_pretty)
 ggsave("sumplots/events/overall_psyemhos_pretty.png", plot = overall_psyemhos_pretty, width = 10, height = 8, dpi = 300)
+
+
+# total beds 
+att_beds <- att_gt(yname = "beds",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "treatment_num",                  # the column we created
+                data = hospdata,
+                control_group = "notyettreated",  # or "notyettreated"
+                xformla = ~ rural,                # covariates (use ~1 if none)
+                est_method = "ipw",            # doubly-robust (optional)
+                clustervars = "state",
+                allow_unbalanced = TRUE
+                )
+summary(att_beds, type = "group")
+ggdid(att_beds)
+
+overall_att_beds <- aggte(att_beds, type = "dynamic", na.rm = TRUE, min_e = -8, max_e = 8)
+summary(overall_att_beds)
+overall_beds <- ggdid(overall_att_beds)
+overall_beds_pretty <- overall_beds +
+  ggtitle(" ") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "Share of Total Beds"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 16,
+      hjust = 0.5,
+      margin = margin(b = 10)
+    ),
+    axis.title.x = element_text(size = 13, margin = margin(t = 10)),
+    axis.title.y = element_text(size = 13, margin = margin(r = 10)),
+    axis.text = element_text(size = 11, color = "black"),
+    panel.grid.major = element_line(color = "grey85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "white", color = NA)
+  ) +
+  geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
+  guides(colour = "none", fill = "none") 
+print(overall_beds_pretty)
+ggsave("sumplots/events/overall_beds_pretty.png", plot = overall_beds_pretty, width = 10, height = 8, dpi = 300)
+

@@ -165,29 +165,22 @@ att_ccr <- att_gt(yname = "cost_to_charge",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "treatment_num",                  # the column we created
-                data = hospdata_early,
+                data = hospdata %>% filter(cost_to_charge <= 1.2),
                 control_group = "notyettreated",  # or "notyettreated"
                 xformla = ~ beds,                # covariates (use ~1 if none)
                 est_method = "dr",    
                 clustervars = "state",        # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
-                # cluster at the hospital level? 
+
 summary(att_ccr)
 ggdid(att_ccr)
 
-overall_att_ccr <- aggte(att_ccr, type = "dynamic", na.rm = TRUE)
+overall_att_ccr <- aggte(att_ccr, type = "dynamic", na.rm = TRUE, min_e = -8, max_e = 8)
 summary(overall_att_ccr)
 
 # overall event study and title 
 overall_ccr <- ggdid(overall_att_ccr)
-overall_ccr <- overall_ccr + 
-  ggtitle("Event Study: Effect of Implementing Tax on Cost to Charge Ratio") +
-  labs( 
-    x = "Years Relative to Treatment",
-    y = "ATT (Average Treatment Effect on the Treated)"
-  ) + theme_minimal()
-ggsave("sumplots/events/overall_ccr.png", plot = overall_ccr, width = 8, height = 8, dpi = 300) 
 
 # cost per charge pretty 
 overall_ccr_pretty <- overall_ccr +
@@ -214,6 +207,8 @@ overall_ccr_pretty <- overall_ccr +
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4)
 print(overall_ccr_pretty)
 ggsave("sumplots/events/overall_ccr_pretty.png", plot = overall_ccr_pretty, width = 10, height = 8, dpi = 300)
+
+summary(hospdata$cost_to_charge)
 
 # Event study for cost to discharge 
 att_cpd <- att_gt(yname = "cost_per_discharge",

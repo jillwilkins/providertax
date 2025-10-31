@@ -453,6 +453,13 @@ dens_taxyr <- ggplot(filter(hospdata, treatment_group == "treated", year < 2020)
   theme_minimal()
 print(dens_taxyr)
 
+dens_ccr <- ggplot(filter(hospdata, treatment_group == "not yet by 2020", year < 2020, cost_to_charge <= 2), aes(x = cost_to_charge)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Cost to Charge Ratio",
+       x = "Cost to Charge Ratio", y = "Density") +
+  theme_minimal()
+print(dens_ccr)
+
 # hist version 
 dens_taxyr_hist <- ggplot(
   filter(hospdata, treatment_group == "treated", year < 2020), 
@@ -534,6 +541,7 @@ group_psyemhos_2011 <- ggplot(
   scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal()
 print(group_psyemhos_2011)
+ggsave("sumplots/group_psyemhos_2011.png", plot = group_psyemhos_2011, width = 8, height = 8, dpi = 300)
 
 # prob of having alchhosp 
 group_alchhos <- ggplot(
@@ -571,3 +579,33 @@ group_alchhos_2011 <- ggplot(
   scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal()
 print(group_alchhos_2011)
+ggsave("sumplots/group_alchhos_2011.png", plot = group_alchhos_2011, width = 8, height = 8, dpi = 300)
+
+
+# bar style 
+# Summarize shares by year, service, and treatment group
+bar_data <- hospdata %>%
+  filter(year %in% c(2005, 2010, 2015, 2019)) %>%  # pick key years
+  group_by(year, treatment_group) %>%
+  summarise(
+    alc_drug_share = mean(alchhos == 1, na.rm = TRUE),
+    psyem_share = mean(psyemhos == 1, na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(alc_drug_share, psyem_share),
+               names_to = "service", values_to = "share")
+
+# Plot
+ggplot(bar_data, aes(x = factor(year), y = share, fill = treatment_group)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~ service, ncol = 1) +  # separate panels for each service
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    x = "Year",
+    y = "Share of Hospitals",
+    fill = "Treatment Group",
+    title = "Share of Hospitals Offering ALC/Drug or PSYEM Services by Group"
+  ) +
+  theme_minimal(base_size = 12)
+
+
+unique(hospdata$state[hospdata$firsttax == 2019])
