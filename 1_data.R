@@ -4,7 +4,7 @@
 ## Date Edited:   10/7/2025
 ## Goal:         Clean data and create the working data set for analysis       
 ##  
-View(fmap_tax)
+
 library(dplyr)
 library(stringr)
 library(tidyr)
@@ -148,7 +148,7 @@ hcris_tax <- hcris %>%
   )
 class(hcris_tax$provider_number)
 hcris_tax <- hcris_tax %>%
-  filter(year >= 2005)
+  filter(year >= 2004)
 
 # note: had to do alot of work here 10/13 to make sure i had serv & then 10/16 with na mcrnum pre 2008. 
 # load in AHA data 
@@ -159,8 +159,8 @@ aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/inp
 aha <- aha %>%
   filter(SERV == 10) %>%
   filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
-  select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE, 
-  OBBD, ALCHBD, PSYBD)
+  select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, TRAUMCER, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, ORTOHOS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE, OBHOS,
+  OBBD, ALCHBD, PSYBD, HOSPBD, CICBD)
 
 
 # Fill MCRNUM with later years. Later, I can come back and manually add more. 
@@ -289,20 +289,7 @@ unique(hospdata$state[hospdata$never == 1])
 unique(hospdata$state[hospdata$treated == 1])
 unique(hospdata$state[hospdata$treated_by_2020 == 1])
 
-
-# add dependent variable calculations 
-hospdata <- hospdata %>%
-  mutate(
-    ucc_prop = tot_uncomp_care_charges / tot_charges, 
-    cost_per_discharge = (cost_to_charge * tot_charges) / tot_discharges, 
-    mcaid_ccr = mcaid_cost / mcaid_charges,
-    mcaid_prop = mcaid_charges / tot_charges, 
-    mcaid_prop_discharges = mcaid_discharges / tot_discharges, 
-    mcare_prop_discharges = mcare_discharges / tot_discharges, 
-    mm_prop_discharges = (mcaid_discharges + mcare_discharges)/ tot_discharges, 
-    private_prop_discharges = 1 - mm_prop_discharges)
-
-
+# treatment groups variable 
 # Treatment group for plots 
 hospdata <- hospdata %>%
   mutate(
@@ -328,6 +315,26 @@ hospdata <- hospdata %>%
   )
 
 hospdata <- hospdata %>%
+  mutate(rural = if_else(cbsatype == "Rural", 1, 0))
+
+# add dependent variable calculations 
+hospdata <- hospdata %>%
+  mutate(
+    ucc_prop = tot_uncomp_care_charges / tot_charges, 
+    cost_per_discharge = (cost_to_charge * tot_charges) / tot_discharges, 
+    mcaid_ccr = mcaid_cost / mcaid_charges,
+    mcaid_prop = mcaid_charges / tot_charges, 
+    mcaid_prop_discharges = mcaid_discharges / tot_discharges, 
+    mcare_prop_discharges = mcare_discharges / tot_discharges, 
+    mm_prop_discharges = (mcaid_discharges + mcare_discharges)/ tot_discharges, 
+    private_prop_discharges = 1 - mm_prop_discharges, 
+    obbed_prop = obbd / beds,
+    psychbed_prop = psybd / beds,
+    alcbed_prop = alchbd / beds)
+
+
+# extra stuff dont run today (11/4)
+hospdata <- hospdata %>%
   mutate(
     notyet2020 = case_when(
       is.na(firsttax) ~ 1,                 # missing firsttax
@@ -339,7 +346,6 @@ hospdata <- hospdata %>%
 
 unique(hospdata$cbsatype)
 
-
 hospdata <- hospdata %>%
   mutate(tmnt20plus = case_when(
     firsttax == 2004 ~ NA_real_,   # Assign NA if firsttax == 2004
@@ -347,8 +353,6 @@ hospdata <- hospdata %>%
     TRUE ~ firsttax                # Otherwise, equal to the firsttax value
   ))
 
-hospdata <- hospdata %>%
-  mutate(rural = if_else(cbsatype == "Rural", 1, 0))
 
 # create event time variable 
 hospdata <- hospdata %>%
@@ -358,3 +362,21 @@ hospdata <- hospdata %>%
       TRUE ~ year - treatment_num     # years since treatment
     )
   )
+
+# NEW 
+
+hospdata <- hospdata %>%
+  mutate(
+    treatment_num2 = case_when(
+      always == 1 ~ NA_real_,         # always-treated units are excluded
+      treated == 1 ~ firsttax,        # for treated states, use first tax year
+      never == 1 ~ 0                  # never-treated get 0
+    )
+  )
+
+hospdata <- hospdata %>%
+  mutate(
+    medicaid_expansion = ifelse(year >= expyear, 1, 0)
+  )
+
+
