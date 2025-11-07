@@ -425,14 +425,21 @@ print(group_payermix_emory)
 
 # ACROSS AND WITHIN VARIATION 
 # DENSITY PLOTS
-dens_mcaid_dis <- ggplot(filter(hospdata, treatment_group == "treated", year < 2020), aes(x = mcaid_prop_discharges)) +
+dens_npr <- ggplot(filter(hospdata_clean, treatment_group == "treated", year < 2020, net_pat_rev > 0), aes(x = net_pat_rev)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Net Patient Revenue",
+       x = "Net Patient Revenue", y = "Density") +
+  theme_minimal()
+print(dens_npr)
+
+dens_mcaid_dis <- ggplot(filter(hospdata_clean, treatment_group == "treated", year < 2020), aes(x = mcaid_prop_discharges)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   labs(title = "Density of Medicaid Proportion of Discharges",
        x = "Medicaid Proportion of Discharges", y = "Density") +
   theme_minimal()
 print(dens_mcaid_dis)
 
-dens_casemix <- ggplot(filter(hospdata, treatment_group == "not yet by 2020", year < 2020), aes(x = private_prop_discharges)) +
+dens_casemix <- ggplot(filter(hospdata_clean, treatment_group == "not yet by 2020", year < 2020), aes(x = private_prop_discharges)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   labs(title = "Density of Non Public Proportion of Discharges",
        x = "Non Public Proportion of Discharges", y = "Density") +
@@ -459,6 +466,13 @@ dens_ccr <- ggplot(filter(hospdata, treatment_group == "not yet by 2020", year <
        x = "Cost to Charge Ratio", y = "Density") +
   theme_minimal()
 print(dens_ccr)
+
+dens_beds <- ggplot(filter(hospdata, treatment_group == "not yet by 2020", year < 2020), aes(x = beds)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of Number of Beds",
+       x = "Number of Beds", y = "Density") +
+  theme_minimal()
+print(dens_beds)
 
 # hist version 
 dens_taxyr_hist <- ggplot(
@@ -560,7 +574,7 @@ group_alchhos <- ggplot(
 print(group_alchhos)
 
 group_alchhos_2011 <- ggplot(
-  hospdata_st %>%
+  hospdata %>%
     filter(
       !is.na(alchhos),
       year < 2020,
@@ -580,7 +594,6 @@ group_alchhos_2011 <- ggplot(
   theme_minimal()
 print(group_alchhos_2011)
 ggsave("sumplots/group_alchhos_2011.png", plot = group_alchhos_2011, width = 8, height = 8, dpi = 300)
-
 
 # bar style 
 # Summarize shares by year, service, and treatment group
@@ -609,3 +622,40 @@ ggplot(bar_data, aes(x = factor(year), y = share, fill = treatment_group)) +
 
 
 unique(hospdata$state[hospdata$firsttax == 2019])
+
+# number of ob beds
+group_ob_beds <- ggplot(
+  filter(hospdata, !is.na(obbd), year < 2020, treatment_group != "always"),
+  aes(x = year, y = obbd / hospbd, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Number of OB Beds",
+    color = "Group",
+    title = "Average Number of OB Beds Over Time by Group"
+  ) +
+  theme_minimal()
+print(group_ob_beds)
+
+group_ob_2011 <- ggplot(
+  hospdata %>%
+    filter(
+      !is.na(obbd),
+      year < 2020,
+      (treatment_num == 2011 | treatment_group == "not yet by 2020")
+    ),
+  aes(x = year, y = obbd / hospbd, color = treatment_group, group = treatment_group)
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2) +
+  stat_summary(fun = mean, geom = "point", size = 2) +
+  labs(
+    x = "Year",
+    y = "Number of OB Beds",
+    color = "Group",
+    title = "Average Number of OB Beds Over Time"
+  ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
+  theme_minimal()
+print(group_ob_2011)

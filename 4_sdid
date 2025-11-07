@@ -7,6 +7,7 @@
 
 library(fixest)
 library(did)
+library(ggplot2)
 
 # make mcrnum numeric
 hospdata <- hospdata %>% mutate(mcrnum = as.numeric(mcrnum))
@@ -165,10 +166,10 @@ att_ccr <- att_gt(yname = "cost_to_charge",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "treatment_num",                  # the column we created
-                data = hospdata %>% filter(cost_to_charge <= 1.2),
+                data = hospdata %>% filter(cost_to_charge <= 1.5, cost_to_charge > 0, beds > 0),
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ beds,                # covariates (use ~1 if none)
-                est_method = "dr",    
+                xformla = ~ 1,                # covariates (use ~1 if none)
+                est_method = "ipw",    
                 clustervars = "state",        # doubly-robust (optional)
                 allow_unbalanced = TRUE
                 )
@@ -219,6 +220,7 @@ att_cpd <- att_gt(yname = "cost_per_discharge",
                 control_group = "notyettreated",  # or "notyettreated"
                 xformla = ~ 1,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
+                clustervars = "state",
                 allow_unbalanced = TRUE
                 )
 
@@ -235,7 +237,6 @@ overall_cpd <- overall_cpd +
   ) + theme_minimal()
 ggsave("sumplots/events/overall_cpd.png", plot = overall_cpd, width = 8, height = 8, dpi = 300) 
 
-hospdata_early <- hospdata %>% filter(year < 2020)
 # Event study for casemix 
 att_ppd <- att_gt(yname = "private_prop_discharges",
                 tname = "year",

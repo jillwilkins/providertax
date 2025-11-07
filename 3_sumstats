@@ -133,7 +133,7 @@ setdiff(names(var_names), names(hospdata_clean))
 
 # treated before 2020
 treated_hos2020 <- hospdata %>%
-  filter(treatment_group == "treated", yes_tax == 1) %>%
+  filter(treatment_group == "treated", yes_tax == 1, year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),
                    list(mean = ~mean(.x, na.rm = TRUE)),
@@ -153,9 +153,10 @@ treated_hos2020 <- hospdata %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treatment_group == "treated" & hospdata$yes_tax == 1])
-    )))
-View(treated_hos2020)    
+      est = as.character(n_distinct(hospdata$mcrnum[hospdata$treatment_group == "treated" & hospdata$yes_tax == 1]))
+    )
+  )
+View(treated_hos2020)
 
 # always hospitals only 
 always_hos <- hospdata %>%
@@ -208,9 +209,9 @@ never_hos <- hospdata %>%
       est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$never == 1]))
     )
   )
-
+unique(hospdata_clean$treatment_group)
 # not treated by 2020 
-notby2020 <- hospdata_st %>%
+notby2020 <- hospdata_clean %>%
   filter(treatment_group == "not yet by 2020", year < 2020) %>%
   group_by(mcrnum) %>%  # group by hospital
   summarise(across(names(var_names),    
@@ -231,10 +232,11 @@ notby2020 <- hospdata_st %>%
   bind_rows(
     tibble(
       variable = "Number of Hospitals",
-      est = as.character(n_distinct(hospdata_st$mcrnum[hospdata_st$treatment_group == "not yet by 2020"]))
+      est = as.character(n_distinct(hospdata_clean$mcrnum[hospdata_clean$treatment_group == "not yet by 2020"]))
     )
   )
 View(notby2020)
+
 # Combine all 
 all_groups <- treated_hos %>%
     left_join(treated_hos2020, by = "variable") %>%
@@ -375,9 +377,144 @@ c(mean = mean(subset_data, na.rm = TRUE), sd = sd(subset_data, na.rm = TRUE))
 
 # mean of alchhos among treated and not yet treated 
 hospdata %>%
-  filter(treatment_group == "treated", !is.na(psyemhos), year < 2020) %>%
-  summarise(sd_psyemhos = sd(psyemhos, na.rm = TRUE))
+  filter(treatment_group == "treated", yes_tax == 1, !is.na(alchbd), year < 2020) %>%
+  summarise(mean_alchbd = mean(alchbd, na.rm = TRUE))
 
 hospdata %>%
-  filter(treatment_group == "not yet by 2020", !is.na(psyemhos), year < 2020) %>%
-  summarise(sd_psyemhos = sd(psyemhos, na.rm = TRUE))
+  filter(treatment_group == "not yet by 2020", !is.na(alchbd), year < 2020) %>%
+  summarise(mean_alchbd = mean(alchbd, na.rm = TRUE))
+
+# standard deviations 
+hospdata %>%
+  filter(treatment_group == "treated", yes_tax == 1, !is.na(alchhos), year < 2020) %>%
+  summarise(sd_alchhos = sd(alchhos, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "not yet by 2020", !is.na(alchhos), year < 2020) %>%
+  summarise(sd_alchhos = sd(alchhos, na.rm = TRUE))
+
+library(dplyr)
+
+# Collapse to hospital-level averages first
+hosp_level <- hospdata %>%
+  filter(year < 2020, !is.na(alchbd), !is.na(alchhos)) %>%
+  group_by(mcrnum, treatment_group, yes_tax) %>%
+  summarise(
+    mean_alchbd = mean(alchbd, na.rm = TRUE),
+    mean_alchhos = mean(alchhos, na.rm = TRUE),
+    sd_alchbd = sd(alchbd, na.rm = TRUE),
+    sd_alchhos = sd(alchhos, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Summarize by treatment group
+summary_stats <- hosp_level %>%
+  filter(treatment_group == "treated" & yes_tax| treatment_group == "not yet by 2020") %>%
+  group_by(treatment_group) %>%
+  summarise(
+    mean_alchbd = mean(mean_alchbd, na.rm = TRUE),
+    sd_alchbd = sd(sd_alchbd, na.rm = TRUE),
+    mean_alchhos = mean(mean_alchhos, na.rm = TRUE),
+    sd_alchhos = sd(sd_alchhos, na.rm = TRUE),
+    n_hospitals = n()
+  )
+
+summary_stats
+
+
+hospdata %>%
+  filter(treatment_group == "treated", yes_tax == 1, !is.na(psybd), year < 2020) %>%
+  summarise(mean_psyembd = mean(psybd, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "not yet by 2020", !is.na(psybd), year < 2020) %>%
+  summarise(mean_psybd = mean(psybd, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "treated", yes_tax == 1, !is.na(obbd), year < 2020) %>%
+  summarise(mean_obbd = mean(obbd_share, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "not yet by 2020", !is.na(obbd), year < 2020) %>%
+  summarise(mean_obbd = mean(obbd_share, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "treated", yes_tax == 1, !is.na(beds), beds > 0, year < 2020) %>%
+  summarise(mean_beds = mean(beds, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "not yet by 2020", !is.na(beds), beds > 0, year < 2020) %>%
+  summarise(mean_beds = mean(beds, na.rm = TRUE))
+
+# means of rural among treated and not yet treated at hospital level 
+hospdata %>%
+  filter(treatment_group == "treated", yes_tax == 1, !is.na(rural), year < 2020) %>%
+  distinct(mcrnum, rural) %>%
+  summarise(mean_rural = mean(rural, na.rm = TRUE))
+
+hospdata %>%
+  filter(treatment_group == "not yet by 2020", !is.na(rural), year < 2020) %>%
+  distinct(mcrnum, rural) %>%
+  summarise(mean_rural = mean(rural, na.rm = TRUE))
+
+
+# TRY AGAIN 
+hospdata_clean %>%
+  filter(
+    treatment_group == "not treated by 2020" |
+      (treatment_group == "treated" & year < firsttax), 
+    !is.na(beds)
+  ) %>%
+  summarise(mean_y = mean(rural, na.rm = TRUE), 
+            sd_y = sd(rural, na.rm = TRUE))
+
+hospdata_clean %>%
+  filter(
+    treatment_group == "not treated by 2020" |
+      (treatment_group == "treated" & year < firsttax), 
+  ) %>%
+  summarise(
+    n = n(),
+    mean_y = mean(beds, na.rm = TRUE), 
+    sd_y = sd(beds, na.rm = TRUE)
+  )
+
+library(dplyr)
+
+# This is what i want to automate after 11/5 
+# CONTROL GROUP SUM 
+hospdata_clean %>%
+  # Step 0: filter for control/pre-treatment group
+  filter(
+    treatment_group == "not treated by 2020" |
+      (treatment_group == "treated" & year < firsttax), 
+    !is.na(beds), 
+  ) %>%
+  # Step 1: compute hospital-level mean
+  group_by(mcrnum) %>%
+  summarise(hosp_mean_y = mean(rural, na.rm = TRUE)) %>%
+  ungroup() %>%
+  # Step 2: compute mean and SD across hospitals
+  summarise(
+    mean_y = mean(hosp_mean_y, na.rm = TRUE),
+    sd_y = sd(hosp_mean_y, na.rm = TRUE),
+    n_hospitals = n()
+  )
+
+# TREATED GROUP SUM 
+hospdata_clean %>%
+  # Step 0: filter for control/pre-treatment group
+  filter(
+    treatment_group == "treated" & yes_tax == 1, 
+    !is.na(beds)
+  ) %>%
+  # Step 1: compute hospital-level mean
+  group_by(mcrnum) %>%
+  summarise(hosp_mean_y = mean(private_prop_discharges, na.rm = TRUE)) %>%
+  ungroup() %>%
+  # Step 2: compute mean and SD across hospitals
+  summarise(
+    mean_y = mean(hosp_mean_y, na.rm = TRUE),
+    sd_y = sd(hosp_mean_y, na.rm = TRUE),
+    n_hospitals = n()
+  )

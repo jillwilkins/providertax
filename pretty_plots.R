@@ -93,7 +93,7 @@ hospdata %>%
 # 2011 Examples 
 # Medicaid Discharges Proportion 
 group_mcaid_dis_2011 <- ggplot(
-  hospdata_st %>%
+  hospdata_clean %>%
     filter(
       !is.na(mcaid_prop_discharges),
       year < 2020,
@@ -123,12 +123,12 @@ group_mcaid_dis_2011 <- ggplot(
   )
 
 print(group_mcaid_dis_2011)
-ggsave("sumplots/plots2011/mcaid_dis.png", plot = group_mcaid_dis_2011, width = 10, height = 8, dpi = 300)
+ggsave("sumplots/plots2011/mcaid_disclean.png", plot = group_mcaid_dis_2011, width = 10, height = 8, dpi = 300)
 
 
 # Commercial Proportion 
 group_payermix_2011 <- ggplot(
-  hospdata %>%
+  hospdata_clean %>%
     filter(
       !is.na(private_prop_discharges),
       year < 2020,
@@ -158,11 +158,11 @@ group_payermix_2011 <- ggplot(
   )
 
 print(group_payermix_2011)
-ggsave("sumplots/plots2011/payermix.png", plot = group_payermix_2011, width = 10, height = 8, dpi = 300)
+ggsave("sumplots/plots2011/payermixclean.png", plot = group_payermix_2011, width = 10, height = 8, dpi = 300)
 
 # Uncompensated Care (2012)
 group_ucc_2012 <- ggplot(
-  hospdata %>%
+  hospdata_clean %>%
     filter(
       !is.na(ucc_prop),
       year < 2020,
@@ -192,7 +192,7 @@ group_ucc_2012 <- ggplot(
   )
 
 print(group_ucc_2012)
-ggsave("sumplots/plots2011/ucc.png", plot = group_ucc_2012, width = 10, height = 8, dpi = 300)
+ggsave("sumplots/plots2011/uccclean.png", plot = group_ucc_2012, width = 10, height = 8, dpi = 300)
 
 
 # Uncompensated Care Proportion (Full)

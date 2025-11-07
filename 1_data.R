@@ -154,14 +154,17 @@ hcris_tax <- hcris_tax %>%
 # load in AHA data 
 aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
 
+
 # note that i prefer hcris to aha for the discharges and charges 
 # limit aha to SERV = 10 (general medical and surgical hospitals), no NA in MCRNUM, no territories, 
 aha <- aha %>%
   filter(SERV == 10) %>%
   filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
   select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, TRAUMCER, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, ORTOHOS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE, OBHOS,
-  OBBD, ALCHBD, PSYBD, HOSPBD, CICBD)
+  OBBD, ALCHBD, PSYBD, HOSPBD, CICBD, CNTRL, MAPP18)
 
+aha <- aha %>%
+  filter(CNTRL %in% c(21, 23, 31, 32, 33), MAPP18 == 2)
 
 # Fill MCRNUM with later years. Later, I can come back and manually add more. 
 aha_filled <- aha %>%
@@ -196,7 +199,7 @@ hcris_tax %>% filter(provider_number == 30001)
 # join aha and hcris_tax
 hospdata <- aha %>%
   left_join(hcris_tax, by = c("MCRNUM" = "provider_number", "YEAR" = "year"))
-
+View(hospdata)
 
 # remove providers with NA in key variables
 cols_to_check <- c(
