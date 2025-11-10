@@ -1,3 +1,10 @@
+# Meta --------------------------------------------------------------------
+## Author:        Jill Wilkins
+## Date Created:  11/5/2025
+## Date Edited:   11/7/2025
+## Goal:          Load in Data of county level median income over time        
+## 
+
 install.packages("censusapi")
 library(censusapi)
 
