@@ -1,7 +1,7 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
 ## Date Created:  9/22/2025
-## Date Edited:   10/7/2025
+## Date Edited:   11/13/2025
 ## Goal:         Clean data and create the working data set for analysis       
 ##  
 
@@ -43,14 +43,17 @@ hcris <- hcris %>%
 # load in tax data
 tax <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/statetaxadopt_kff.csv", skip = 2)
 
-# remove footnotes column and notes in extra rows 
-tax <- tax %>% select(-Footnotes)
-tax <- tax[2:52, ]
-
-# convert full state names (statename) to abbreviations (state)
-tax <- tax %>% rename(statename = Location)
-tax$state <- state.abb[match(tax$statename, state.name)]
-tax$state[tax$statename == "District of Columbia"] <- "DC"
+# remove footnotes column, notes in extra rows; convert the state names to abbreviations
+tax <- tax %>%
+  select(-Footnotes) %>%
+  slice(2:52) %>%
+  rename(statename = Location) %>%
+  mutate(
+    state = ifelse(
+      statename == "District of Columbia", "DC",
+      state.abb[match(statename, state.name)]
+    )
+  )
 
 # change column names 
 tax <- tax %>%
@@ -69,11 +72,18 @@ tax <- tax %>%
 
 #load in FMAP data 
 fmap <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/fmaps_kff.csv", skip = 2)
-fmap <- fmap %>% select(-Footnotes)
-fmap <- fmap[2:52, ]
-fmap <- fmap %>% rename(statename = Location)
-fmap$state <- state.abb[match(fmap$statename, state.name)]
-fmap$state[fmap$statename == "District of Columbia"] <- "DC"
+
+# clean and rename states 
+fmap <- fmap %>%
+  select(-footnotes) %>%
+  slice(2:52) %>%
+  rename(statename = Location) %>%
+  mutate(
+    state = ifelse(
+      statename == "District of Columbia", "DC",
+      state.abb[match(statename, state.name)]
+    )
+  )
 
 # change column names 
 fmap <- fmap %>%
@@ -131,7 +141,7 @@ expansion <- expansion %>%
       TRUE ~ year(mdy(expdate))                   # extract the year (month/day/year)
     )) %>% select(state, expdate, expyear)
 
-# join tax and fmap
+# join data
 fmap_tax <- fmap %>%
   left_join(tax %>% select(state, firsttax),
     by = c("state" = "state")) %>%
@@ -140,13 +150,17 @@ fmap_tax <- fmap %>%
   left_join(expansion, 
     by = c("state" = "state"))
 
-# join fmap_tax into hcris
+# join fmap_tax and hcris
 hcris_tax <- hcris %>%
   left_join(
     fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax, expyear),
     by = c("state" = "state", "year" = "year")
   )
+
+# verify provider_number class
 class(hcris_tax$provider_number)
+
+# drop years before 2004 
 hcris_tax <- hcris_tax %>%
   filter(year >= 2004)
 
@@ -155,18 +169,15 @@ hcris_tax <- hcris_tax %>%
 aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
 
 
-# note that i prefer hcris to aha for the discharges and charges 
-# limit aha to SERV = 10 (general medical and surgical hospitals), no NA in MCRNUM, no territories, 
+# limit aha to SERV = 10 (general medical and surgical hospitals), no territories, no safety net hospitals, no public hospitals  
 aha <- aha %>%
   filter(SERV == 10) %>%
   filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
+  filter(CNTRL %in% c(21, 23, 31, 32, 33), MAPP18 == 2) %>%
   select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, TRAUMCER, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, ORTOHOS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE, OBHOS,
   OBBD, ALCHBD, PSYBD, HOSPBD, CICBD, CNTRL, MAPP18)
 
-aha <- aha %>%
-  filter(CNTRL %in% c(21, 23, 31, 32, 33), MAPP18 == 2)
-
-# Fill MCRNUM with later years. Later, I can come back and manually add more. 
+# If MCRNUM is missing for one hospital-year, fill it with the MCRNUM from the same hospital, different year.  
 aha_filled <- aha %>%
   group_by(MNAME) %>%  # group hospitals by name
   mutate(
@@ -183,58 +194,31 @@ aha_filled %>%
   filter(is.na(MCRNUM)) %>%
   distinct(MNAME)
 
-#For now Oct 16, proceed by dropping what is left unfilled. 
+#For now Oct 16, proceed by dropping what is left with no MCRNUM 
 aha_orig <- aha
 aha <- aha_filled  
 
-# Convert mcrnum to a number
+# Convert mcrnum to integer 
 aha <- aha %>%
   mutate(MCRNUM = as.integer(MCRNUM))
 
-#verify working arizona
+# verify working arizona
 aha %>% filter(MCRNUM == 30001)
 hcris_tax %>% filter(provider_number == 30001)
 
-# mcrnum and provider_number now matching
-# join aha and hcris_tax
+#join aha and hcris_tax
 hospdata <- aha %>%
   left_join(hcris_tax, by = c("MCRNUM" = "provider_number", "YEAR" = "year"))
-View(hospdata)
-
-# remove providers with NA in key variables
-cols_to_check <- c(
-  "TRAUMHOS", "TRAUMSYS", "PSYEMHOS", "PSYEMSYS", "ALCHHOS", "ALCHSYS", "beds",
-  "tot_charges", "net_pat_rev", "tot_discounts", "tot_operating_exp",
-  "ip_charges", "icu_charges", "ancillary_charges", "tot_discharges",
-  "mcare_discharges", "mcaid_discharges", "tot_mcare_payment",
-  "secondary_mcare_payment", "street", "city", "state", "zip", "county",
-  "name", "uncomp_care", "cost_to_charge", "new_cap_ass", "cash",
-  "net_mcaid_rev", "mcaid_charges", "mcaid_cost", "hvbp_payment",
-  "hrrp_payment", "tot_uncomp_care_charges", "tot_uncomp_care_partial_pmts",
-  "bad_debt", "get_dsh_supp", "net_med_all_dsh", "dsh_from_mcaid",
-  "rev_cost_mcaid"
-)
-
-providers_to_drop <- hospdata %>%
-  group_by(MCRNUM) %>%
-  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
-  filter(all_na) %>%
-  select(MCRNUM)
-View(providers_to_drop)
-hospdata <- hospdata %>%
-  anti_join(providers_to_drop, by = "MCRNUM")
-
-# check that it worked
-hospdata %>%
-  group_by(MCRNUM) %>%
-  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
-  summarise(n_providers = sum(all_na))
-
-# make variables lowercase 
+  
+#make variables lowercase 
 colnames(hospdata) <- tolower(colnames(hospdata))
 
+# rural specification
+hospdata <- hospdata %>%
+  mutate(rural = if_else(cbsatype == "Rural", 1, 0))
+
 # GROUPS: 
-# yes_tax: observation with tax in that year (1 if year >= firsttax, 0 otherwise)
+# yes_tax: hospital with tax in that year (1 if year >= firsttax, 0 otherwise)
 hospdata <- hospdata %>%
   mutate(yes_tax = ifelse(!is.na(firsttax) & year >= firsttax, 1, 0))
 
@@ -242,7 +226,6 @@ hospdata <- hospdata %>%
 # always states: firsttax <= 2005
 always_state <- tax %>% filter(firsttax < 2005) %>% pull(state)
 never_state <- tax %>% filter(firsttax == "never") %>% pull(state)
-
 
 hospdata <- hospdata %>%
   mutate(
@@ -265,6 +248,7 @@ hospdata <- hospdata %>%
     )
   )
 
+# verify number of states in each group 
 hospdata %>%
   group_by(mcrnum, state) %>%
   summarise(
@@ -279,12 +263,12 @@ hospdata %>%
     treated_states = n_distinct(state[treated == 1])
   )
 
-
+# for my purposes, created treatment by 2020
 hospdata <- hospdata %>%
   mutate(
     treated_by_2020 = case_when(
       !is.na(firsttax) & firsttax >= 2005 & firsttax <= 2019 ~ 1,
-      TRUE ~ 0  # includes firsttax < 2005, > 2019, or NA
+      TRUE ~ 0  
     ))
 
 unique(hospdata$state[hospdata$always == 1])
@@ -293,7 +277,6 @@ unique(hospdata$state[hospdata$treated == 1])
 unique(hospdata$state[hospdata$treated_by_2020 == 1])
 
 # treatment groups variable 
-# Treatment group for plots 
 hospdata <- hospdata %>%
   mutate(
     treatment_group = case_when(
@@ -317,10 +300,7 @@ hospdata <- hospdata %>%
     )
   )
 
-hospdata <- hospdata %>%
-  mutate(rural = if_else(cbsatype == "Rural", 1, 0))
-
-# add dependent variable calculations 
+# add outcome variable calculations 
 hospdata <- hospdata %>%
   mutate(
     ucc_prop = tot_uncomp_care_charges / tot_charges, 
@@ -331,9 +311,44 @@ hospdata <- hospdata %>%
     mcare_prop_discharges = mcare_discharges / tot_discharges, 
     mm_prop_discharges = (mcaid_discharges + mcare_discharges)/ tot_discharges, 
     private_prop_discharges = 1 - mm_prop_discharges, 
-    obbed_prop = obbd / beds,
+    obbd_prop = obbd / beds,
     psychbed_prop = psybd / beds,
     alcbed_prop = alchbd / beds)
+
+# save working data
+write.csv(hospdata, "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hospdata.csv", row.names = FALSE)
+
+# Not sure i want to keep this section of cleaning? 
+# remove providers with NA in all key variables
+cols_to_check <- c(
+  "TRAUMHOS", "TRAUMSYS", "PSYEMHOS", "PSYEMSYS", "ALCHHOS", "ALCHSYS", "beds",
+  "tot_charges", "net_pat_rev", "tot_discounts", "tot_operating_exp",
+  "ip_charges", "icu_charges", "ancillary_charges", "tot_discharges",
+  "mcare_discharges", "mcaid_discharges", "tot_mcare_payment",
+  "secondary_mcare_payment", "street", "city", "state", "zip", "county",
+  "name", "uncomp_care", "cost_to_charge", "new_cap_ass", "cash",
+  "net_mcaid_rev", "mcaid_charges", "mcaid_cost", "hvbp_payment",
+  "hrrp_payment", "tot_uncomp_care_charges", "tot_uncomp_care_partial_pmts",
+  "bad_debt", "get_dsh_supp", "net_med_all_dsh", "dsh_from_mcaid",
+  "rev_cost_mcaid"
+)
+
+providers_to_drop <- hospdata %>%
+  group_by(MCRNUM) %>%
+  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
+  filter(all_na) %>%
+  select(MCRNUM)
+View(providers_to_drop)
+
+hospdata <- hospdata %>%
+  anti_join(providers_to_drop, by = "MCRNUM")
+
+# check that it worked
+hospdata %>%
+  group_by(MCRNUM) %>%
+  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
+  summarise(n_providers = sum(all_na))
+# end unsure section 
 
 
 # extra stuff dont run today (11/4)

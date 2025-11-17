@@ -1,7 +1,7 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
 ## Date Created:  10/2/2025
-## Date Edited:   10/8/2025
+## Date Edited:   11/13/2025
 ## Goal:          Figures that show relationship of tax adoption and outcome variable        
 ##  
 

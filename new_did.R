@@ -375,10 +375,10 @@ att_beds <- att_gt(yname = "beds",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "treatment_num",                  # the column we created
-                data = hospdata,
+                data = hospdata_clean,
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ rural,                # covariates (use ~1 if none)
-                est_method = "ipw",            # doubly-robust (optional)
+                xformla = ~ ct_pre_income,                # covariates (use ~1 if none)
+                est_method = "dr",            # doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
                 )
@@ -419,13 +419,13 @@ hospdata_clean <- hospdata_clean %>%
   mutate(obbd_share = obbd / beds)
 summary(hospdata_clean$obbd_share)
 
-att_obbd <- att_gt(yname = "obbd_share",
+att_obbd <- att_gt(yname = "obbd",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "treatment_num",                  # the column we created
-                data = hospdata_clean %>% filter(beds > 30, obbd_share < 1),
+                data = hospdata_clean %>% filter(beds > 30, obbd > 0),
                 control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ prebeds,                # covariates (use ~1 if none)
+                xformla = ~ prebeds + ct_pre_income,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
@@ -440,7 +440,7 @@ overall_obbd_pretty <- overall_obbd +
   ggtitle(" ") +
   labs(
     x = "Years Relative to Treatment",
-    y = "Share of Total Beds"
+    y = "Total OBBD"
   ) +
   theme_minimal(base_size = 14) +
   theme(
@@ -460,11 +460,10 @@ overall_obbd_pretty <- overall_obbd +
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
   guides(colour = "none", fill = "none") 
 print(overall_obbd_pretty)
-ggsave("overall_obbd_share.png", plot = overall_obbd_pretty, width = 10, height = 8, dpi = 300)
+ggsave("overall_obbd.png", plot = overall_obbd_pretty, width = 10, height = 8, dpi = 300)
 
 colnames(hospdata)
 # cost to charge ratio by urban/rural status
-
 
 att_urb_ccr <- att_gt(yname = "cost_to_charge",
                 tname = "year",

@@ -1,16 +1,17 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
 ## Date Created:  10/9/2025
-## Date Edited:   10//2025
-## Goal:          Summary Statistics Table         
+## Date Edited:   11/14/2025
+## Goal:          og Summary Statistics Table         
 ## 
+
 library(knitr)
 library(kableExtra)
 
-# set up  
+# set up  to make tables
 # key variables
-sum_vars <- c("private_prop_discharges", "mcaid_prop_discharges", "mcaid_prop", "ucc_prop", 
-                   "cost_per_discharge", "cost_to_charge")
+sum_vars <- c("private_prop_discharges", "mcaid_prop_discharges", "ucc_prop", "psyemhos", "alchhos", 
+                  "cost_to_charge", "rural")
 
 var_names <- c(
   private_prop_discharges = "Non Public Proportion of Discharges",
