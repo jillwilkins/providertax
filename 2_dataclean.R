@@ -1,13 +1,64 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
-## Date Created:  11/5/2025
-## Date Edited:   11/7/2025
-## Goal:          Load in Data of county level median income over time        
+## Date Created:  11/18/2025
+## Date Edited:   11/18/2025
+## Goal:          Clean data      
 ## 
 
-install.packages("censusapi")
-library(censusapi)
+# 
+# keep years 2020 and before
+hospdata_clean <- hospdata %>%
+  filter(year <= 2020)
 
+# drop hospitals that have beds = NA 
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%                       # group by hospital
+  filter(!all(is.na(beds))) %>%            # keep hospitals with at least one non-NA bed count
+  ungroup()
+
+# drop hospitals that have more than 5 NA beds 
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(sum(is.na(beds)) <= 3) %>%  # keep hospitals with 3 or fewer NA beds
+  ungroup()
+
+# drop if hospitals have beds = 0 ever 
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(!any(beds == 0, na.rm = TRUE)) %>%  # keep only hospitals that never report 0 beds
+  ungroup()
+
+# drop if hospitals ever have beds less than 10
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(!any(beds < 30, na.rm = TRUE)) %>%  # keep only hospitals that always have beds over 30
+  ungroup()
+
+# drop hospitals that have NA for an outcome in all years 
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(!all(is.na(private_prop_discharges))) %>%   # keep hospitals with at least one non-NA outcome
+  ungroup()
+
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(!all(is.na(mcaid_prop_discharges))) %>%   # keep hospitals with at least one non-NA outcome
+  ungroup()
+
+# drop if state is empty for all years
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(!all(is.na(state))) %>%   # keep hospitals with at least one non-NA state
+  ungroup()
+
+# define pre treatment level covariates (beds, county income)
+# pre treatment level beds 
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  mutate(prebeds = mean(beds[yes_tax == 0], na.rm = TRUE)) %>%
+  ungroup()
+
+# insert county level income data 
 # If you have an API key, set it:
 censusapi::censusapikey("3d68cc260a0373b59509aed3e418df2d057eb664", install = TRUE)
 Sys.setenv(CENSUS_KEY = "3d68cc260a0373b59509aed3e418df2d057eb664")
@@ -28,13 +79,7 @@ for (yr in years) {
   Sys.sleep(0.5)  # be polite to API
 }
 
-# Bind into one data.frame
-library(dplyr)
 full_df <- bind_rows(results_list)
-# View the first few rows
-
-library(dplyr)
-library(stringr)
 
 saipe_clean <- full_df %>%
   mutate(
@@ -118,11 +163,9 @@ hospdata_clean <- hospdata_clean %>%
   mutate(state = toupper(state))%>%
   left_join(saipe_clean, by = c("state", "county", "year"))
 
-colnames(hospdata_clean)
+hospdata_clean <- hospdata_clean %>%
+  group_by(county) %>%
+  mutate(ct_pre_income = mean(median_income[year < firsttax], na.rm = TRUE)) %>%  
+  ungroup()
 
-nainc <- hospdata_clean %>%
-  filter(is.na(median_income)) 
-View(nainc)
-
-summary(hospdata_clean$median_income)
-
+summary(hospdata_clean$ct_pre_income)
