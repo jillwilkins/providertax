@@ -677,7 +677,7 @@ hospdata_log <- hospdata_clean %>%
 
 
 
-# npr lol 
+# npr 
 att_npr <- att_gt(yname = "net_pat_rev",
                 tname = "year",
                 idname = "mcrnum",
