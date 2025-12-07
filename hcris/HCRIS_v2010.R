@@ -91,3 +91,4 @@ for (i in 2010:2021) {
   }
 }
 write_tsv(final.hcris.v2010, 'data/output/HCRIS_Data_v2010.txt', append = FALSE, col_names = TRUE)
+colnames(final.hcris.v2010)

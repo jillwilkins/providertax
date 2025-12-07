@@ -13,7 +13,7 @@ library(lubridate)
 
 #load in hcris data  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
-
+colnames(hcris)
 # clean state names
 unique(hcris$state)
 hcris <- hcris %>%

@@ -15,8 +15,11 @@ pacman::p_load(tidyverse, ggplot2, dplyr, lubridate)
 # Import data -------------------------------------------------------------
 
 ## create v1996 and v2010 data
-source('data/HCRIS_v1996.R')
-source('data/HCRIS_v2010.R')
+#source('data/HCRIS_v1996.R')
+#source('data/HCRIS_v2010.R')
+
+final.hcris.v1996 = read_tsv('data/output/HCRIS_Data_v1996.txt')
+final.hcris.v2010 = read_tsv('data/output/HCRIS_Data_v2010.txt')
 
 
 ## create missing variables for columns introduced in v2010 of hcris forms
@@ -164,3 +167,4 @@ final.hcris.data =
   arrange(provider_number, year)
 
 write_tsv(final.hcris.data,'data/output/HCRIS_Data.txt')
+colnames(final.hcris.data)

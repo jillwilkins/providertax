@@ -4,9 +4,7 @@ library(readr)
 library(tidyverse)
 library(dplyr)
 
-
 # Variable locations ------------------------------------------------------
-
 hcris.vars = NULL
 hcris.vars = rbind(hcris.vars,c('beds','S300001','01200','0100','numeric'))
 hcris.vars = rbind(hcris.vars,c('tot_charges','G300000','00100','0100','numeric'))
