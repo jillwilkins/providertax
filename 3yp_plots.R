@@ -187,3 +187,33 @@ group_ucc_prop <- ggplot(
 
 print(group_ucc_prop)
 ggsave("sumplots/group_ucc_prop.png", plot = group_ucc_prop, width = 10, height = 8, dpi = 300)
+
+# net patient revenue 
+group_npr <- ggplot(
+  filter(
+    hospdata_clean,
+    !is.na(net_pat_rev),
+    year < 2020,
+    treatment_group != "always",
+   net_pat_rev >= quantile(net_pat_rev, 0.01, na.rm = TRUE),
+    net_pat_rev <= quantile(net_pat_rev, 0.99, na.rm = TRUE)
+  ),
+  aes(x = year, y = net_pat_rev, color = factor(treatment_group))
+) +
+  stat_summary(fun = mean, geom = "line", size = 1.2, aes(group = treatment_group)) +
+  stat_summary(fun = mean, geom = "point", size = 2, aes(group = treatment_group)) +
+  labs(
+    x = "Year",
+    y = "Average Net Patient Revenue",
+    color = "Group",
+    title = "Average Net Patient Over Time by Group"
+  ) +
+  scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
+  theme_minimal()
+
+print(group_npr)
+
+pre_96 <- hospdata_clean %>%
+  filter(year < 2010) %>%
+  select(net_pat_rev, mcrnum, year)
+View(hcris)

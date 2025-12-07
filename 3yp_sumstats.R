@@ -96,3 +96,49 @@ kable(results, format = "latex", booktabs = TRUE,
       caption = "Summary Statistics by Treatment Status",
       col.names = c("Variable", "Treated Hospitals", "Not Yet Treated by 2020"),
       align = "lcc")
+
+
+# added information for draft 
+summary(hospdata_clean$net_pat_rev)
+
+npr_sum <- hospdata_clean %>% filter(!is.na(net_pat_rev), net_pat_rev > 0) %>%
+  summarise(
+    mean_npr = mean(net_pat_rev, na.rm = TRUE),
+    sd_npr = sd (net_pat_rev, na.rm = TRUE), 
+    median_npr = median(net_pat_rev, na.rm = TRUE),
+    min_npr = min(net_pat_rev, na.rm = TRUE),
+    max_npr = max(net_pat_rev, na.rm = TRUE), 
+    top_90_npr = quantile (net_pat_rev, 0.9, na.rm = TRUE), 
+    top_75_npr = quantile (net_pat_rev, 0.75, na.rm = TRUE)
+  )
+npr_sum
+
+dens_npr <- ggplot(filter(hospdata_clean, !is.na(net_pat_rev), net_pat_rev > 0, net_pat_rev < 100000000), aes(x = beds)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Density of NPR",
+       x = "NPR", y = "Density") +
+  theme_minimal()
+print(dens_npr)
+
+ggplot(hospdata_clean %>% filter(net_pat_rev > 0, !is.na(net_pat_rev), net_pat_rev < 3000000000), aes(x = net_pat_rev)) +
+  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
+  scale_x_continuous(labels = scales::comma) +
+  labs(
+    title = "Distribution of Net Patient Revenue",
+    x = "Net Patient Revenue (USD)",
+    y = "Count of Hospitals"
+  ) +
+  theme_minimal()
+
+ggplot(hospdata_clean, aes(x = net_pat_rev)) +
+  geom_density(fill = "skyblue", alpha = 0.5) +
+  scale_x_continuous(labels = scales::comma) +
+  labs(
+    title = "Density of Net Patient Revenue",
+    x = "Net Patient Revenue (USD)",
+    y = "Density"
+  ) +
+  theme_minimal()
+
+
+View(hospdata_clean)

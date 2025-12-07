@@ -5,6 +5,10 @@
 ## Goal:          Preliminary: Event Study Analysis that was used in my third year paper presentation        
 ## 
 
+library(fixest)
+library(did)
+library(ggplot2)
+
 # this was the event study ran for commercial discharges 
 att_payermix5 <- att_gt(yname = "private_prop_discharges",
                 tname = "year",
@@ -152,3 +156,49 @@ overall_ucc_pretty <- overall_ucc_prop +
   guides(colour = "none", fill = "none") 
 print(overall_ucc_pretty)
 ggsave("events_nov5/overall_ucc_clean.png", plot = overall_ucc_pretty, width = 10, height = 8, dpi = 300, bg = "transparent")
+
+# additional event studies ran for draft 
+att_npr <- att_gt(yname = "net_pat_rev",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "treatment_num",                  # the column we created
+                data = hospdata_clean %>% filter(!is.na(net_pat_rev), net_pat_rev > 0, net_pat_rev < 5000000000),
+                control_group = "notyettreated",  # or "notyettreated"
+                xformla = ~ prebeds + ct_pre_income,                # covariates (use ~1 if none)
+                est_method = "dr",            # doubly-robust (optional)
+                clustervars = "state",
+                base_period = "universal",
+                allow_unbalanced = TRUE
+                )
+summary(att_npr, type = "group")
+ggdid(att_npr)
+
+overall_att_npr <- aggte(att_npr, type = "dynamic", na.rm = TRUE, min_e = -8, max_e = 8)
+summary(overall_att_npr)
+overall_npr <- ggdid(overall_att_npr)
+overall_npr_pretty <- overall_npr +
+  ggtitle(" ") +
+  labs(
+    x = "Years Relative to Treatment",
+    y = "Net Patient Revenue"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(
+      face = "bold",
+      size = 16,
+      hjust = 0.5,
+      margin = margin(b = 10)
+    ),
+    axis.title.x = element_text(size = 13, margin = margin(t = 10 )),
+    axis.title.y = element_text(size = 13, margin = margin(r = 10)),
+    axis.text = element_text(size = 11, color = "black"),
+    panel.grid.major = element_line(color = "grey85", size = 0.3),
+    panel.grid.minor = element_blank(),
+    plot.background = element_rect(fill = "transparent", color = NA)
+  ) +
+  geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
+  guides(colour = "none", fill = "none") +
+  scale_y_continuous(labels = scales::label_number(scipen = 999))
+print(overall_npr_pretty)
+

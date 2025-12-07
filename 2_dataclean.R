@@ -5,7 +5,9 @@
 ## Goal:          Clean data      
 ## 
 
-# 
+# load cleaned data 
+
+
 # keep years 2020 and before
 hospdata_clean <- hospdata %>%
   filter(year <= 2020)
@@ -59,6 +61,7 @@ hospdata_clean <- hospdata_clean %>%
   ungroup()
 
 # insert county level income data 
+library(censusapi)
 # If you have an API key, set it:
 censusapi::censusapikey("3d68cc260a0373b59509aed3e418df2d057eb664", install = TRUE)
 Sys.setenv(CENSUS_KEY = "3d68cc260a0373b59509aed3e418df2d057eb664")

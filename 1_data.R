@@ -75,7 +75,7 @@ fmap <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/in
 
 # clean and rename states 
 fmap <- fmap %>%
-  select(-footnotes) %>%
+  select(-Footnotes) %>%
   slice(2:52) %>%
   rename(statename = Location) %>%
   mutate(
@@ -125,35 +125,36 @@ tax_totals <- tax %>%
   summarise(totaltax = sum(has_tax, na.rm = TRUE), .groups = "drop")
 
 # load in state expansion status 
-expansion <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/expansion.csv", skip = 2)
+# expansion <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/expansion.csv", skip = 2)
 
 #drop excess rows and rename states
-expansion <- expansion %>% select(-Footnotes)
-expansion <- expansion[2:52, ]
-expansion <- expansion %>% rename(statename = Location) 
-expansion <- expansion %>% rename(expdate = Expansion.Implementation.Date) 
-expansion$state <- state.abb[match(expansion$statename, state.name)]
-expansion$state[expansion$statename == "District of Columbia"] <- "DC"
-expansion <- expansion %>%
-  mutate(
-    expyear = case_when(
-      expdate %in% c("N/A", "", NA) ~ NA_real_,   # keep NAs for non-expansion states
-      TRUE ~ year(mdy(expdate))                   # extract the year (month/day/year)
-    )) %>% select(state, expdate, expyear)
+# expansion <- expansion %>% select(-Footnotes)
+#expansion <- expansion[2:52, ]
+#expansion <- expansion %>% rename(statename = Location) 
+#expansion <- expansion %>% rename(expdate = Expansion.Implementation.Date) 
+#expansion$state <- state.abb[match(expansion$statename, state.name)]
+#expansion$state[expansion$statename == "District of Columbia"] <- "DC"
+#expansion <- expansion %>%
+#  mutate(
+ #   expyear = case_when(
+  #    expdate %in% c("N/A", "", NA) ~ NA_real_,   # keep NAs for non-expansion states
+   #   TRUE ~ year(mdy(expdate))                   # extract the year (month/day/year)
+   # )) %>% select(state, expdate, expyear)
 
 # join data
 fmap_tax <- fmap %>%
   left_join(tax %>% select(state, firsttax),
     by = c("state" = "state")) %>%
   left_join(tax_totals,
-    by = c("year" = "year")) %>%
-  left_join(expansion, 
-    by = c("state" = "state"))
+    by = c("year" = "year")) 
+    #%>%
+  #left_join(expansion, 
+   # by = c("state" = "state"))
 
 # join fmap_tax and hcris
 hcris_tax <- hcris %>%
   left_join(
-    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax, expyear),
+    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax),
     by = c("state" = "state", "year" = "year")
   )
 
@@ -161,21 +162,23 @@ hcris_tax <- hcris %>%
 class(hcris_tax$provider_number)
 
 # drop years before 2004 
-hcris_tax <- hcris_tax %>%
-  filter(year >= 2004)
+#hcris_tax <- hcris_tax %>%
+#  filter(year >= 2004)
 
 # note: had to do alot of work here 10/13 to make sure i had serv & then 10/16 with na mcrnum pre 2008. 
 # load in AHA data 
 aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
 
-
+# DECEMBER 6th - ISSUE OF SERV for years prior to 2010 causing problems.
 # limit aha to SERV = 10 (general medical and surgical hospitals), no territories, no safety net hospitals, no public hospitals  
 aha <- aha %>%
-  filter(SERV == 10) %>%
-  filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
-  filter(CNTRL %in% c(21, 23, 31, 32, 33), MAPP18 == 2) %>%
+  # filter(SERV == 10) %>%.  # THIS WAs commented out on 12/6 
+  # filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
+  # filter(CNTRL %in% c(21, 23, 31, 32, 33), MAPP18 == 2) %>%
   select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, TRAUMCER, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, ORTOHOS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE, OBHOS,
   OBBD, ALCHBD, PSYBD, HOSPBD, CICBD, CNTRL, MAPP18)
+
+View(aha)
 
 # If MCRNUM is missing for one hospital-year, fill it with the MCRNUM from the same hospital, different year.  
 aha_filled <- aha %>%
@@ -209,7 +212,7 @@ hcris_tax %>% filter(provider_number == 30001)
 #join aha and hcris_tax
 hospdata <- aha %>%
   left_join(hcris_tax, by = c("MCRNUM" = "provider_number", "YEAR" = "year"))
-  
+
 #make variables lowercase 
 colnames(hospdata) <- tolower(colnames(hospdata))
 
