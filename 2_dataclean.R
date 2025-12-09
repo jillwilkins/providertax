@@ -1,12 +1,12 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
 ## Date Created:  11/18/2025
-## Date Edited:   11/18/2025
-## Goal:          Clean data      
+## Date Edited:   12/9/2025
+## Goal:          Clean data
 ## 
 
 # load cleaned data 
-
+hospdata <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hospdata_hcris.csv")
 
 # keep years 2020 and before
 hospdata_clean <- hospdata %>%
@@ -14,47 +14,47 @@ hospdata_clean <- hospdata %>%
 
 # drop hospitals that have beds = NA 
 hospdata_clean <- hospdata_clean %>%
-  group_by(mcrnum) %>%                       # group by hospital
-  filter(!all(is.na(beds))) %>%            # keep hospitals with at least one non-NA bed count
+  group_by(mcrnum) %>%                       
+  filter(!all(is.na(beds))) %>%            
   ungroup()
 
-# drop hospitals that have more than 5 NA beds 
+# keep hospitals with 3 or fewer years of missing beds 
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
-  filter(sum(is.na(beds)) <= 3) %>%  # keep hospitals with 3 or fewer NA beds
+  filter(sum(is.na(beds)) <= 3) %>%  
   ungroup()
 
 # drop if hospitals have beds = 0 ever 
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
-  filter(!any(beds == 0, na.rm = TRUE)) %>%  # keep only hospitals that never report 0 beds
+  filter(!any(beds == 0, na.rm = TRUE)) %>%  
   ungroup()
 
-# drop if hospitals ever have beds less than 10
+# drop if hospitals ever have beds less than 30
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
-  filter(!any(beds < 30, na.rm = TRUE)) %>%  # keep only hospitals that always have beds over 30
+  filter(!any(beds < 30, na.rm = TRUE)) %>%  
   ungroup()
 
 # drop hospitals that have NA for an outcome in all years 
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
-  filter(!all(is.na(private_prop_discharges))) %>%   # keep hospitals with at least one non-NA outcome
+  filter(!all(is.na(private_prop_discharges))) %>%   
   ungroup()
 
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
-  filter(!all(is.na(mcaid_prop_discharges))) %>%   # keep hospitals with at least one non-NA outcome
+  filter(!all(is.na(mcaid_prop_discharges))) %>%   
   ungroup()
 
-# drop if state is empty for all years
+# drop if state is empty for all years; if missing fill that in 
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
   filter(!all(is.na(state))) %>%   # keep hospitals with at least one non-NA state
   ungroup()
 
 # define pre treatment level covariates (beds, county income)
-# pre treatment level beds 
+# pre treatment beds 
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
   mutate(prebeds = mean(beds[yes_tax == 0], na.rm = TRUE)) %>%
@@ -62,7 +62,6 @@ hospdata_clean <- hospdata_clean %>%
 
 # insert county level income data 
 library(censusapi)
-# If you have an API key, set it:
 censusapi::censusapikey("3d68cc260a0373b59509aed3e418df2d057eb664", install = TRUE)
 Sys.setenv(CENSUS_KEY = "3d68cc260a0373b59509aed3e418df2d057eb664")
 
@@ -72,7 +71,7 @@ results_list <- list()
 for (yr in years) {
   dat <- getCensus(
     name = "timeseries/poverty/saipe",
-    vintage = NULL,                # time‐series endpoint uses YEAR parameter
+    vintage = NULL,                
     vars = c("NAME", "SAEMHI_PT", "STATE", "COUNTY"),
     region = "county:*",
     YEAR = yr
@@ -154,7 +153,6 @@ state_lookup <- tibble(
   state_name = tolower(state.name),
   state = tolower(state.abb)
 )
-
 saipe_clean <- saipe_clean %>%
   left_join(state_lookup, by = "state_name")
 
@@ -172,3 +170,38 @@ hospdata_clean <- hospdata_clean %>%
   ungroup()
 
 summary(hospdata_clean$ct_pre_income)
+
+# save cleaned and income data 
+write.csv(hospdata_clean, "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hospdata_clean.csv", row.names = FALSE)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(
+    !mcrnum %in% multi_state_mcrnums,
+    !typectrl %in% 7:13
+  )
+
+
+# NOW dec 7 attempt to add in serv from AHA 
+aha$MCRNUM <- as.integer(aha$MCRNUM)
+
+aha_serv <- aha %>%
+  group_by(MCRNUM) %>%
+  summarize(SERV = first(SERV), .groups = "drop")
+
+hospdata_aha <- hospdata_clean%>%
+  left_join(aha_serv, by = c("mcrnum" = "MCRNUM"))
+
+View(hospdata_aha)
+
+# georgia calc
+georgia_ratio <- hospdata_clean %>%
+  filter(state == "GA", hrrp_payment > 0, net_pat_rev > 0, year == 2013 | year == 2012) %>%                      # keep Georgia hospitals
+  mutate(hrrp_ratio = hrrp_payment / net_pat_rev)
+
+summary(georgia_ratio$hrrp_ratio)
+hospdata %>%
+  group_by(state) %>%
+  filter(firsttax != 2004) %>%
+  summarise(count = n())
+
+

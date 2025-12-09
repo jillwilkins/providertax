@@ -1,8 +1,8 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
 ## Date Created:  10/9/2025 (11/14/25)
-## Date Edited:   11/17/2025
-## Goal:          Summary Statistics Table in my 3YP         
+## Date Edited:   12/9/2025
+## Goal:          Summary Statistics Table          
 ## 
 
 library(dplyr)
@@ -10,31 +10,37 @@ library(purrr)
 library(rlang)
 library(kableExtra)
 
-rm(control_results, treated_results, results)
 
 sum_vars <- c(
-  "private_prop_discharges", "mcaid_prop_discharges", "ucc_prop", 
-  "psyemhos", "alchhos", "cost_to_charge", "rural"
+  "tot_discharges", "private_discharges", "private_prop_discharges", "mcaid_discharges", "mcaid_prop_discharges", "ucc_prop", 
+  "cost_to_charge", "net_pat_rev", "prebeds", "ct_pre_income"
 )
 
 var_labels <- c(
-  private_prop_discharges = "Private Insurance Discharges",
-  mcaid_prop_discharges   = "Medicaid Discharges",
+  tot_discharges      = "Total Discharges",
+  private_discharges    = "Private Discharges",
+  private_prop_discharges = "Private Share of Discharges",
+  mcaid_discharges      = "Medicaid Discharges ",
+  mcaid_prop_discharges   = "Medicaid Share of Discharges",
   ucc_prop                = "Uncompensated Care (Prop)",
-  psyemhos                = "Psych ED Visits",
-  alchhos                 = "Alcohol ED Visits",
+  #psyemhos                = "Psych ED Visits",
+  #alchhos                 = "Alcohol ED Visits",
   cost_to_charge          = "Cost to Charge Ratio",
-  rural                   = "Rural Indicator"
+  net_pat_rev             = "Net Patient Revenue",
+  prebeds                 = "Pre-Treatment Beds",
+  ct_pre_income          = "County Pre-Treatment Income"
+  #rural                   = "Rural Indicator"
 )
 
 control_results <- map_dfr(sum_vars, function(v) {
 
-  hospdata_clean %>%
+  hospdata_aha %>%
     # pre tax and never taxed 
     filter(
       treatment_group == "not treated by 2020" |
         (treatment_group == "treated" & year < firsttax),
-      !is.na(beds)
+      !is.na(beds), 
+      SERV == 10
     ) %>%
     # hospital-level mean 
     group_by(mcrnum) %>%
@@ -46,15 +52,16 @@ control_results <- map_dfr(sum_vars, function(v) {
       sd_y   = sd(hosp_mean_y, na.rm = TRUE)
     )
 })
-
+View(control_results)
 treated_results <- map_dfr(sum_vars, function(v) {
 
-  hospdata_clean %>%
+  hospdata_aha %>%
     # filter for treated & taxed
     filter(
       treatment_group == "treated",
       yes_tax == 1,
-      !is.na(beds)
+      !is.na(beds), 
+      SERV == 10
     ) %>%
     # hospital-level mean 
     group_by(mcrnum) %>%
@@ -83,10 +90,10 @@ treated_results <- treated_results %>%
     label = var_labels[variable]
   ) %>%
   select(variable, label, mean_sd_treated)
-
+View(treated_results)
 results <- treated_results %>%
   left_join(
-    control_results %>% select(variable, mean_sd_treated),
+    control_results %>% select(variable, mean_sd_control),
     by = "variable"
   ) %>%
   select(label, mean_sd_control, mean_sd_treated)
@@ -98,7 +105,7 @@ kable(results, format = "latex", booktabs = TRUE,
       align = "lcc")
 
 
-# added information for draft 
+# exploratory analysis 
 summary(hospdata_clean$net_pat_rev)
 
 npr_sum <- hospdata_clean %>% filter(!is.na(net_pat_rev), net_pat_rev > 0) %>%

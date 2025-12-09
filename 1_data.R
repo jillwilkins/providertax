@@ -1,7 +1,7 @@
 # Meta --------------------------------------------------------------------
 ## Author:        Jill Wilkins
 ## Date Created:  9/22/2025
-## Date Edited:   11/13/2025
+## Date Edited:   12/9/2025
 ## Goal:         Clean data and create the working data set for analysis       
 ##  
 
@@ -161,64 +161,11 @@ hcris_tax <- hcris %>%
 # verify provider_number class
 class(hcris_tax$provider_number)
 
-# drop years before 2004 
-#hcris_tax <- hcris_tax %>%
-#  filter(year >= 2004)
+# SAVE here 12/6. 
+write.csv(hcris_tax, "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hcris_prog.csv", row.names = FALSE)
 
-# note: had to do alot of work here 10/13 to make sure i had serv & then 10/16 with na mcrnum pre 2008. 
-# load in AHA data 
-aha <- read_csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/AHAdata_20052023.csv")
-
-# DECEMBER 6th - ISSUE OF SERV for years prior to 2010 causing problems.
-# limit aha to SERV = 10 (general medical and surgical hospitals), no territories, no safety net hospitals, no public hospitals  
-aha <- aha %>%
-  # filter(SERV == 10) %>%.  # THIS WAs commented out on 12/6 
-  # filter(!STCD %in% c(3, 4, 5, 6, 7, 8)) %>% 
-  # filter(CNTRL %in% c(21, 23, 31, 32, 33), MAPP18 == 2) %>%
-  select(MCRNUM, YEAR, MNAME, SERV, TRAUMHOS, TRAUMSYS, TRAUMCER, PSYEMHOS, PSYEMSYS, ALCHHOS, ALCHSYS, ORTOHOS, STCD, MCRDCH, MCDDCH, DCTOTH, CBSATYPE, OBHOS,
-  OBBD, ALCHBD, PSYBD, HOSPBD, CICBD, CNTRL, MAPP18)
-
-View(aha)
-
-# If MCRNUM is missing for one hospital-year, fill it with the MCRNUM from the same hospital, different year.  
-aha_filled <- aha %>%
-  group_by(MNAME) %>%  # group hospitals by name
-  mutate(
-    MCRNUM = ifelse(
-      is.na(MCRNUM),
-      first(na.omit(MCRNUM)),  # get first non-missing mcrnum within hospital name
-      MCRNUM
-    )
-  ) %>%
-  ungroup()
-
-# View whats not matched. 
-aha_filled %>%
-  filter(is.na(MCRNUM)) %>%
-  distinct(MNAME)
-
-#For now Oct 16, proceed by dropping what is left with no MCRNUM 
-aha_orig <- aha
-aha <- aha_filled  
-
-# Convert mcrnum to integer 
-aha <- aha %>%
-  mutate(MCRNUM = as.integer(MCRNUM))
-
-# verify working arizona
-aha %>% filter(MCRNUM == 30001)
-hcris_tax %>% filter(provider_number == 30001)
-
-#join aha and hcris_tax
-hospdata <- aha %>%
-  left_join(hcris_tax, by = c("MCRNUM" = "provider_number", "YEAR" = "year"))
-
-#make variables lowercase 
-colnames(hospdata) <- tolower(colnames(hospdata))
-
-# rural specification
-hospdata <- hospdata %>%
-  mutate(rural = if_else(cbsatype == "Rural", 1, 0))
+# plan is to load treatment data and then merge with aha later when needed to avoid pre 2010 issues. 
+hospdata <- hcris_tax
 
 # GROUPS: 
 # yes_tax: hospital with tax in that year (1 if year >= firsttax, 0 otherwise)
@@ -250,6 +197,10 @@ hospdata <- hospdata %>%
       TRUE                 ~ 1     # 1 otherwise
     )
   )
+
+#rename provider_number to mcrnum for merging later
+hospdata <- hospdata %>%
+  rename(mcrnum = provider_number)
 
 # verify number of states in each group 
 hospdata %>%
@@ -313,91 +264,12 @@ hospdata <- hospdata %>%
     mcaid_prop_discharges = mcaid_discharges / tot_discharges, 
     mcare_prop_discharges = mcare_discharges / tot_discharges, 
     mm_prop_discharges = (mcaid_discharges + mcare_discharges)/ tot_discharges, 
-    private_prop_discharges = 1 - mm_prop_discharges, 
-    obbd_prop = obbd / beds,
-    psychbed_prop = psybd / beds,
-    alcbed_prop = alchbd / beds)
+    private_prop_discharges = 1 - mm_prop_discharges) 
+    # obbd_prop = obbd / beds,
+    #psychbed_prop = psybd / beds,
+    #alcbed_prop = alchbd / beds)
 
 # save working data
-write.csv(hospdata, "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hospdata.csv", row.names = FALSE)
-
-# Not sure i want to keep this section of cleaning? 
-# remove providers with NA in all key variables
-cols_to_check <- c(
-  "TRAUMHOS", "TRAUMSYS", "PSYEMHOS", "PSYEMSYS", "ALCHHOS", "ALCHSYS", "beds",
-  "tot_charges", "net_pat_rev", "tot_discounts", "tot_operating_exp",
-  "ip_charges", "icu_charges", "ancillary_charges", "tot_discharges",
-  "mcare_discharges", "mcaid_discharges", "tot_mcare_payment",
-  "secondary_mcare_payment", "street", "city", "state", "zip", "county",
-  "name", "uncomp_care", "cost_to_charge", "new_cap_ass", "cash",
-  "net_mcaid_rev", "mcaid_charges", "mcaid_cost", "hvbp_payment",
-  "hrrp_payment", "tot_uncomp_care_charges", "tot_uncomp_care_partial_pmts",
-  "bad_debt", "get_dsh_supp", "net_med_all_dsh", "dsh_from_mcaid",
-  "rev_cost_mcaid"
-)
-
-providers_to_drop <- hospdata %>%
-  group_by(MCRNUM) %>%
-  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
-  filter(all_na) %>%
-  select(MCRNUM)
-View(providers_to_drop)
-
-hospdata <- hospdata %>%
-  anti_join(providers_to_drop, by = "MCRNUM")
-
-# check that it worked
-hospdata %>%
-  group_by(MCRNUM) %>%
-  summarise(all_na = all(across(all_of(cols_to_check), ~ all(is.na(.))))) %>%
-  summarise(n_providers = sum(all_na))
-# end unsure section 
-
-
-# extra stuff dont run today (11/4)
-hospdata <- hospdata %>%
-  mutate(
-    notyet2020 = case_when(
-      is.na(firsttax) ~ 1,                 # missing firsttax
-      firsttax == "never" ~ 1,             # never treated
-      as.numeric(firsttax) >= 2020 ~ 1,    # treated 2020 or later
-      TRUE ~ 0                             # treated before 2020
-    )
-  )
-
-unique(hospdata$cbsatype)
-
-hospdata <- hospdata %>%
-  mutate(tmnt20plus = case_when(
-    firsttax == 2004 ~ NA_real_,   # Assign NA if firsttax == 2004
-    is.na(firsttax) ~ 0,           # Assign 0 if firsttax is missing (never treated)
-    TRUE ~ firsttax                # Otherwise, equal to the firsttax value
-  ))
-
-
-# create event time variable 
-hospdata <- hospdata %>%
-  mutate(
-    event_time = case_when(
-      treatment_num == 0 ~ NA_real_,  # never treated
-      TRUE ~ year - treatment_num     # years since treatment
-    )
-  )
-
-# NEW 
-
-hospdata <- hospdata %>%
-  mutate(
-    treatment_num2 = case_when(
-      always == 1 ~ NA_real_,         # always-treated units are excluded
-      treated == 1 ~ firsttax,        # for treated states, use first tax year
-      never == 1 ~ 0                  # never-treated get 0
-    )
-  )
-
-hospdata <- hospdata %>%
-  mutate(
-    medicaid_expansion = ifelse(year >= expyear, 1, 0)
-  )
+write.csv(hospdata, "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hospdata_hcris.csv", row.names = FALSE)
 
 

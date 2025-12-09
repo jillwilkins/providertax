@@ -114,7 +114,7 @@ ggsave("sumplots/plots2011/uccclean.png", plot = group_ucc_2012, width = 10, hei
 # Medicaid Discharges Proportion 
 group_mcaid_dis <- ggplot(
   filter(
-    hospdata_st,
+    hospdata_clean,
     !is.na(mcaid_prop_discharges),
     year < 2020,
     treatment_group != "always",
@@ -134,13 +134,13 @@ group_mcaid_dis <- ggplot(
   scale_x_continuous(breaks = seq(2005, 2019, 2), limits = c(2005, 2019)) +
   theme_minimal()
 
-print(group_mcaid_dis_prop2)
+print(group_mcaid_dis)
 ggsave("sumplots/group_mcaid_dis.png", plot = group_mcaid_dis, width = 10, height = 8, dpi = 300)
 
 # Commercial Proportion
 group_payermix <- ggplot(
   filter(
-    hospdata,
+    hospdata_clean,
     treatment_group != "always",
     !is.na(mcaid_prop_discharges),
     year < 2020,
@@ -164,7 +164,7 @@ ggsave("sumplots/group_payermix.png", plot = group_payermix, width = 80, height 
 
 # Uncompensated Care Proportion 
 group_ucc_prop <- ggplot(
-  hospdata %>%
+  hospdata_clean %>%
     filter(
       !is.na(ucc_prop),
       year < 2020,
@@ -216,4 +216,4 @@ print(group_npr)
 pre_96 <- hospdata_clean %>%
   filter(year < 2010) %>%
   select(net_pat_rev, mcrnum, year)
-View(hcris)
+View(pre_96)
