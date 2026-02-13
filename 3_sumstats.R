@@ -34,7 +34,7 @@ var_labels <- c(
 
 control_results <- map_dfr(sum_vars, function(v) {
 
-  hospdata_aha %>%
+  hospdata_clean %>%
     # pre tax and never taxed 
     filter(
       treatment_group == "not treated by 2020" |

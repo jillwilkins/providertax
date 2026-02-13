@@ -174,12 +174,14 @@ summary(hospdata_clean$ct_pre_income)
 # save cleaned and income data 
 write.csv(hospdata_clean, "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hospdata_clean.csv", row.names = FALSE)
 
+# filter for only general acute hospitals 
 hospdata_clean <- hospdata_clean %>%
   filter(
     !mcrnum %in% multi_state_mcrnums,
     !typectrl %in% 7:13
   )
 
+View(hospdata_clean)
 
 # NOW dec 7 attempt to add in serv from AHA 
 aha$MCRNUM <- as.integer(aha$MCRNUM)

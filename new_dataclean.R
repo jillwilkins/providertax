@@ -1,0 +1,372 @@
+# ==============================================================================
+# HCRIS Data Cleaning Script - Create Analytical Dataset
+# Purpose: Apply sample restrictions to create final dataset for DiD analysis
+# Input: hospdata_full.csv (from hcris_data_prep_cleaned.R)
+# Output: hospdata_analytical.csv
+# ==============================================================================
+
+# Load required packages -------------------------------------------------------
+library(dplyr)
+library(stringr)
+library(readr)
+
+# Set file paths ---------------------------------------------------------------
+data_output_path <- "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/"
+
+# ==============================================================================
+# LOAD DATA
+# ==============================================================================
+
+hospdata <- read.csv(
+  paste0(data_output_path, "hospdata_full.csv"),
+  stringsAsFactors = FALSE
+)
+
+cat("\n=== STARTING SAMPLE ===\n")
+cat(paste("Total observations:", nrow(hospdata), "\n"))
+cat(paste("Unique hospitals:", n_distinct(hospdata$mcrnum), "\n"))
+cat(paste("Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
+
+
+# ==============================================================================
+# FILTER 1: RESTRICT TO ANALYSIS YEARS (2004-2024)
+# ==============================================================================
+
+# WHY: Treatment data only available from 2004 onward
+# DECISION: Use Option 2 - start sample when treatment data begins
+# NOTE: States with treatment in 2004 are "always treated" in our data
+
+hospdata_clean <- hospdata %>%
+  filter(year >= 2004 & year <= 2024)
+
+cat("\n=== FILTER 1: Year Range (2004-2024) ===\n")
+cat(paste("Observations removed:", nrow(hospdata) - nrow(hospdata_clean), "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals:", n_distinct(hospdata_clean$mcrnum), "\n"))
+
+
+# ==============================================================================
+# FILTER 2: HOSPITAL TYPE - REMOVE GOVERNMENTAL HOSPITALS
+# ==============================================================================
+
+# VARIABLE: typectrl (type of control/ownership)
+# REMOVE: typectrl 7-13 (all governmental hospitals)
+# KEEP: typectrl 1-6 (nonprofit and proprietary hospitals)
+#
+# REFERENCE: HCRIS Form S201, Line 21
+# 1 = Voluntary Nonprofit, Church         8 = Governmental, City-County
+# 2 = Voluntary Nonprofit, Other          9 = Governmental, County
+# 3 = Proprietary, Individual            10 = Governmental, State
+# 4 = Proprietary, Corporation           11 = Governmental, Hospital District
+# 5 = Proprietary, Partnership           12 = Governmental, City
+# 6 = Proprietary, Other                 13 = Governmental, Other
+# 7 = Governmental, Federal
+
+before_count <- n_distinct(hospdata_clean$mcrnum)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(!typectrl %in% 7:13)
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
+
+cat("\n=== FILTER 2: Hospital Type (Non-Governmental Only) ===\n")
+cat(paste("Hospitals removed:", before_count - after_count, "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+# Show breakdown of remaining hospital types
+cat("\nRemaining hospital types:\n")
+hospdata_clean %>%
+  distinct(mcrnum, typectrl) %>%
+  count(typectrl) %>%
+  mutate(
+    type_label = case_when(
+      typectrl == 1 ~ "Voluntary Nonprofit, Church",
+      typectrl == 2 ~ "Voluntary Nonprofit, Other",
+      typectrl == 3 ~ "Proprietary, Individual",
+      typectrl == 4 ~ "Proprietary, Corporation",
+      typectrl == 5 ~ "Proprietary, Partnership",
+      typectrl == 6 ~ "Proprietary, Other",
+      TRUE ~ "Unknown"
+    )
+  ) %>%
+  select(typectrl, type_label, n) %>%
+  print()
+
+
+# ==============================================================================
+# FILTER 3: MULTI-STATE HOSPITALS (PLACEHOLDER)
+# ==============================================================================
+
+# TODO: Add multi-state hospital filter when code is ready
+# PLACEHOLDER CODE:
+# 
+# # Identify hospitals that appear in multiple states
+# multi_state_mcrnums <- hospdata_clean %>%
+#   group_by(mcrnum) %>%
+#   summarise(n_states = n_distinct(state)) %>%
+#   filter(n_states > 1) %>%
+#   pull(mcrnum)
+# 
+# before_count <- n_distinct(hospdata_clean$mcrnum)
+# 
+# hospdata_clean <- hospdata_clean %>%
+#   filter(!mcrnum %in% multi_state_mcrnums)
+# 
+# after_count <- n_distinct(hospdata_clean$mcrnum)
+# 
+# cat("\n=== FILTER 3: Multi-State Hospitals ===\n")
+# cat(paste("Hospitals removed:", before_count - after_count, "\n"))
+# cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+# cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+
+# ==============================================================================
+# FILTER 4: BED COUNT - REMOVE HOSPITALS WITH MISSING BED DATA
+# ==============================================================================
+
+# WHY: Bed count is key control variable; missing data suggests data quality issues
+# DECISION: Keep only hospitals with complete bed data across all years (0 missing)
+# RATIONALE: 94% of hospitals have complete data - strict filter keeps sample clean
+
+# Identify hospitals with ANY missing bed data
+hospitals_with_missing_beds <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  summarise(
+    total_years = n(),
+    missing_years = sum(is.na(beds))
+  ) %>%
+  filter(missing_years > 0) %>%
+  pull(mcrnum)
+
+before_count <- n_distinct(hospdata_clean$mcrnum)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(!mcrnum %in% hospitals_with_missing_beds)
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
+
+cat("\n=== FILTER 4: Complete Bed Data ===\n")
+cat(paste("Hospitals removed (any missing bed data):", before_count - after_count, "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+
+# ==============================================================================
+# FILTER 5: BED COUNT - MINIMUM SIZE THRESHOLD
+# ==============================================================================
+
+# WHY: Very small hospitals may have different operational dynamics
+# DECISION: Remove hospitals with average bed count < 30
+# METHOD: Calculate average beds across all years, then filter entire hospital
+
+# Calculate average bed count for each hospital
+hospital_avg_beds <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  summarise(
+    avg_beds = mean(beds, na.rm = TRUE),
+    min_beds = min(beds, na.rm = TRUE),
+    max_beds = max(beds, na.rm = TRUE)
+  )
+
+# Identify small hospitals (average < 30 beds)
+small_hospitals <- hospital_avg_beds %>%
+  filter(avg_beds < 30) %>%
+  pull(mcrnum)
+
+before_count <- n_distinct(hospdata_clean$mcrnum)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(!mcrnum %in% small_hospitals)
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
+
+cat("\n=== FILTER 5: Minimum Bed Count (Average >= 30) ===\n")
+cat(paste("Hospitals removed (avg beds < 30):", before_count - after_count, "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+# Show bed count distribution for remaining hospitals
+cat("\nBed count distribution (remaining hospitals):\n")
+hospital_avg_beds %>%
+  filter(mcrnum %in% hospdata_clean$mcrnum) %>%
+  summarise(
+    min_avg = min(avg_beds),
+    q25 = quantile(avg_beds, 0.25),
+    median = median(avg_beds),
+    q75 = quantile(avg_beds, 0.75),
+    max_avg = max(avg_beds)
+  ) %>%
+  print()
+
+# ==============================================================================
+# FILTER 4B: MAXIMUM BED COUNT - REMOVE DATA ERRORS
+# ==============================================================================
+
+# WHY: Some observations have impossibly high bed counts (e.g., 6+ million)
+# DECISION: Remove hospitals that ever report > 3,000 beds
+# RATIONALE: Largest US hospitals have ~2,400 beds; 3,000 is a generous upper bound
+
+#diagnostic of the large bed count issue
+hospdata %>%
+  filter(!is.na(beds)) %>%
+  arrange(desc(beds)) %>%
+  select(mcrnum, mcrnum, state, year, beds) %>%
+  head(20)
+
+hospitals_with_extreme_beds <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(any(beds > 3000, na.rm = TRUE)) %>%
+  pull(mcrnum) %>%
+  unique()
+
+before_count <- n_distinct(hospdata_clean$mcrnum)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(!mcrnum %in% hospitals_with_extreme_beds)
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
+
+cat("\n=== FILTER 4B: Maximum Bed Count (≤ 3,000) ===\n")
+cat(paste("Hospitals removed (beds > 3,000 in any year):", before_count - after_count, "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+# ==============================================================================
+# ADDITIONAL DATA QUALITY CHECK: REMOVE HOSPITALS WITH BED COUNT = 0
+# ==============================================================================
+
+# WHY: Bed count of 0 is impossible for operating hospital
+# NOTE: This should be caught by previous filters, but check to be safe
+
+hospitals_with_zero_beds <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(any(beds == 0, na.rm = TRUE)) %>%
+  pull(mcrnum) %>%
+  unique()
+
+if (length(hospitals_with_zero_beds) > 0) {
+  before_count <- n_distinct(hospdata_clean$mcrnum)
+  
+  hospdata_clean <- hospdata_clean %>%
+    filter(!mcrnum %in% hospitals_with_zero_beds)
+  
+  after_count <- n_distinct(hospdata_clean$mcrnum)
+  
+  cat("\n=== ADDITIONAL CHECK: Zero Bed Count ===\n")
+  cat(paste("Hospitals removed (beds = 0 in any year):", before_count - after_count, "\n"))
+  cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+  cat(paste("Unique hospitals remaining:", after_count, "\n"))
+} else {
+  cat("\n=== ADDITIONAL CHECK: Zero Bed Count ===\n")
+  cat("No hospitals with zero beds found. ✓\n")
+}
+
+
+# ==============================================================================
+# FINAL SAMPLE SUMMARY
+# ==============================================================================
+
+cat("\n" , rep("=", 70), "\n", sep = "")
+cat("FINAL ANALYTICAL SAMPLE\n")
+cat(rep("=", 70), "\n", sep = "")
+
+cat("\nSample composition:\n")
+cat(paste("  Total observations:", nrow(hospdata_clean), "\n"))
+cat(paste("  Unique hospitals:", n_distinct(hospdata_clean$mcrnum), "\n"))
+cat(paste("  Year range:", min(hospdata_clean$year), "to", max(hospdata_clean$year), "\n"))
+cat(paste("  Number of years:", n_distinct(hospdata_clean$year), "\n"))
+
+cat("\nHospitals by state:\n")
+hospdata_clean %>%
+  distinct(mcrnum, state) %>%
+  count(state, sort = TRUE) %>%
+  head(10) %>%
+  print()
+
+cat("\n... (showing top 10 states)\n")
+
+cat("\nHospitals by treatment status:\n")
+hospdata_clean %>%
+  distinct(mcrnum, state, ever_treat, cohort) %>%
+  count(ever_treat) %>%
+  mutate(
+    status = ifelse(ever_treat == 1, "Ever Treated", "Never Treated"),
+    pct = round(n / sum(n) * 100, 1)
+  ) %>%
+  select(status, n, pct) %>%
+  print()
+
+cat("\nTreatment cohorts:\n")
+hospdata_clean %>%
+  distinct(mcrnum, cohort) %>%
+  count(cohort, sort = TRUE) %>%
+  print()
+
+
+# ==============================================================================
+# VERIFY TREATMENT VARIABLES ARE INTACT
+# ==============================================================================
+
+cat("\n=== TREATMENT VARIABLE CHECK ===\n")
+
+# Check that all required variables exist
+required_vars <- c("gname", "cohort", "ever_treat", "post_treat", "time_to_treat")
+missing_vars <- setdiff(required_vars, names(hospdata_clean))
+
+if (length(missing_vars) == 0) {
+  cat("All treatment variables present: ✓\n")
+  cat("  - gname (for C&S)\n")
+  cat("  - cohort (readable version)\n")
+  cat("  - ever_treat (0/1)\n")
+  cat("  - post_treat (0/1)\n")
+  cat("  - time_to_treat (years since adoption)\n")
+} else {
+  cat("WARNING: Missing variables:", paste(missing_vars, collapse = ", "), "\n")
+}
+
+
+# ==============================================================================
+# SAVE ANALYTICAL DATASET
+# ==============================================================================
+
+write.csv(
+  hospdata_clean,
+  paste0(data_output_path, "hospdata_analysis.csv"),
+  row.names = FALSE
+)
+
+cat("\n=== DATA SAVED SUCCESSFULLY ===\n")
+cat("Output file: hospdata_analysis.csv\n")
+cat("Location:", data_output_path, "\n")
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("CLEANING COMPLETE!\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+
+# ==============================================================================
+# OPTIONAL: CREATE SUMMARY STATISTICS TABLE
+# ==============================================================================
+
+# Uncomment to generate a summary table of key variables
+
+# summary_stats <- hospdata_clean %>%
+#   group_by(year) %>%
+#   summarise(
+#     n_hospitals = n_distinct(mcrnum),
+#     n_treated = sum(post_treat),
+#     pct_treated = round(mean(post_treat) * 100, 1),
+#     avg_beds = round(mean(beds, na.rm = TRUE), 1),
+#     avg_ucc_prop = round(mean(ucc_prop, na.rm = TRUE), 3),
+#     avg_mcaid_prop = round(mean(mcaid_prop, na.rm = TRUE), 3)
+#   )
+# 
+# print(summary_stats)
+# 
+# # Save summary stats
+# write.csv(
+#   summary_stats,
+#   paste0(data_output_path, "summary_stats_by_year.csv"),
+#   row.names = FALSE
+# )

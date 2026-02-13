@@ -5,6 +5,8 @@
 ## Goal:          Here is the code for the plots used in my third year paper.        
 ##  
 
+
+
 # Single Treatment Cohort 
 # Medicaid Discharges Proportion 
 group_mcaid_dis_2011 <- ggplot(

@@ -7,7 +7,6 @@
 
 library(fixest)
 library(did)
-library(ggplot2)
 
 View(hospdata_clean)
 
@@ -30,7 +29,7 @@ att_payermix5 <- att_gt(yname = "private_prop_discharges",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "treatment_num",                  
-                data = hospdata_aha %>% filter(!is.na(private_prop_discharges), private_prop_discharges > 0, year >= 2004, SERV == 10),
+                data = hospdata_clean %>% filter(!is.na(private_prop_discharges), private_prop_discharges > 0, year >= 2004),
                 control_group = "notyettreated",  
                 xformla = ~ prebeds + ct_pre_income,               # covariates (use ~1 if none)
                 est_method = "dr",
@@ -232,7 +231,7 @@ att_ucc_prop <- att_gt(yname = "ucc_prop",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "treatment_num",                  # the column we created
-                data = hospdata_aha %>% filter(!is.na(ucc_prop), ucc_prop > 0, year >= 2004, SERV == 10),
+                data = hospdata_clean %>% filter(!is.na(ucc_prop), ucc_prop > 0, year >= 2004),
                 control_group = "notyettreated",  # or "notyettreated"
                 xformla = ~ prebeds + ct_pre_income,                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)

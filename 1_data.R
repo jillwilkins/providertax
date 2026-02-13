@@ -10,6 +10,7 @@ library(stringr)
 library(tidyr)
 library(readr)
 library(lubridate)
+library(ggplot2)
 
 #load in hcris data  
 hcris <- read.delim("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/HCRIS_data.txt", stringsAsFactors = FALSE)
@@ -272,4 +273,4 @@ hospdata <- hospdata %>%
 # save working data
 write.csv(hospdata, "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/hospdata_hcris.csv", row.names = FALSE)
 
-
+View(hospdata)
