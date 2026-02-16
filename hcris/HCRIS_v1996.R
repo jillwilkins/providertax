@@ -28,6 +28,7 @@ hcris.vars = rbind(hcris.vars,c('name','S200000','00200','0100','alpha'))
 hcris.vars = rbind(hcris.vars,c('uncomp_care','S100000','03000','0100','numeric'))
 hcris.vars = rbind(hcris.vars,c('cost_to_charge','S100000','02400','0100','numeric'))
 hcris.vars = rbind(hcris.vars,c('new_cap_ass','A700002','00900','0200','numeric'))
+
 hcris.vars = rbind(hcris.vars,c('cash','G000000','00100','0100','numeric'))
 
 # add my variables 
@@ -35,6 +36,8 @@ hcris.vars = rbind(hcris.vars,c('net_mcaid_rev','S100000','01701','0100','numeri
 hcris.vars = rbind(hcris.vars,c('mcaid_charges','S100000','02800','0100','numeric'))
 hcris.vars = rbind(hcris.vars,c('mcaid_cost','S100000','02900','0100','numeric'))
 hcris.vars = rbind(hcris.vars,c('typectrl', 'S200000', '01800', '0100', 'numeric'))
+hcris.vars = rbind(hcris.vars,c('provtype', 'S200000', '01900', '0100', 'numeric'))
+
 
 colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")
 
