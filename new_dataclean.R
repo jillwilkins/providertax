@@ -33,7 +33,7 @@ cat(paste("Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 # ==============================================================================
 
 # WHY: Treatment data only available from 2004 onward
-# DECISION: Use Option 2 - start sample when treatment data begins
+# DECISION: start sample when treatment data begins
 # NOTE: States with treatment in 2004 are "always treated" in our data
 
 hospdata_clean <- hospdata %>%
@@ -46,54 +46,72 @@ cat(paste("Unique hospitals:", n_distinct(hospdata_clean$mcrnum), "\n"))
 
 
 # ==============================================================================
-# FILTER 2: HOSPITAL TYPE - REMOVE GOVERNMENTAL HOSPITALS
+# FILTER 2: HOSPITAL TYPE - GENERAL ACUTE CARE AND NON-GOVERNMENTAL
 # ==============================================================================
 
-# VARIABLE: typectrl (type of control/ownership)
-# REMOVE: typectrl 7-13 (all governmental hospitals)
-# KEEP: typectrl 1-6 (nonprofit and proprietary hospitals)
-#
-# REFERENCE: HCRIS Form S201, Line 21
-# 1 = Voluntary Nonprofit, Church         8 = Governmental, City-County
-# 2 = Voluntary Nonprofit, Other          9 = Governmental, County
-# 3 = Proprietary, Individual            10 = Governmental, State
-# 4 = Proprietary, Corporation           11 = Governmental, Hospital District
-# 5 = Proprietary, Partnership           12 = Governmental, City
-# 6 = Proprietary, Other                 13 = Governmental, Other
-# 7 = Governmental, Federal
+# OBJECTIVE: Keep only private (non-governmental) general acute care hospitals
+# METHOD: Use HCRIS variables when available, AHA variables as backup for 2011+
+
+# PART A: Keep only general acute care hospitals
+# HCRIS: provtype = 1 (General Short Term)
+# AHA: serv = 10 (General acute care)
 
 before_count <- n_distinct(hospdata_clean$mcrnum)
 
 hospdata_clean <- hospdata_clean %>%
-  filter(!typectrl %in% 7:13)
+  filter(provtype == 1 | serv == 10)
 
 after_count <- n_distinct(hospdata_clean$mcrnum)
 
-cat("\n=== FILTER 2: Hospital Type (Non-Governmental Only) ===\n")
+cat("\n=== FILTER 2A: General Acute Care Only ===\n")
 cat(paste("Hospitals removed:", before_count - after_count, "\n"))
 cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
 cat(paste("Unique hospitals remaining:", after_count, "\n"))
 
-# Show breakdown of remaining hospital types
-cat("\nRemaining hospital types:\n")
+
+# PART B: Keep only non-governmental hospitals
+# HCRIS typectrl: Keep 1-6 (nonprofit & proprietary), Remove 7-13 (governmental)
+# AHA cntrl: Keep 21,23,30-33 (nonprofit & for-profit), Remove 12-16,41-48 (governmental)
+#
+# HCRIS CODES:                           AHA CODES:
+# 1 = Nonprofit, Church                  21 = Church operated
+# 2 = Nonprofit, Other                   23 = Other not-for-profit
+# 3 = Proprietary, Individual            31 = Individual
+# 4 = Proprietary, Corporation           33 = Corporation
+# 5 = Proprietary, Partnership           32 = Partnership
+# 6 = Proprietary, Other                 30 = Other investor-owned
+# 7-13 = Governmental (REMOVE)           12-16, 41-48 = Governmental (REMOVE)
+
+before_count <- n_distinct(hospdata_clean$mcrnum)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(
+    typectrl %in% 1:6 |                           # HCRIS: non-governmental
+    cntrl %in% c(21, 23, 30, 31, 32, 33)         # AHA: non-governmental
+  )
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
+
+cat("\n=== FILTER 2B: Non-Governmental Only ===\n")
+cat(paste("Hospitals removed:", before_count - after_count, "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+# Verify ownership distribution
+cat("\nOwnership type breakdown:\n")
 hospdata_clean %>%
-  distinct(mcrnum, typectrl) %>%
-  count(typectrl) %>%
   mutate(
-    type_label = case_when(
-      typectrl == 1 ~ "Voluntary Nonprofit, Church",
-      typectrl == 2 ~ "Voluntary Nonprofit, Other",
-      typectrl == 3 ~ "Proprietary, Individual",
-      typectrl == 4 ~ "Proprietary, Corporation",
-      typectrl == 5 ~ "Proprietary, Partnership",
-      typectrl == 6 ~ "Proprietary, Other",
+    ownership = case_when(
+      !is.na(typectrl) & typectrl %in% 1:2 ~ "Nonprofit",
+      !is.na(typectrl) & typectrl %in% 3:6 ~ "For-profit",
+      !is.na(cntrl) & cntrl %in% c(21, 23) ~ "Nonprofit",
+      !is.na(cntrl) & cntrl %in% c(30, 31, 32, 33) ~ "For-profit",
       TRUE ~ "Unknown"
     )
   ) %>%
-  select(typectrl, type_label, n) %>%
+  distinct(mcrnum, ownership) %>%
+  count(ownership) %>%
   print()
-
-
 # ==============================================================================
 # FILTER 3: MULTI-STATE HOSPITALS (PLACEHOLDER)
 # ==============================================================================
@@ -262,6 +280,7 @@ if (length(hospitals_with_zero_beds) > 0) {
   cat("No hospitals with zero beds found. ✓\n")
 }
 
+cat(paste("  Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 
 # ==============================================================================
 # FINAL SAMPLE SUMMARY

@@ -168,3 +168,4 @@ final.hcris.data =
 
 write_tsv(final.hcris.data,'data/output/HCRIS_Data.txt')
 colnames(final.hcris.data)
+View(final.hcris.data)

@@ -83,4 +83,3 @@ for (i in 1998:2011) {
 }
 write_tsv(final.hcris.v1996,'data/output/HCRIS_Data_v1996.txt',append=FALSE,col_names=TRUE)
 
-

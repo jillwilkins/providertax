@@ -355,7 +355,33 @@ hospdata %>%
   print()
 
 # ==============================================================================
-# 9. SAVE FULL DATASET: no hospitals or years have been dropped yet. 
+# 9. JOIN AHA: join necessary var from aha. 
+# ==============================================================================
+# Load AHA data
+aha <- read_csv(paste0(data_input_path, "AHAdata_20052023.csv"))
+
+#cahnge column names to lowercase
+colnames(aha) <- tolower(colnames(aha))
+
+# Select only what you need from AHA and prepare for merge
+aha_minimal <- aha %>%
+  select(mcrnum, year, cntrl, serv) 
+
+# Convert aha_minimal mcrnum to match hospdata (integer)
+aha_minimal <- aha_minimal %>%
+  mutate(mcrnum = as.integer(mcrnum))
+
+# Merge on both mcrnum and year
+hospdata <- hospdata %>%
+  left_join(aha_minimal, by = c("mcrnum", "year"))
+
+# Check AHA coverage
+cat("\n=== AHA DATA COVERAGE ===\n")
+cat(paste("AHA year range:", min(aha_minimal$year), "to", max(aha_minimal$year), "\n"))
+cat(paste("Unique hospitals in AHA:", n_distinct(aha_minimal$mcrnum), "\n"))
+
+# ==============================================================================
+# 10. SAVE FULL DATASET: no hospitals or years have been dropped yet. 
 # ==============================================================================
 
 write.csv(
@@ -371,15 +397,3 @@ cat(paste("Years covered:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 cat(paste("Total observations:", nrow(hospdata), "\n"))
 
 
-
-
-# How common is missing bed data?
-bed_missing_summary <- hospdata %>%
-  group_by(mcrnum) %>%
-  summarise(
-    total_years = n(),
-    missing_years = sum(is.na(beds)),
-    pct_missing = missing_years / total_years * 100
-  )
-
-table(bed_missing_summary$missing_years)  # How many hospitals have 0, 1, 2, 3... missing years?
