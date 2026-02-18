@@ -190,8 +190,8 @@ dis_did <- hospdata %>%
 att_mcaid_prop_dis <- att_gt(yname = "mcaid_prop_discharges",
                 tname = "year",
                 idname = "mcrnum",
-                gname = "treatment_num2",                  # the column we created
-                data = hospdata %>% filter(beds > 30, mcaid_prop_discharges > 0),
+                gname = "gname",                  # the column we created
+                data = hospdata_analysis %>% filter (year >= 2004, year <= 2014),
                 control_group = "notyettreated",          # or "nevertreated"
                 xformla = ~ beds,                        # covariates (use ~1 if none)
                 est_method = "ipw",                        # doubly-robust (optional)
@@ -374,10 +374,9 @@ ggsave("sumplots/events/overall_psyemhos_pretty.png", plot = overall_psyemhos_pr
 att_beds <- att_gt(yname = "beds",
                 tname = "year",
                 idname = "mcrnum",
-                gname = "treatment_num",                  # the column we created
-                data = hospdata_clean,
-                control_group = "notyettreated",  # or "notyettreated"
-                xformla = ~ ct_pre_income,                # covariates (use ~1 if none)
+                gname = "gname",                  # the column we created
+                data = hospdata_analysis %>% filter (year >= 2004, year <= 2014),
+                control_group = "notyettreated",  # or "notyettreated"                # covariates (use ~1 if none)
                 est_method = "dr",            # doubly-robust (optional)
                 clustervars = "state",
                 allow_unbalanced = TRUE
@@ -555,3 +554,102 @@ overall_rural_ccr_pretty <- overall_rural_ccr +
   guides(colour = "none", fill = "none") 
 print(overall_rural_ccr_pretty)
 ggsave("sumplots/events/overall_rural_ccr_pretty.png", plot = overall_rural_ccr_pretty, width = 10, height = 8, dpi = 300) 
+
+
+# Keep treated cohorts 2004-2012
+# Use adopters 2013+ as "not yet treated" controls
+hospdata_analysis <- hospdata_analysis %>%
+  mutate(
+    analysis_group = case_when(
+      gname == 0 ~ "Never Treated",           # Never adopters
+      gname <= 2012 ~ "Early Adopter",        # Your treatment group
+      gname >= 2013 ~ "Late Adopter"          # Control until they adopt
+    )
+  )
+
+# For C&S, this means:
+# - States adopting 2013+ serve as controls for 2004-2012 adopters
+# - Then become treated themselves
+# - C&S handles this automatically with staggered timing
+
+result_test <- att_gt(
+  yname = "ucc_prop",
+  tname = "year",
+  idname = "mcrnum",
+  gname = "gname",  # Includes all cohorts
+  data = hospdata_analysis,
+  control_group = "notyettreated",  # Uses 2013+ as controls for early cohorts
+  est_method = "dr"
+)
+
+result_test <- att_gt(yname = "mcaid_prop_discharges",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "gname",                  # the column we created
+                data = hospdata_analysis %>% filter(gname != 2013),  # Remove year restriction,
+                control_group = "notyettreated",  # or "notyettreated"
+                xformla = ~ 1,               # covariates (use ~1 if none)
+                est_method = "dr",# doubly-robust (optional)
+                clustervars = "state",
+                allow_unbalanced = TRUE
+                )
+
+
+# Then aggregate focusing on early cohorts:
+# Then aggregate normally
+agg_simple <- aggte(result_test, type = "simple")
+agg_dynamic <- aggte(result_test, type = "dynamic")
+agg_group <- aggte(result_test, type = "group")
+
+agg_simple <- aggte(result_test, type = "simple")
+summary(agg_simple)
+
+# View results
+summary(agg_simple)
+summary(agg_dynamic)
+ggdid(agg_dynamic)  
+
+# Method 1: Filter data BEFORE running att_gt
+hospdata_early <- hospdata_analysis %>%
+  filter(gname <= 2012 | gname == 0)  # Early adopters + never treated
+
+summary(hospdata_analysis$mcaid_discharges)
+
+result_pre <- att_gt(
+  yname = "ucc_prop",
+  tname = "year",
+  idname = "mcrnum",
+  gname = "gname",
+  data = hospdata_analysis,
+  control_group = "notyettreated"
+)
+
+agg_simple_early <- aggte(result_pre, type = "simple")
+summary(agg_simple_early)
+
+agg_dynamic_early <- aggte(result_pre, type = "dynamic")
+summary(agg_dynamic_early)
+ggdid(agg_dynamic_early)
+
+agg_group_early <- aggte(result_pre, type = "group")
+summary(agg_group_early)
+
+result_all <- att_gt(
+  yname = "mcaid_prop_discharges",
+  tname = "year",
+  idname = "mcrnum",
+  gname = "gname",
+  data = hospdata_analysis,
+  control_group = "notyettreated"
+)
+
+agg_simple_late <- aggte(result_all, type = "simple")
+summary(agg_simple_late)
+
+agg_dynamic_late <- aggte(result_all, type = "dynamic")
+summary(agg_dynamic_late)
+ggdid(agg_dynamic_late)
+
+agg_group_late <- aggte(result_late, type = "group")
+summary(agg_group_late)
+
