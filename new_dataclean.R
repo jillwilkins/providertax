@@ -374,6 +374,8 @@ hospdata_clean %>%
   count(cohort, sort = TRUE) %>%
   print()
 
+View(hospdata_clean)
+
 # ==============================================================================
 # CREATE PRE-TREATMENT BASELINE CHARACTERISTICS
 # ==============================================================================
@@ -503,3 +505,4 @@ cat(rep("=", 70), "\n\n", sep = "")
 #   paste0(data_output_path, "summary_stats_by_year.csv"),
 #   row.names = FALSE
 # )
+

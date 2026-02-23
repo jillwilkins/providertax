@@ -177,7 +177,10 @@ fmap <- fmap %>%
   rename(multiplier = m) %>%
   mutate(year = as.integer(year)) %>%
   filter(!is.na(fmap) & !is.na(multiplier))  # Remove rows from title lines
-
+# What does your tax data look like?
+tax %>%
+  select(state, firsttax) %>%
+  filter(firsttax %in% c("2004", "2005", "2006", "never")) 
 
 # ==============================================================================
 # 4. CREATE CUMULATIVE TAX COUNT (for descriptive stats)
@@ -223,31 +226,28 @@ View(expansion)
 # 5. MERGE ALL DATA SOURCES
 # ==============================================================================
 
-# Create master state-year dataset ---------------------------------------------
+# Create master state-year dataset for TIME-VARYING variables only
 fmap_tax <- fmap %>%
-  left_join(
-    tax %>% select(state, firsttax),
-    by = "state"
-  ) %>%
-  left_join(
-    tax_totals,
-    by = "year"
-  ) %>% 
-  left_join(
-    expansion,
-    by = "state"
-  )
+  left_join(tax_totals, by = "year") %>%  # Year-level only
+  left_join(expansion, by = "state")       # State-level only
 
-# Merge with HCRIS hospital data -----------------------------------------------
-# RESULT: Hospital-year panel with state policy variables
+# Create separate state-level dataset for NON-TIME-VARYING variables
+state_info <- tax %>%
+  select(state, firsttax)  # This is STATE-LEVEL, not state-year
 
+# Merge with HCRIS hospital data
 hospdata <- hcris %>%
+  # First merge state-year variables
   left_join(
-    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax, expyear),
+    fmap_tax %>% select(state, year, fmap, multiplier, totaltax, expyear),
     by = c("state", "year")
   ) %>%
-  rename(mcrnum = provider_number)  # Rename for consistency
-
+  # Then merge state-level variables (no year!)
+  left_join(
+    state_info,
+    by = "state"  # ← Only by state!
+  ) %>%
+  rename(mcrnum = provider_number)
 
 # ==============================================================================
 # 6. CREATE TREATMENT VARIABLES 
@@ -269,46 +269,38 @@ hospdata <- hospdata %>%
 hospdata <- hospdata %>%
   mutate(
     # 1. GNAME: Treatment cohort for C&S package
-    # - Year of adoption for treated states
-    # - 0 for never-treated states (C&S convention)
     gname = case_when(
-      is.na(firsttax_num) ~ 0,           # Never treated = 0
-      TRUE ~ firsttax_num                # Otherwise = adoption year
+      is.na(firsttax_num) ~ 0,                    # Never treated = 0
+      firsttax_num == 2004 ~ 0,                   # 2004 = always treated = 0
+      TRUE ~ firsttax_num                         # 2005+ = adoption year
     ),
     
     # 2. COHORT: Character version for readability
-    # - "Never" for never-treated
-    # - Year as character for treated states
     cohort = case_when(
       is.na(firsttax_num) ~ "Never",
+      firsttax_num == 2004 ~ "Always (2004)",     # Mark as always treated
       TRUE ~ as.character(firsttax_num)
     ),
     
     # 3. EVER_TREAT: Simple indicator for ever being treated
-    # - 1 if state ever adopts tax
-    # - 0 if never adopts
     ever_treat = case_when(
       is.na(firsttax_num) ~ 0,
-      TRUE ~ 1
+      TRUE ~ 1                                    # Includes 2004 cohort
     ),
     
     # 4. POST_TREAT: Is treatment currently active?
-    # - 1 if current year >= adoption year
-    # - 0 otherwise
     post_treat = case_when(
-      is.na(firsttax_num) ~ 0,           # Never treated = always 0
-      year >= firsttax_num ~ 1,          # After adoption = 1
-      TRUE ~ 0                           # Before adoption = 0
+      is.na(firsttax_num) ~ 0,                    # Never treated = always 0
+      firsttax_num == 2004 ~ 1,                   # 2004 cohort = always 1 (even in 2003)
+      year >= firsttax_num ~ 1,                   # After adoption = 1
+      TRUE ~ 0                                    # Before adoption = 0
     ),
     
     # 5. TIME_TO_TREAT: Years relative to treatment adoption
-    # - Negative = years before treatment
-    # - 0 = year of treatment
-    # - Positive = years after treatment
-    # - NA = never treated (for plotting/event studies)
     time_to_treat = case_when(
-      is.na(firsttax_num) ~ NA_real_,    # Never treated = NA
-      TRUE ~ year - firsttax_num         # Otherwise = year - adoption year
+      is.na(firsttax_num) ~ NA_real_,             # Never treated = NA
+      firsttax_num == 2004 ~ NA_real_,            # Always treated = NA
+      TRUE ~ year - firsttax_num                  # 2005+ cohorts: 2003 → -2, 2004 → -1, etc.
     ),
   
 
@@ -324,6 +316,20 @@ hospdata <- hospdata %>%
   # early mediciad expander 
   # use this to identify the early medicaid expansion states (likely different from non)
   )
+
+# Check 2004 cohort in 2003
+hospdata %>%
+  filter(cohort == "Always (2004)", year == 2003) %>%
+  select(state, year, firsttax_num, cohort, gname, post_treat, ever_treat) %>%
+  head(10)
+# Should show: cohort = "Always (2004)", post_treat = 1
+
+# Check 2005 cohort in 2003
+hospdata %>%
+  filter(cohort == "2005", year == 2003) %>%
+  select(state, year, firsttax_num, cohort, gname, post_treat, time_to_treat) %>%
+  head(10)
+# Should show: cohort = "2005", post_treat = 0, time_to_treat = -2
 
 
 # ==============================================================================
@@ -366,7 +372,6 @@ hospdata <- hospdata %>%
     op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp
   )
 
-View(hospdata)  # Check the final dataset structure and variables
 # ==============================================================================
 # 8. VERIFY TREATMENT GROUPS
 # ==============================================================================

@@ -97,7 +97,7 @@ cat("\n=== TABLE 2: SUMMARY STATISTICS BY TREATMENT COHORT ===\n")
 print(summary_by_cohort, n = Inf)
 View(summary_by_cohort)
 
-View(hospdata_analysis %>% filter(cohort == 2005))
+View(hospdata_analysis)
 # ==============================================================================
 # TABLE 3: PRE-TREATMENT VS POST-TREATMENT COMPARISON
 # ==============================================================================
