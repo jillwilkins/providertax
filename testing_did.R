@@ -582,27 +582,43 @@ result_test <- att_gt(
   est_method = "dr"
 )
 
-result_test <- att_gt(yname = "mcaid_prop_discharges",
+hospdata_analysis <- hospdata_analysis %>%
+  mutate(log_op = log(tot_operating_exp), 
+         log_npr = log(net_pat_rev), 
+         dis_per_bed = mcaid_discharges / beds, 
+         log_mcc = log(mcaid_charges),
+         hosplarge = ifelse(beds > 500, 1, 0))
+
+
+result_test <- att_gt(yname = "cost_per_discharge",
                 tname = "year",
                 idname = "mcrnum",
-                gname = "gname",                  # the column we created
-                data = hospdata_analysis %>% filter(gname != 2013),  # Remove year restriction,
-                control_group = "notyettreated",  # or "notyettreated"
+                gname = "gname",                  
+                data = hospdata_analysis %>% filter(state != "HI", year <= 2020),  
+                control_group = "notyettreated",  
                 xformla = ~ 1,               # covariates (use ~1 if none)
-                est_method = "dr",# doubly-robust (optional)
-                clustervars = "state",
+                est_method = "dr",
+                clustervars = "state", 
+                base_period = "universal",
                 allow_unbalanced = TRUE
                 )
+warnings()
 
-
-# Then aggregate focusing on early cohorts:
-# Then aggregate normally
-agg_simple <- aggte(result_test, type = "simple")
-agg_dynamic <- aggte(result_test, type = "dynamic")
-agg_group <- aggte(result_test, type = "group")
+summary(result_test, type = "group")
+ggdid(result_test)
 
 agg_simple <- aggte(result_test, type = "simple")
 summary(agg_simple)
+
+agg_dynamic <- aggte(result_test, type = "dynamic", min_e = -6, max_e = 6)
+summary(agg_dynamic)
+ggdid(agg_dynamic)
+
+agg_group <- aggte(result_test, type = "group")
+summary(agg_group)
+ggdid(agg_group)
+
+
 
 # View results
 summary(agg_simple)

@@ -37,7 +37,7 @@ cat(paste("Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 # NOTE: States with treatment in 2004 are "always treated" in our data
 
 hospdata_clean <- hospdata %>%
-  filter(year >= 2004 & year <= 2024)
+  filter(year >= 2003 & year <= 2024)
 
 cat("\n=== FILTER 1: Year Range (2004-2024) ===\n")
 cat(paste("Observations removed:", nrow(hospdata) - nrow(hospdata_clean), "\n"))
@@ -175,11 +175,12 @@ cat(paste("Unique hospitals remaining:", after_count, "\n"))
 # ==============================================================================
 
 # WHY: Very small hospitals may have different operational dynamics
-# DECISION: Remove hospitals with average bed count < 30
-# METHOD: Calculate average beds across all years, then filter entire hospital
+# DECISION: Remove hospitals that ever report < 30 beds in any year
+# METHOD: Identify hospitals where minimum bed count < 30, remove entire hospital
+# RATIONALE: Ensures consistent hospital size; transient drops below 30 suggest data issues
 
-# Calculate average bed count for each hospital
-hospital_avg_beds <- hospdata_clean %>%
+# Calculate bed statistics for each hospital
+hospital_bed_stats <- hospdata_clean %>%
   group_by(mcrnum) %>%
   summarise(
     avg_beds = mean(beds, na.rm = TRUE),
@@ -187,9 +188,9 @@ hospital_avg_beds <- hospdata_clean %>%
     max_beds = max(beds, na.rm = TRUE)
   )
 
-# Identify small hospitals (average < 30 beds)
-small_hospitals <- hospital_avg_beds %>%
-  filter(avg_beds < 30) %>%
+# Identify hospitals that EVER have < 30 beds
+small_hospitals <- hospital_bed_stats %>%
+  filter(min_beds < 30) %>%
   pull(mcrnum)
 
 before_count <- n_distinct(hospdata_clean$mcrnum)
@@ -199,14 +200,14 @@ hospdata_clean <- hospdata_clean %>%
 
 after_count <- n_distinct(hospdata_clean$mcrnum)
 
-cat("\n=== FILTER 5: Minimum Bed Count (Average >= 30) ===\n")
-cat(paste("Hospitals removed (avg beds < 30):", before_count - after_count, "\n"))
+cat("\n=== FILTER 5: Minimum Bed Count (Ever < 30 beds) ===\n")
+cat(paste("Hospitals removed (min beds < 30 in any year):", before_count - after_count, "\n"))
 cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
 cat(paste("Unique hospitals remaining:", after_count, "\n"))
 
 # Show bed count distribution for remaining hospitals
 cat("\nBed count distribution (remaining hospitals):\n")
-hospital_avg_beds %>%
+hospital_bed_stats %>%
   filter(mcrnum %in% hospdata_clean$mcrnum) %>%
   summarise(
     min_avg = min(avg_beds),
@@ -283,6 +284,57 @@ if (length(hospitals_with_zero_beds) > 0) {
 cat(paste("  Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 
 # ==============================================================================
+# FILTER 7: MINIMUM DISCHARGE VOLUME
+# ==============================================================================
+
+# WHY: Hospitals with average < 100 discharges/year likely specialty facilities or data errors
+# DECISION: Remove hospitals with average discharges < 100
+
+# Identify low-volume hospitals
+low_discharge_hospitals <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  summarise(avg_discharges = mean(tot_discharges, na.rm = TRUE)) %>%
+  filter(avg_discharges < 100) %>%
+  pull(mcrnum)
+
+before_count <- n_distinct(hospdata_clean$mcrnum)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(!mcrnum %in% low_discharge_hospitals)
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
+
+cat("\n=== FILTER 7: Minimum Discharge Volume (Avg >= 100) ===\n")
+cat(paste("Hospitals removed:", before_count - after_count, "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+# ==============================================================================
+# FILTER 8: Other unrealisic values
+# ==============================================================================
+
+# negative operating expenses, net patient revenue, charges
+hosp_bad_data <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  filter(any(tot_operating_exp < 0, na.rm = TRUE) | any(net_pat_rev < 0, na.rm = TRUE) 
+  | any(tot_charges < 0, na.rm = TRUE) | any(mcaid_charges < 0, na.rm = TRUE) | any(cost_to_charge < 0, na.rm = TRUE)
+  | cost_to_charge > 2) %>%
+  pull(mcrnum) %>%
+  unique()
+
+before_count <- n_distinct(hospdata_clean$mcrnum)
+
+hospdata_clean <- hospdata_clean %>%
+  filter(!mcrnum %in% hosp_bad_data)
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
+
+cat("\n=== FILTER 8: Remove Hospitals with Unrealistic Financial Values ===\n")
+cat(paste("Hospitals removed (negative financial values):", before_count - after_count, "\n"))
+cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
+cat(paste("Unique hospitals remaining:", after_count, "\n"))
+
+# ==============================================================================
 # FINAL SAMPLE SUMMARY
 # ==============================================================================
 
@@ -322,6 +374,68 @@ hospdata_clean %>%
   count(cohort, sort = TRUE) %>%
   print()
 
+# ==============================================================================
+# CREATE PRE-TREATMENT BASELINE CHARACTERISTICS
+# ==============================================================================
+
+hospdata_clean <- hospdata_clean %>%
+  group_by(mcrnum) %>%
+  arrange(year) %>%
+  mutate(
+    # Pre-treatment averages (for treated hospitals)
+    # For never-treated (gname == 0), use early years (2004-2006)
+    pre_beds_avg = case_when(
+      gname == 0 ~ mean(beds[year %in% 2004:2006], na.rm = TRUE),  # Never treated: use 2004-2006
+      TRUE ~ mean(beds[year < gname], na.rm = TRUE)                 # Treated: use all years before treatment
+    ),
+    
+    pre_discharges_avg = case_when(
+      gname == 0 ~ mean(tot_discharges[year %in% 2004:2006], na.rm = TRUE),
+      TRUE ~ mean(tot_discharges[year < gname], na.rm = TRUE)
+    ),
+    
+    # Alternative: Use a fixed baseline period for everyone (more comparable)
+    baseline_beds = mean(beds[year %in% 2004:2006], na.rm = TRUE),
+    baseline_discharges = mean(tot_discharges[year %in% 2004:2006], na.rm = TRUE),
+    
+    # Number of pre-treatment years available
+    n_pre_years = sum(year < gname, na.rm = TRUE),
+    n_baseline_years = sum(year %in% 2004:2006, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Check the results
+cat("\n=== PRE-TREATMENT BASELINE CHARACTERISTICS ===\n")
+
+# Summary by cohort
+hospdata_clean %>%
+  group_by(cohort) %>%
+  summarise(
+    n_hospitals = n_distinct(mcrnum),
+    mean_pre_beds = mean(pre_beds_avg, na.rm = TRUE),
+    mean_baseline_beds = mean(baseline_beds, na.rm = TRUE),
+    mean_pre_discharges = mean(pre_discharges_avg, na.rm = TRUE),
+    pct_missing_pre_beds = round(mean(is.na(pre_beds_avg)) * 100, 1),
+    pct_missing_baseline = round(mean(is.na(baseline_beds)) * 100, 1)
+  ) %>%
+  print(n = Inf)
+
+# Check for issues
+cat("\n=== POTENTIAL ISSUES ===\n")
+cat(paste("Hospitals with missing pre_beds_avg:", 
+          sum(is.na(hospdata_clean$pre_beds_avg)), "\n"))
+cat(paste("Hospitals with missing baseline_beds:", 
+          sum(is.na(hospdata_clean$baseline_beds)), "\n"))
+
+# Check hospitals treated very early (might have no pre-treatment data)
+early_treated <- hospdata_clean %>%
+  filter(gname == 2004) %>%
+  distinct(mcrnum, pre_beds_avg, n_pre_years) %>%
+  arrange(n_pre_years)
+
+cat("\n=== 2004 COHORT (LIMITED PRE-TREATMENT DATA) ===\n")
+cat(paste("2004 cohort has", unique(early_treated$n_pre_years), "pre-treatment years\n"))
+cat("Consider using baseline_beds instead for this cohort\n")
 
 # ==============================================================================
 # VERIFY TREATMENT VARIABLES ARE INTACT

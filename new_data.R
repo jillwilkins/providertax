@@ -1,6 +1,7 @@
 # ==============================================================================
 # HCRIS Data Preparation Script - CLEANED VERSION
 # Purpose: Prepare hospital-level panel data for staggered DiD analysis
+# Reference where im at: data, dataclean, datafilter, and stats files are cleaned and acceptable.
 # ==============================================================================
 
 # Load required packages -------------------------------------------------------
@@ -201,7 +202,23 @@ tax_totals <- tax %>%
     .groups = "drop"
   )
 
+# expansion data 
+expansion <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/expansion.csv", skip = 2)
 
+#drop excess rows and rename states
+expansion <- expansion %>% select(-Footnotes)
+expansion <- expansion[2:52, ]
+expansion <- expansion %>% rename(statename = Location) 
+expansion <- expansion %>% rename(expdate = Expansion.Implementation.Date) 
+expansion$state <- state.abb[match(expansion$statename, state.name)]
+expansion$state[expansion$statename == "District of Columbia"] <- "DC"
+expansion <- expansion %>%
+  mutate(
+    expyear = case_when(
+      expdate %in% c("N/A", "", NA) ~ 0,   # keep NAs for non-expansion states
+      TRUE ~ year(mdy(expdate))                   # extract the year (month/day/year)
+    )) %>% select(state, expdate, expyear)
+View(expansion)
 # ==============================================================================
 # 5. MERGE ALL DATA SOURCES
 # ==============================================================================
@@ -215,6 +232,10 @@ fmap_tax <- fmap %>%
   left_join(
     tax_totals,
     by = "year"
+  ) %>% 
+  left_join(
+    expansion,
+    by = "state"
   )
 
 # Merge with HCRIS hospital data -----------------------------------------------
@@ -222,7 +243,7 @@ fmap_tax <- fmap %>%
 
 hospdata <- hcris %>%
   left_join(
-    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax),
+    fmap_tax %>% select(state, year, fmap, multiplier, firsttax, totaltax, expyear),
     by = c("state", "year")
   ) %>%
   rename(mcrnum = provider_number)  # Rename for consistency
@@ -288,7 +309,20 @@ hospdata <- hospdata %>%
     time_to_treat = case_when(
       is.na(firsttax_num) ~ NA_real_,    # Never treated = NA
       TRUE ~ year - firsttax_num         # Otherwise = year - adoption year
-    )
+    ),
+  
+
+  # 6. EXP_STATUS: Is this state operating under Medicaid expansion in this year?
+  # 0 = not expanded in this year 
+  # 1 = expanded in this year
+  exp_status = case_when(
+    is.na(expyear) ~ 0,                 # Non-expansion states = 0
+    year >= expyear ~ 1,                # After expansion = 1
+    TRUE ~ 0                           # Before expansion = 0
+  )
+
+  # early mediciad expander 
+  # use this to identify the early medicaid expansion states (likely different from non)
   )
 
 
@@ -323,7 +357,13 @@ hospdata <- hospdata %>%
     mm_prop_discharges = (mcaid_discharges + mcare_discharges) / tot_discharges,
     
     # Private insurance share (residual)
-    private_prop_discharges = 1 - mm_prop_discharges
+    private_prop_discharges = 1 - mm_prop_discharges,
+
+    # number of private discharges 
+    private_discharges = tot_discharges - (mcaid_discharges + mcare_discharges),
+
+    # operating margin 
+    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp
   )
 
 View(hospdata)  # Check the final dataset structure and variables
@@ -395,5 +435,3 @@ cat("Output file: hospdata_full.csv\n")
 cat(paste("Number of hospitals:", n_distinct(hospdata$mcrnum), "\n"))
 cat(paste("Years covered:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 cat(paste("Total observations:", nrow(hospdata), "\n"))
-
-

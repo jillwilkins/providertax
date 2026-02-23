@@ -8,8 +8,7 @@ library(knitr)
 library(kableExtra)  # Optional: for prettier tables
 
 # Load data if not already in environment
-# hospdata_analysis <- read.csv("path/to/hospdata_analysis.csv")
-
+# hospdata_analysis <- read.csv(paste0(data_output_path, "hospdata_analysis.csv"))
 
 # ==============================================================================
 # TABLE 1: OVERALL SUMMARY STATISTICS
@@ -38,9 +37,15 @@ summary_overall <- hospdata_analysis %>%
     
     net_pat_rev_mean = mean(net_pat_rev, na.rm = TRUE),
     net_pat_rev_sd = sd(net_pat_rev, na.rm = TRUE),
+
+    tot_operating_exp_mean = mean(tot_operating_exp, na.rm = TRUE),
+    tot_operating_exp_sd = sd(tot_operating_exp, na.rm = TRUE),
     
     cost_per_discharge_mean = mean(cost_per_discharge, na.rm = TRUE),
     cost_per_discharge_sd = sd(cost_per_discharge, na.rm = TRUE),
+    
+    op_margin_mean = mean(op_margin, na.rm = TRUE),
+    op_margin_sd = sd(op_margin, na.rm = TRUE),
     
     # Treatment
     ever_treat_pct = mean(ever_treat, na.rm = TRUE) * 100,
@@ -65,12 +70,14 @@ print(table1, n = Inf)
 # TABLE 2: SUMMARY STATISTICS BY TREATMENT COHORT
 # ==============================================================================
 
-summary_by_cohort <- hospdata_analysis %>%
+summary_by_cohort <- hospdata_analysis %>% #filter(year <= 2019) %>%  # Limit to pre-2020 for this table
   group_by(cohort) %>%
   summarise(
     n_obs = n(),
     n_hospitals = n_distinct(mcrnum),
+    pct_hospitals = round(n_hospitals / n_distinct(hospdata_analysis$mcrnum) * 100, 1),
     n_states = n_distinct(state),
+    pct_states = round(n_states / n_distinct(hospdata_analysis$state) * 100, 1),
     
     # Hospital characteristics
     beds_mean = mean(beds, na.rm = TRUE),
@@ -80,6 +87,8 @@ summary_by_cohort <- hospdata_analysis %>%
     ucc_prop_mean = mean(ucc_prop, na.rm = TRUE),
     mcaid_prop_discharges_mean = mean(mcaid_prop_discharges, na.rm = TRUE),
     net_pat_rev_mean = mean(net_pat_rev, na.rm = TRUE),
+    tot_operating_exp_mean = mean(tot_operating_exp, na.rm = TRUE),
+    op_margin_mean = mean(op_margin, na.rm = TRUE),
     cost_per_discharge_mean = mean(cost_per_discharge, na.rm = TRUE)
   ) %>%
   mutate(across(where(is.numeric) & !c(n_obs, n_hospitals, n_states), ~round(., 2)))
@@ -88,6 +97,7 @@ cat("\n=== TABLE 2: SUMMARY STATISTICS BY TREATMENT COHORT ===\n")
 print(summary_by_cohort, n = Inf)
 View(summary_by_cohort)
 
+View(hospdata_analysis %>% filter(cohort == 2005))
 # ==============================================================================
 # TABLE 3: PRE-TREATMENT VS POST-TREATMENT COMPARISON
 # ==============================================================================
@@ -117,6 +127,12 @@ summary_pre_post <- hospdata_analysis %>%
     
     net_pat_rev_mean = mean(net_pat_rev, na.rm = TRUE),
     net_pat_rev_sd = sd(net_pat_rev, na.rm = TRUE),
+
+    tot_operating_exp_mean = mean(tot_operating_exp, na.rm = TRUE),
+    tot_operating_exp_sd = sd(tot_operating_exp, na.rm = TRUE), 
+
+    op_margin_mean = mean(op_margin, na.rm = TRUE), 
+    op_margin_sd = sd(op_margin, na.rm = TRUE),
     
     cost_per_discharge_mean = mean(cost_per_discharge, na.rm = TRUE),
     cost_per_discharge_sd = sd(cost_per_discharge, na.rm = TRUE)
@@ -260,3 +276,6 @@ View(paper_table1)
 
 cat("\n=== SUMMARY STATISTICS COMPLETE ===\n")
 cat("All tables printed above. Uncomment export lines to save as CSV files.\n")
+
+
+
