@@ -39,6 +39,7 @@ hcris.vars = rbind(hcris.vars,c('typectrl', 'S200000', '01800', '0100', 'numeric
 hcris.vars = rbind(hcris.vars,c('provtype', 'S200000', '01900', '0100', 'numeric'))
 
 
+
 colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")
 
 setwd("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/")

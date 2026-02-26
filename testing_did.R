@@ -587,14 +587,56 @@ hospdata_analysis <- hospdata_analysis %>%
          log_npr = log(net_pat_rev), 
          dis_per_bed = mcaid_discharges / beds, 
          log_mcc = log(mcaid_charges),
-         hosplarge = ifelse(beds > 500, 1, 0))
+         hosplarge = ifelse(beds > 500, 1, 0), 
+         npr_per_bed = net_pat_rev / beds,
+         cost_per_bed = tot_operating_exp / beds,
+         npr_per_dis = net_pat_rev / tot_discharges, 
+        cost_per_dis = tot_operating_exp / tot_discharges, 
+        discount_per_bed = tot_discounts / beds,
+          )
 
+hospdata_op <- hospdata_analysis %>%
+  filter(flag_op_exp_jump != 1)
 
-result_test <- att_gt(yname = "cost_per_discharge",
+# this was good for mcaid discharges, net pat rev, log_mcc, mcaid_charges, mcaid_discharges,  
+result_test <- att_gt(yname = "log_mcc",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "gname",                  
-                data = hospdata_analysis %>% filter(state != "HI", year <= 2020),  
+                data = hospdata_analysis %>% filter(state != "HI"), # state != "TX", state != "NJ"),  
+                control_group = "notyettreated",  
+                xformla = ~ 1,               # covariates (use ~1 if none)
+                est_method = "dr",
+                clustervars = "state", 
+                base_period = "universal",
+                allow_unbalanced = TRUE
+                )
+
+warnings()
+View(hospdata_analysis %>% filter(expyear == firsttax))
+
+summary(result_test, type = "group")
+ggdid(result_test)
+
+agg_simple <- aggte(result_test, type = "simple")
+summary(agg_simple)
+
+agg_dynamic <- aggte(result_test, type = "dynamic", min_e = -3, max_e = 5)
+summary(agg_dynamic)
+ggdid(agg_dynamic)
+
+agg_group <- aggte(result_test, type = "group")
+summary(agg_group)
+ggdid(agg_group)
+
+View(hospdata_analysis)
+# new tester 
+# this was good
+result_test1 <- att_gt(yname = "mcaid_charges",
+                tname = "year",
+                idname = "mcrnum",
+                gname = "gname",                  
+                data = hospdata_analysis %>% filter(state != "HI", year <= 2020), # state != "TX", state != "NJ"),  
                 control_group = "notyettreated",  
                 xformla = ~ 1,               # covariates (use ~1 if none)
                 est_method = "dr",
@@ -604,20 +646,19 @@ result_test <- att_gt(yname = "cost_per_discharge",
                 )
 warnings()
 
-summary(result_test, type = "group")
-ggdid(result_test)
+summary(result_test1, type = "group")
+ggdid(result_test1)
 
-agg_simple <- aggte(result_test, type = "simple")
-summary(agg_simple)
+agg_simple1 <- aggte(result_test1, type = "simple")
+summary(agg_simple1)
 
-agg_dynamic <- aggte(result_test, type = "dynamic", min_e = -6, max_e = 6)
-summary(agg_dynamic)
-ggdid(agg_dynamic)
+agg_dynamic1 <- aggte(result_test1, type = "dynamic", min_e = -3, max_e = 6)
+summary(agg_dynamic1)
+ggdid(agg_dynamic1)
 
-agg_group <- aggte(result_test, type = "group")
-summary(agg_group)
-ggdid(agg_group)
-
+agg_group1 <- aggte(result_test1, type = "group")
+summary(agg_group1)
+ggdid(agg_group1)
 
 
 # View results

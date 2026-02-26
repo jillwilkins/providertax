@@ -6,7 +6,7 @@
 hospdata_analysis <- read.csv(paste0(data_output_path, "hospdata_analysis.csv"))
 
 # 1. Summary statistics
-summary(hospdata_analysis[, c("ucc_prop", "mcaid_prop_discharges", "net_pat_rev", "tot_operating_exp")])
+summary(hospdata_analysis[, c("ucc_prop", "mcaid_prop_discharges", "net_pat_rev", "tot_operating_exp", "cost_per_discharge")])
 
 
 # 2. Check for impossible/problematic values
@@ -81,6 +81,8 @@ hospdata_analysis %>%
   arrange(ucc_prop) %>%
   head(20)
 
+# 2/26 this is now 0, has been taken care of in the data cleaning script 
+# next step, uncomp care 
 # Set ucc_prop to NA if either component is negative or zero
 hospdata_analysis <- hospdata_analysis %>%
   mutate(
@@ -156,11 +158,44 @@ hospdata_analysis %>%
   arrange(desc(cost_per_discharge))
 
 # charges investigation 
+summary(hospdata_analysis$op_margin)
 summary(hospdata_analysis$mcaid_charges)
-summary(hospdata_analysis$tot_charges)
-summary(hospdata_analysis$cost_to_charge)
-quantile(hospdata_analysis$cost_to_charge, 
-         c(0.01, 0.05, 0.10, 0.50, 0.90, 0.95, 0.99, 0.995, 0.999), 
+summary(hospdata_analysis$uncomp_care)
+summary(hospdata_analysis$tot_uncomp_care_charges)
+
+quantile(hospdata_analysis$mcaid_charges, 
+         c(0.01, 0.05, 0.10, 0.50, 0.75, 0.90, 0.95, 0.99, 0.995, 0.999), 
          na.rm = TRUE)
 summary(hospdata_analysis$net_pat_rev)
+
+
+# ==============================================================================
+# DIAGNOSTIC: MEDICAID SHARE - 2012 COHORT
+# ==============================================================================
+
+cat("\n=== MEDICAID SHARE: 2012 COHORT ===\n")
+
+hospdata_analysis %>%
+  filter(cohort == "2012", !is.na(mcaid_prop_discharges)) %>%
+  summarise(
+    n_obs = n(),
+    n_hospitals = n_distinct(mcrnum),
+    n_states = n_distinct(state),
+    min = min(mcaid_prop_discharges, na.rm = TRUE),
+    p01 = quantile(mcaid_prop_discharges, 0.01, na.rm = TRUE),
+    p05 = quantile(mcaid_prop_discharges, 0.05, na.rm = TRUE),
+    p10 = quantile(mcaid_prop_discharges, 0.10, na.rm = TRUE),
+    p25 = quantile(mcaid_prop_discharges, 0.25, na.rm = TRUE),
+    p50 = quantile(mcaid_prop_discharges, 0.50, na.rm = TRUE),
+    p75 = quantile(mcaid_prop_discharges, 0.75, na.rm = TRUE),
+    p90 = quantile(mcaid_prop_discharges, 0.90, na.rm = TRUE),
+    p95 = quantile(mcaid_prop_discharges, 0.95, na.rm = TRUE),
+    p99 = quantile(mcaid_prop_discharges, 0.99, na.rm = TRUE),
+    max = max(mcaid_prop_discharges, na.rm = TRUE),
+    mean = mean(mcaid_prop_discharges, na.rm = TRUE),
+    sd = sd(mcaid_prop_discharges, na.rm = TRUE)
+  ) %>%
+  mutate(across(where(is.numeric) & !c(n_obs, n_hospitals, n_states), ~round(., 3))) %>%
+  print()
+  # possible weirdness with mcrnum 370202
 

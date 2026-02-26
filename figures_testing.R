@@ -11,9 +11,10 @@ library(dplyr)
 # liked this one, informative for the general treand 
 trend_ever_never <- hospdata_analysis %>%
   filter(
-    !is.na(tot_uncomp_care_charges),
-    year >= 2004 & year <= 2019, 
-    state != "HI"  # Exclude Hawaii due to data issues
+    !is.na(op_margin),
+    year >= 2003 & year <= 2019, 
+    state != "HI", 
+    firsttax != 2004 # Exclude Hawaii due to data issues
   ) %>%
   mutate(
     treatment_status = ifelse(ever_treat == 1, "Ever Treated", "Never Treated")
@@ -21,13 +22,13 @@ trend_ever_never <- hospdata_analysis %>%
 
 fig1_ever_never <- ggplot(
   trend_ever_never,
-  aes(x = year, y = tot_uncomp_care_charges, color = treatment_status, linetype = treatment_status)
+  aes(x = year, y = op_margin, color = treatment_status, linetype = treatment_status)
 ) +
   stat_summary(fun = mean, geom = "line", size = 1.2) +
   stat_summary(fun = mean, geom = "point", size = 2.5) +
   # Add confidence intervals
   stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.3, alpha = 0.5) +
-  scale_color_manual(values = c("Ever Treated" = "#D73027", "Never Treated" = "#4575B4")) +
+  scale_color_manual(values = c("Ever Treated" = "#83e5f4", "Never Treated" = "#e961cb")) +
   scale_linetype_manual(values = c("Ever Treated" = "solid", "Never Treated" = "dashed")) +
   labs(
     title = "Medicaid Share of Discharges: Treated vs Never-Treated States",
@@ -49,6 +50,75 @@ fig1_ever_never <- ggplot(
 print(fig1_ever_never)
 ggsave("figures/mcaid_trend_ever_vs_never.png", width = 10, height = 6, dpi = 300)
 
+# ==============================================================================
+# DIAGNOSTIC: OPERATING MARGIN - NEVER TREATED GROUP
+# ==============================================================================
+
+# Summary statistics
+cat("\n=== OPERATING MARGIN: NEVER TREATED ===\n")
+
+hospdata_analysis %>%
+  filter(cohort == "Never", !is.na(op_margin)) %>%
+  summarise(
+    n_obs = n(),
+    n_hospitals = n_distinct(mcrnum),
+    mean = mean(op_margin, na.rm = TRUE),
+    median = median(op_margin, na.rm = TRUE),
+    sd = sd(op_margin, na.rm = TRUE),
+    min = min(op_margin, na.rm = TRUE),
+    max = max(op_margin, na.rm = TRUE),
+    p25 = quantile(op_margin, 0.25, na.rm = TRUE),
+    p75 = quantile(op_margin, 0.75, na.rm = TRUE)
+  ) %>%
+  mutate(across(where(is.numeric) & !c(n_obs, n_hospitals), ~round(., 4))) %>%
+  print()
+
+# Distribution
+cat("\n=== PERCENTILES ===\n")
+hospdata_analysis %>%
+  filter(cohort == "Never", !is.na(op_margin)) %>%
+  summarise(
+    p01 = quantile(op_margin, 0.01, na.rm = TRUE),
+    p05 = quantile(op_margin, 0.05, na.rm = TRUE),
+    p10 = quantile(op_margin, 0.10, na.rm = TRUE),
+    p25 = quantile(op_margin, 0.25, na.rm = TRUE),
+    p50 = quantile(op_margin, 0.50, na.rm = TRUE),
+    p75 = quantile(op_margin, 0.75, na.rm = TRUE),
+    p90 = quantile(op_margin, 0.90, na.rm = TRUE),
+    p95 = quantile(op_margin, 0.95, na.rm = TRUE),
+    p99 = quantile(op_margin, 0.99, na.rm = TRUE)
+  ) %>%
+  mutate(across(everything(), ~round(., 4))) %>%
+  print()
+View(hospdata_analysis %>% filter(cohort == "Never", !is.na(op_margin)) %>% select(mcrnum, state, year, op_margin) %>% arrange(op_margin))
+# By year
+cat("\n=== OPERATING MARGIN BY YEAR (NEVER TREATED) ===\n")
+hospdata_analysis %>%
+  filter(cohort == "Never", !is.na(op_margin)) %>%
+  group_by(year) %>%
+  summarise(
+    n_hospitals = n_distinct(mcrnum),
+    mean = mean(op_margin, na.rm = TRUE),
+    median = median(op_margin, na.rm = TRUE)
+  ) %>%
+  mutate(across(where(is.numeric) & !n_hospitals, ~round(., 4))) %>%
+  print(n = Inf)
+
+# Histogram
+library(ggplot2)
+
+ggplot(hospdata_analysis %>% filter(cohort == "Never", !is.na(op_margin)), 
+       aes(x = op_margin)) +
+  geom_histogram(bins = 50, fill = "#4575B4", alpha = 0.7) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+  labs(
+    title = "Operating Margin Distribution: Never-Treated Hospitals",
+    x = "Operating Margin",
+    y = "Count"
+  ) +
+  theme_minimal()
+
+ggsave("diagnostics/op_margin_never_treated.png", width = 10, height = 6, dpi = 300)
 
 # ------------------------------------------------------------------------------
 # Figure 2: Pre vs Post Treatment (Treated Hospitals Only)
@@ -57,7 +127,7 @@ ggsave("figures/mcaid_trend_ever_vs_never.png", width = 10, height = 6, dpi = 30
 trend_pre_post <- hospdata_analysis %>%
   filter(
     !is.na(mcaid_prop_discharges),
-    year >= 2004 & year <= 2019,
+    year >= 2003 & year <= 2019,
     ever_treat == 1,  # Only treated hospitals
     state != "HI"     # Exclude Hawaii due to data issues
   ) %>%
@@ -67,12 +137,12 @@ trend_pre_post <- hospdata_analysis %>%
 
 fig2_pre_post <- ggplot(
   trend_pre_post,
-  aes(x = year, y = mcaid_prop_discharges, color = period)
+  aes(x = year, y = op_margin, color = period)
 ) +
   stat_summary(fun = mean, geom = "line", size = 1.2) +
   stat_summary(fun = mean, geom = "point", size = 2.5) +
   stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.3, alpha = 0.5) +
-  scale_color_manual(values = c("Pre-Treatment" = "#FEE08B", "Post-Treatment" = "#D73027")) +
+  scale_color_manual(values = c("Pre-Treatment" = "#4575B4", "Post-Treatment" = "#75E6FA")) +
   labs(
     title = "Medicaid Share: Pre vs Post Treatment (Treated Hospitals)",
     subtitle = "Each hospital classified based on its own treatment timing",

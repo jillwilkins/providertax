@@ -50,6 +50,9 @@ hcris.vars = rbind(hcris.vars,c('mcaid_cost','S100000','00700','00100','numeric'
 hcris.vars = rbind(hcris.vars,c('rev_cost_mcaid','S100000','00800','00100','numeric'))
 hcris.vars = rbind(hcris.vars, c('typectrl', 'S200001', '02100', '00000', 'numeric'))
 hcris.vars = rbind(hcris.vars, c('provtype', 'S200001', '00300', '00400', 'numeric'))
+hcris.vars = rbind(hcris.vars, c('tot_uncomp_care_cost', 'S100000', '03000', '00100', 'numeric'))
+
+
 #hcris.vars=rbind(hcris.vars, c('name', worksheet code, row, column))
 
 colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")

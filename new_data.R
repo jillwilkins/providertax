@@ -221,7 +221,7 @@ expansion <- expansion %>%
       expdate %in% c("N/A", "", NA) ~ 0,   # keep NAs for non-expansion states
       TRUE ~ year(mdy(expdate))                   # extract the year (month/day/year)
     )) %>% select(state, expdate, expyear)
-View(expansion)
+
 # ==============================================================================
 # 5. MERGE ALL DATA SOURCES
 # ==============================================================================
@@ -342,7 +342,7 @@ hospdata %>%
 hospdata <- hospdata %>%
   mutate(
     # Uncompensated care as proportion of total charges
-    ucc_prop = tot_uncomp_care_charges / tot_charges,
+    ucc_prop = uncomp_care / tot_charges,
     
     # Average cost per discharge
     cost_per_discharge = (cost_to_charge * tot_charges) / tot_discharges,
@@ -410,7 +410,7 @@ colnames(aha) <- tolower(colnames(aha))
 
 # Select only what you need from AHA and prepare for merge
 aha_minimal <- aha %>%
-  select(mcrnum, year, cntrl, serv) 
+  select(mcrnum, year, cntrl, serv, rurlhos) 
 
 # Convert aha_minimal mcrnum to match hospdata (integer)
 aha_minimal <- aha_minimal %>%
@@ -440,3 +440,4 @@ cat("Output file: hospdata_full.csv\n")
 cat(paste("Number of hospitals:", n_distinct(hospdata$mcrnum), "\n"))
 cat(paste("Years covered:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 cat(paste("Total observations:", nrow(hospdata), "\n"))
+

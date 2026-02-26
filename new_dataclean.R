@@ -314,11 +314,14 @@ cat(paste("Unique hospitals remaining:", after_count, "\n"))
 # ==============================================================================
 
 # negative operating expenses, net patient revenue, charges
+# cost to charge, cost per discharge
+# operating margin (removes 2 hospitals with extreme values) 
 hosp_bad_data <- hospdata_clean %>%
   group_by(mcrnum) %>%
   filter(any(tot_operating_exp < 0, na.rm = TRUE) | any(net_pat_rev < 0, na.rm = TRUE) 
-  | any(tot_charges < 0, na.rm = TRUE) | any(mcaid_charges < 0, na.rm = TRUE) | any(cost_to_charge < 0, na.rm = TRUE)
-  | cost_to_charge > 2) %>%
+  | any(tot_charges < 0, na.rm = TRUE) | any(mcaid_charges < 0, na.rm = TRUE) | any(mcaid_charges > 5e9, na.rm = TRUE) | any(cost_to_charge < 0, na.rm = TRUE)
+  | any(cost_to_charge > 2, na.rm = TRUE) | any(cost_per_discharge > 60000, na.rm = TRUE) | any(op_margin < -1.5, na.rm = TRUE) | any(op_margin > 1.5, na.rm = TRUE) 
+  | any(mcaid_charges < mcaid_discharges, na.rm = TRUE) | any(tot_uncomp_care_charges < 0, na.rm = TRUE)) %>%
   pull(mcrnum) %>%
   unique()
 
