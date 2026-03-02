@@ -176,7 +176,7 @@ summary(hospdata_analysis$net_pat_rev)
 cat("\n=== MEDICAID SHARE: 2012 COHORT ===\n")
 
 hospdata_analysis %>%
-  filter(cohort == "2012", !is.na(mcaid_prop_discharges)) %>%
+  filter(!is.na(mcaid_prop_discharges)) %>%
   summarise(
     n_obs = n(),
     n_hospitals = n_distinct(mcrnum),
