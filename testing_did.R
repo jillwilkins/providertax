@@ -599,11 +599,11 @@ hospdata_op <- hospdata_analysis %>%
   filter(flag_op_exp_jump != 1)
 
 # this was good for mcaid discharges, net pat rev, log_mcc, mcaid_charges, mcaid_discharges,  
-result_test <- att_gt(yname = "mcaid_charges_w",
+result_test <- att_gt(yname = "tot_operating_exp",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "gname",                  
-                data = hospdata_analysis_wins %>% filter(state != "HI", year <= 2020), # state != "TX", state != "NJ"),  
+                data = hospdata_analysis %>% filter(state != "HI", year <= 2020), # state != "TX", state != "NJ"),  
                 control_group = "notyettreated",  
                 xformla = ~ 1,               # covariates (use ~1 if none)
                 est_method = "dr",

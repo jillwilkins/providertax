@@ -314,25 +314,9 @@ cat(paste("  Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 # ==============================================================================
 # CLEAN: TOT DISCHARGE VOLUME
 # ==============================================================================
-
-# WHY: Hospitals with average < 100 discharges/year likely specialty facilities or data errors
-# DECISION: Remove hospitals with average discharges < 100
-
-# Identify low-volume hospitals
-#low_discharge_hospitals <- hospdata_clean %>%
-#  group_by(mcrnum) %>%
-#  summarise(avg_discharges = mean(tot_discharges, na.rm = TRUE)) %>%
-#  filter(avg_discharges < 100) %>%
-#  pull(mcrnum)
+# WHY: Distribution of Total Discharges contains questionable values 
 
 before_count <- n_distinct(hospdata_clean$mcrnum)
-
-#hospdata_clean <- hospdata_clean %>%
-  filter(!mcrnum %in% low_discharge_hospitals)
-
-after_count <- n_distinct(hospdata_clean$mcrnum)
-
-summary(hospdata_clean$tot_discharges)
 
 hospitals_with_extreme_discharges <- hospdata_clean %>%
   group_by(mcrnum) %>%
@@ -363,11 +347,13 @@ hospitals_with_low_discharges <- hospdata_clean %>%
   pull(mcrnum) %>%
   unique()
 
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_low_discharges) %>% select(mcrnum, name, state, year, tot_discharges, mcaid_discharges, beds, net_pat_rev))
+#View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_low_discharges) %>% select(mcrnum, name, state, year, tot_discharges, mcaid_discharges, beds, net_pat_rev))
 
 # after review, thesee cant be fixed so remove them 
 hospdata_clean <- hospdata_clean %>%
   filter(!mcrnum %in% hospitals_with_low_discharges)
+
+after_count <- n_distinct(hospdata_clean$mcrnum)
 
 cat("\n=== FILTER 7: Minimum Discharge Volume (Avg >= 100) ===\n")
 cat(paste("Hospitals removed:", before_count - after_count, "\n"))
@@ -388,7 +374,7 @@ hospitals_with_neg_npr <- hospdata_clean %>%
   pull(mcrnum) %>%
   unique()
 
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_neg_npr) %>% select(mcrnum, name, state, year, cohort, net_pat_rev, mcaid_discharges, tot_discharges, beds))
+#View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_neg_npr) %>% select(mcrnum, name, state, year, cohort, net_pat_rev, mcaid_discharges, tot_discharges, beds))
 
 # some are typos. correct to absolute value 
 hospdata_clean <- hospdata_clean %>%
@@ -425,7 +411,7 @@ hospitals_with_high_npr <- hospdata_clean %>%
   pull(mcrnum) %>%
   unique()
 
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_high_npr) %>% select(mcrnum, name, state, year, cohort, net_pat_rev, mcaid_discharges, tot_discharges, beds))
+#View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_high_npr) %>% select(mcrnum, name, state, year, cohort, net_pat_rev, mcaid_discharges, tot_discharges, beds))
 
 # remove hospitals with bad data
 hospdata_clean <- hospdata_clean %>%
@@ -434,7 +420,7 @@ hospdata_clean <- hospdata_clean %>%
 # after review on 2/26, most high values are very high but dont appear to be errors 
 
 after_avg <- mean(hospdata_clean$net_pat_rev, na.rm = TRUE)
-summary(hospdata_clean$net_pat_rev)
+# summary(hospdata_clean$net_pat_rev)
 
 cat("\n=== CLEAN: Net Patient Revenue Corrections ===\n")
 cat(paste("Hospitals removed (unfeasible net patient revenue):", before_count - after_count, "\n"))
@@ -458,7 +444,7 @@ hospitals_with_high_uncomp_care <- hospdata_clean %>%
   unique()
 
 # none appear to be errors
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_high_uncomp_care) %>% select(mcrnum, name, state, year, cohort, uncomp_care, net_pat_rev, mcaid_discharges, tot_discharges, beds))
+# View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_high_uncomp_care) %>% select(mcrnum, name, state, year, cohort, uncomp_care, net_pat_rev, mcaid_discharges, tot_discharges, beds))
 
 # NEGATIVE VALUES 
 hospitals_with_neg_uncomp_care <- hospdata_clean %>%
@@ -467,7 +453,7 @@ hospitals_with_neg_uncomp_care <- hospdata_clean %>%
   pull(mcrnum) %>%
   unique()
 
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_neg_uncomp_care) %>% select(mcrnum, name, state, year, cohort, uncomp_care, net_pat_rev, mcaid_discharges, tot_discharges, beds))
+#View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_neg_uncomp_care) %>% select(mcrnum, name, state, year, cohort, uncomp_care, net_pat_rev, mcaid_discharges, tot_discharges, beds))
 
 # some are typos. correct to absolute value
 hospdata_clean <- hospdata_clean %>%
@@ -509,8 +495,9 @@ hospitals_with_high_operating_exp <- hospdata_clean %>%
   filter(any(tot_operating_exp > 6e9, na.rm = TRUE)) %>%
   pull(mcrnum) %>%
   unique()
+
 # no large values appear to be errors 
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_high_operating_exp) %>% select(mcrnum, name, state, year, cohort, tot_operating_exp, net_pat_rev, mcaid_discharges, tot_discharges, beds))
+# View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_high_operating_exp) %>% select(mcrnum, name, state, year, cohort, tot_operating_exp, net_pat_rev, mcaid_discharges, tot_discharges, beds))
 
 # NEGATIVE VALUES
 hospitals_with_neg_operating_exp <- hospdata_clean %>%
@@ -519,7 +506,7 @@ hospitals_with_neg_operating_exp <- hospdata_clean %>%
   pull(mcrnum) %>%
   unique()
 
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_neg_operating_exp) %>% select(mcrnum, name, state, year, cohort, tot_operating_exp, net_pat_rev, mcaid_discharges, tot_discharges, beds))
+#View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_neg_operating_exp) %>% select(mcrnum, name, state, year, cohort, tot_operating_exp, net_pat_rev, mcaid_discharges, tot_discharges, beds))
 
 # filter out these hospitals for now. Its only 3 and they dont have an obvious solution. 
 hospdata_clean <- hospdata_clean %>%
@@ -553,7 +540,7 @@ hospitals_with_neg_mcaid_charges <- hospdata_clean %>%
   unique()
 
 #View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_neg_mcaid_charges) %>% select(mcrnum, name, state, year, cohort, mcaid_charges, net_pat_rev, mcaid_discharges, tot_discharges, beds))
-# looks like a type 
+# looks like a typo
 
 hospdata_clean <- hospdata_clean %>%
   mutate( 
@@ -663,8 +650,6 @@ hospdata_clean %>%
   count(cohort, sort = TRUE) %>%
   print()
 
-View(hospdata_clean)
-
 # ==============================================================================
 # CREATE PRE-TREATMENT BASELINE CHARACTERISTICS
 # ==============================================================================
@@ -750,49 +735,5 @@ if (length(missing_vars) == 0) {
 }
 
 
-# ==============================================================================
-# SAVE ANALYTICAL DATASET
-# ==============================================================================
-
-write.csv(
-  hospdata_clean,
-  paste0(data_output_path, "hospdata_analysis.csv"),
-  row.names = FALSE
-)
-
-cat("\n=== DATA SAVED SUCCESSFULLY ===\n")
-cat("Output file: hospdata_analysis.csv\n")
-cat("Location:", data_output_path, "\n")
-
-cat("\n", rep("=", 70), "\n", sep = "")
-cat("CLEANING COMPLETE!\n")
-cat(rep("=", 70), "\n\n", sep = "")
-
-
-# ==============================================================================
-# OPTIONAL: CREATE SUMMARY STATISTICS TABLE
-# ==============================================================================
-
-# Uncomment to generate a summary table of key variables
-
-# summary_stats <- hospdata_clean %>%
-#   group_by(year) %>%
-#   summarise(
-#     n_hospitals = n_distinct(mcrnum),
-#     n_treated = sum(post_treat),
-#     pct_treated = round(mean(post_treat) * 100, 1),
-#     avg_beds = round(mean(beds, na.rm = TRUE), 1),
-#     avg_ucc_prop = round(mean(ucc_prop, na.rm = TRUE), 3),
-#     avg_mcaid_prop = round(mean(mcaid_prop, na.rm = TRUE), 3)
-#   )
-# 
-# print(summary_stats)
-# 
-# # Save summary stats
-# write.csv(
-#   summary_stats,
-#   paste0(data_output_path, "summary_stats_by_year.csv"),
-#   row.names = FALSE
-# )
 
 

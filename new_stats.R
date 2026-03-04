@@ -8,7 +8,7 @@ library(knitr)
 library(kableExtra)  # Optional: for prettier tables
 
 # Load data if not already in environment
-# hospdata_analysis <- read.csv(paste0(data_output_path, "hospdata_analysis.csv"))
+ hospdata_analysis <- read.csv(paste0(data_output_path, "hospdata_analysis.csv"))
 
 # ==============================================================================
 # TABLE 1: OVERALL SUMMARY STATISTICS
@@ -177,7 +177,9 @@ summary_balance <- hospdata_analysis %>%
     net_pat_rev_sd = sd(net_pat_rev, na.rm = TRUE),
     
     cost_per_discharge_mean = mean(cost_per_discharge, na.rm = TRUE),
-    cost_per_discharge_sd = sd(cost_per_discharge, na.rm = TRUE)
+    cost_per_discharge_sd = sd(cost_per_discharge, na.rm = TRUE), 
+
+    pct_rural_mean = mean(rurlhos, na.rm = TRUE)
   ) %>%
   mutate(across(where(is.numeric) & !c(n_obs, n_hospitals, n_states), ~round(., 2)))
 
