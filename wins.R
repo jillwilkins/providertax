@@ -1,7 +1,7 @@
 # ==============================================================================
 # WINSORIZE OUTCOME VARIABLES
 # ==============================================================================
-install.packages("DescTools")  # Install if not already installed
+install.packages("DescTools")  
 library(DescTools)  # Has Winsorize function
 # Or if not installed: install.packages("DescTools")
 
@@ -27,6 +27,7 @@ hospdata_analysis_wins <- hospdata_analysis %>%
     # Winsorize at 1st and 99th percentile (standard)
     mcaid_prop_discharges_w = winsorize_var(mcaid_prop_discharges, c(0.01, 0.99)),
     ucc_prop_w = winsorize_var(ucc_prop, c(0.01, 0.99)),
+    uncomp_care_w = winsorize_var(uncomp_care, c(.01, .99)),
     op_margin_w = winsorize_var(op_margin, c(0.01, 0.99)),
     net_pat_rev_w = winsorize_var(net_pat_rev, c(0.01, 0.99)),
     tot_operating_exp_w = winsorize_var(tot_operating_exp, c(0.01, 0.99)),

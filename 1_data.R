@@ -291,7 +291,7 @@ hospdata <- hospdata %>%
     # 4. POST_TREAT: Is treatment currently active?
     post_treat = case_when(
       is.na(firsttax_num) ~ 0,                    # Never treated = always 0
-      firsttax_num == 2004 ~ 1,                   # 2004 cohort = always 1 (even in 2003)
+      firsttax_num == 2004 ~ 1,                   # 2004 cohort = always 1 (even in , 2002)
       year >= firsttax_num ~ 1,                   # After adoption = 1
       TRUE ~ 0                                    # Before adoption = 0
     ),
@@ -300,7 +300,7 @@ hospdata <- hospdata %>%
     time_to_treat = case_when(
       is.na(firsttax_num) ~ NA_real_,             # Never treated = NA
       firsttax_num == 2004 ~ NA_real_,            # Always treated = NA
-      TRUE ~ year - firsttax_num                  # 2005+ cohorts: 2003 → -2, 2004 → -1, etc.
+      TRUE ~ year - firsttax_num                  # 2005+ cohorts: ,2002→ -3, 2003 → -2, 2004 → -1, etc.
     ),
   
 
@@ -311,11 +311,16 @@ hospdata <- hospdata %>%
     is.na(expyear) ~ 0,                 # Non-expansion states = 0
     year >= expyear ~ 1,                # After expansion = 1
     TRUE ~ 0                           # Before expansion = 0
-  )
+  ),
 
-  # early mediciad expander 
-  # use this to identify the early medicaid expansion states (likely different from non)
-  )
+  #7. EXP_DURING: Does this state expand during the window (3 year pre provider tax, 5 years post)
+  # 0 = did not expand within window 
+  # 1 = did expand within window 
+  exp_during = case_when(
+    expyear - firsttax_num <= 5 ~ 1,  # expansion happens less than 5 years post tax, exp_during = 1
+    firsttax_num - expyear <= 3 ~ 1  # tax happens less than years post expansion, exp_during = 1, 
+  ))
+
 
 # Check 2004 cohort in 2003
 hospdata %>%
@@ -355,6 +360,9 @@ hospdata <- hospdata %>%
     
     # Medicaid share of discharges
     mcaid_prop_discharges = mcaid_discharges / tot_discharges,
+
+    # Medicaid cost per medicaid discharge
+    mcaid_cost_per_discharge = mcaid_cost / mcaid_discharges,
     
     # Medicare share of discharges
     mcare_prop_discharges = mcare_discharges / tot_discharges,
@@ -369,7 +377,11 @@ hospdata <- hospdata %>%
     private_discharges = tot_discharges - (mcaid_discharges + mcare_discharges),
 
     # operating margin 
-    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp
+    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp, 
+
+    # Log variables for skewed outcomes
+    log_npr = log(net_pat_rev),  # Add 1 to avoid log(0
+    log_op = log(tot_operating_exp) 
   )
 
 # ==============================================================================
@@ -383,9 +395,7 @@ hospdata %>%
   distinct(state, cohort) %>%
   count(cohort) %>%
   arrange(cohort) %>%
-  print()
-
-# as of 2/13, there are 51 "Never" which is a result of the years prior to 2004. 
+  print() 
 
 # Check number of hospitals by treatment status -------------------------------
 cat("\n=== HOSPITALS BY TREATMENT STATUS ===\n")
@@ -410,7 +420,7 @@ colnames(aha) <- tolower(colnames(aha))
 
 # Select only what you need from AHA and prepare for merge
 aha_minimal <- aha %>%
-  select(mcrnum, year, cntrl, serv, rurlhos) 
+  select(mcrnum, year, cntrl, serv, rurlhos, obbd, cicbd, alchbd, psybd) 
 
 # Convert aha_minimal mcrnum to match hospdata (integer)
 aha_minimal <- aha_minimal %>%

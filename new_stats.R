@@ -46,6 +46,9 @@ summary_overall <- hospdata_analysis %>%
     
     op_margin_mean = mean(op_margin, na.rm = TRUE),
     op_margin_sd = sd(op_margin, na.rm = TRUE),
+
+    mcaid_charges_mean = mean(mcaid_charges, na.rm = TRUE),
+    mcaid_charges_sd = sd(mcaid_charges, na.rm = TRUE),
     
     # Treatment
     ever_treat_pct = mean(ever_treat, na.rm = TRUE) * 100,
@@ -89,7 +92,8 @@ summary_by_cohort <- hospdata_analysis %>% #filter(year <= 2019) %>%  # Limit to
     net_pat_rev_mean = mean(net_pat_rev, na.rm = TRUE),
     tot_operating_exp_mean = mean(tot_operating_exp, na.rm = TRUE),
     op_margin_mean = mean(op_margin, na.rm = TRUE),
-    cost_per_discharge_mean = mean(cost_per_discharge, na.rm = TRUE)
+    cost_per_discharge_mean = mean(cost_per_discharge, na.rm = TRUE), 
+    mcaid_charges_mean = mean(mcaid_charges, na.rm = TRUE)
   ) %>%
   mutate(across(where(is.numeric) & !c(n_obs, n_hospitals, n_states), ~round(., 2)))
 
@@ -179,6 +183,9 @@ summary_balance <- hospdata_analysis %>%
     cost_per_discharge_mean = mean(cost_per_discharge, na.rm = TRUE),
     cost_per_discharge_sd = sd(cost_per_discharge, na.rm = TRUE), 
 
+    mcaid_charges_mean = mean(mcaid_charges, na.rm = TRUE),
+    mcaid_charges_sd = sd(mcaid_charges, na.rm = TRUE),
+
     pct_rural_mean = mean(rurlhos, na.rm = TRUE)
   ) %>%
   mutate(across(where(is.numeric) & !c(n_obs, n_hospitals, n_states), ~round(., 2)))
@@ -265,8 +272,14 @@ paper_table1 <- hospdata_analysis %>%
                                        sd(net_pat_rev, na.rm = TRUE) / 1e6),
     `Cost per Discharge` = sprintf("%.0f (%.0f)", 
                                     mean(cost_per_discharge, na.rm = TRUE), 
-                                    sd(cost_per_discharge, na.rm = TRUE))
-  )
+                                    sd(cost_per_discharge, na.rm = TRUE)), 
+    `Operating Margin` = sprintf("%.3f (%.3f)", 
+                                    mean(op_margin, na.rm = TRUE), 
+                                    sd(op_margin, na.rm = TRUE)),
+    `Medicaid Charges ($M)` = sprintf("%.1f (%.1f)", 
+                                       mean(mcaid_charges, na.rm = TRUE) / 1e6, 
+                                       sd(mcaid_charges, na.rm = TRUE) / 1e6
+                                       ))
 
 cat("\n=== PAPER-READY TABLE: SUMMARY STATISTICS ===\n")
 cat("(Format: Mean (SD))\n\n")

@@ -1,5 +1,5 @@
 # ==============================================================================
-# ADD COUNTY-LEVEL INCOME DATA
+# ADD STATE INCOME DATA
 # ==============================================================================
 
 library(censusapi)
@@ -55,7 +55,7 @@ cat(paste("Percent merged:",
           round(mean(!is.na(hospdata_clean$median_income)) * 100, 1), "%\n"))
 # drop the original median_income column if it exists (to avoid confusion) 
 
-# pre treatment median income
+# pre treatment median income # needs to be the average! this cant be time varying 
 hospdata_clean <- hospdata_clean %>%
   group_by(mcrnum) %>%
   mutate(median_income_pre = ifelse(post_treat == 0, median_income, NA_real_)) %>%
@@ -79,3 +79,5 @@ cat("Location:", data_output_path, "\n")
 cat("\n", rep("=", 70), "\n", sep = "")
 cat("CLEANING COMPLETE!\n")
 cat(rep("=", 70), "\n\n", sep = "")
+
+View(hospdata_analysis)

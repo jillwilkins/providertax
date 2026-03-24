@@ -599,11 +599,11 @@ hospdata_op <- hospdata_analysis %>%
   filter(flag_op_exp_jump != 1)
 
 # this was good for mcaid discharges, net pat rev, log_mcc, mcaid_charges, mcaid_discharges,  
-result_test <- att_gt(yname = "tot_operating_exp",
+result_test <- att_gt(yname = "mcaid_charges",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "gname",                  
-                data = hospdata_analysis %>% filter(state != "HI", year <= 2020), # state != "TX", state != "NJ"),  
+                data = hospdata_analysis %>% filter(state != "HI", year < 2020), # state != "TX", state != "NJ"),  
                 control_group = "notyettreated",  
                 xformla = ~ 1,               # covariates (use ~1 if none)
                 est_method = "dr",
@@ -621,7 +621,7 @@ ggdid(result_test)
 agg_simple <- aggte(result_test, type = "simple")
 summary(agg_simple)
 
-agg_dynamic <- aggte(result_test, type = "dynamic", min_e = -3, max_e = 5)
+agg_dynamic <- aggte(result_test, type = "dynamic", min_e = -4, max_e = 6)
 summary(agg_dynamic)
 ggdid(agg_dynamic)
 
@@ -632,19 +632,21 @@ ggdid(agg_group)
 View(hospdata_analysis)
 # new tester 
 # this was good
-result_test1 <- att_gt(yname = "mcaid_charges",
+result_test1 <- att_gt(
+                yname = "mcaid_prop_discharges",
                 tname = "year",
                 idname = "mcrnum",
-                gname = "gname",                  
-                data = hospdata_analysis %>% filter(state != "HI", year <= 2020), # state != "TX", state != "NJ"),  
+                gname = "gname",  
+                data = hospdata_analysis %>% filter(year > 2003, gname != 2013),  
                 control_group = "notyettreated",  
-                xformla = ~ 1,               # covariates (use ~1 if none)
                 est_method = "dr",
                 clustervars = "state", 
-                base_period = "universal",
-                allow_unbalanced = TRUE
+                base_period = "universal"
                 )
-warnings()
+
+table(hospdata_analysis$gname)
+
+
 
 summary(result_test1, type = "group")
 ggdid(result_test1)
@@ -652,7 +654,7 @@ ggdid(result_test1)
 agg_simple1 <- aggte(result_test1, type = "simple")
 summary(agg_simple1)
 
-agg_dynamic1 <- aggte(result_test1, type = "dynamic", min_e = -3, max_e = 6)
+agg_dynamic1 <- aggte(result_test1, type = "dynamic", min_e = -4, max_e = 4)
 summary(agg_dynamic1)
 ggdid(agg_dynamic1)
 
@@ -660,6 +662,7 @@ agg_group1 <- aggte(result_test1, type = "group")
 summary(agg_group1)
 ggdid(agg_group1)
 
+View(hospdata_analysis %>% filter(state == "GA") %>% select(mcrnum, name, year, gname, hrrp_payment, net_pat_rev))
 
 # View results
 summary(agg_simple)

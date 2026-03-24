@@ -30,7 +30,7 @@ cat(paste("Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 
 
 # ==============================================================================
-# FILTER 1: RESTRICT TO ANALYSIS YEARS (2004-2024)
+# FILTER 1: RESTRICT TO ANALYSIS YEARS (2002-2024)
 # ==============================================================================
 
 # WHY: Treatment data only available from 2004 onward
@@ -38,7 +38,7 @@ cat(paste("Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 # NOTE: States with treatment in 2004 are "always treated" in our data
 
 hospdata_clean <- hospdata %>%
-  filter(year >= 2003 & year <= 2024)
+  filter(year >= 2002 & year <= 2024)
 
 cat("\n=== FILTER 1: Year Range (2004-2024) ===\n")
 cat(paste("Observations removed:", nrow(hospdata) - nrow(hospdata_clean), "\n"))
@@ -113,32 +113,6 @@ hospdata_clean %>%
   distinct(mcrnum, ownership) %>%
   count(ownership) %>%
   print()
-# ==============================================================================
-# FILTER 3: MULTI-STATE HOSPITALS (PLACEHOLDER)
-# ==============================================================================
-
-# TODO: Add multi-state hospital filter when code is ready
-# PLACEHOLDER CODE:
-# 
-# # Identify hospitals that appear in multiple states
-# multi_state_mcrnums <- hospdata_clean %>%
-#   group_by(mcrnum) %>%
-#   summarise(n_states = n_distinct(state)) %>%
-#   filter(n_states > 1) %>%
-#   pull(mcrnum)
-# 
-# before_count <- n_distinct(hospdata_clean$mcrnum)
-# 
-# hospdata_clean <- hospdata_clean %>%
-#   filter(!mcrnum %in% multi_state_mcrnums)
-# 
-# after_count <- n_distinct(hospdata_clean$mcrnum)
-# 
-# cat("\n=== FILTER 3: Multi-State Hospitals ===\n")
-# cat(paste("Hospitals removed:", before_count - after_count, "\n"))
-# cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
-# cat(paste("Unique hospitals remaining:", after_count, "\n"))
-
 
 # ==============================================================================
 # FILTER 4: BED COUNT - REMOVE HOSPITALS WITH MISSING BED DATA
