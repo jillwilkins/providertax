@@ -599,7 +599,7 @@ hospdata_op <- hospdata_analysis %>%
   filter(flag_op_exp_jump != 1)
 
 # this was good for mcaid discharges, net pat rev, log_mcc, mcaid_charges, mcaid_discharges,  
-result_test <- att_gt(yname = "mcaid_charges",
+result_test <- att_gt(yname = "medicaid_enrollment",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "gname",                  

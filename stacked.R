@@ -21,7 +21,7 @@ library(fastDummies)
 window <- 5  # Event window (±5 years)
 
 # Exclude always treated 
-hospdata_stack <- hospdata_analysis_wins %>%
+hospdata_stack <- hospdata_analysis %>%
   filter(cohort != "Always (2004)") 
 
 # Get treated cohorts (exclude never-treated and always treated, gname == 0)
@@ -94,7 +94,7 @@ stacked_data <- stacked_data %>%
 # 5. estimate stacked DiD with feols
 colnames(stacked_data)
 stacked_result <- feols(
-  mcaid_share_discharges ~ i(rel_year, treated, ref = -1) + exp_status + median_income_pre| mcrnum^df + year^df,
+  cash ~ i(rel_year, treated, ref = -1) + exp_status + median_income_pre| mcrnum^df + year^df,
   data = stacked_data %>% filter(state != "HI", year < 2022), # state != "TX", state != "NJ",
   cluster = ~state
 )
@@ -162,7 +162,7 @@ stacked_event_study_gradient <- ggplot(coef_data, aes(x = rel_year, y = coef, co
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
   # Labels
   labs(
-    title = "Stacked DiD Event Study: Medicaid Share of Discharges",
+    title = "Stacked DiD Event Study: Log Tot Operating Exp",
     x = "Years Relative to Treatment",
     y = "Effect on Outcome"
   ) +
@@ -185,7 +185,7 @@ stacked_event_study_gradient <- ggplot(coef_data, aes(x = rel_year, y = coef, co
 print(stacked_event_study_gradient)
 
 # Save
-ggsave("sdid_mcaid_prop_dis.png", 
+ggsave("sdid_logop.png", 
        plot = stacked_event_study_gradient, 
        width = 8, height = 10, dpi = 300)
 
@@ -328,7 +328,11 @@ outcomes <- list(
 
   list(var = "log_op", 
        label = "Log Total Operating Expenses",
-       file = "figure/sdid_log_op.png")
+       file = "figure/sdid_log_op.png"),
+
+  list(var = "medicaid_enrollment",
+      label = "Medicaid Enrollment",
+      file = "figures/sdid_mcaid_enroll.png")
 )
 
 # Run for all outcomes
@@ -339,8 +343,8 @@ for (outcome in outcomes) {
     outcome_var = outcome$var,
     outcome_label = outcome$label,
     filename = outcome$file,
-    width = 10,
-    height = 7
+    width = 8,
+    height = 10
   )
 }
 

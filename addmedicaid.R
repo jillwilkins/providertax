@@ -92,5 +92,39 @@ hospdata_analysis <- hospdata_analysis %>%
   left_join(medicaid_late, by = c("state" = "state", "year" = "year")) %>%
   left_join(medicaid_early, by = c("state" = "state", "year" = "year")) 
 
+# IPUMS 
+install.packages('ipumsr')
 
+library('ipumsr')
 
+ddi <- read_ipums_ddi(paste0(data_input_path, "usa_00002.xml"))
+data_enroll <- read_ipums_micro(ddi)
+colnames(data_enroll)
+
+# rename variables, convert the fips code
+data_enroll <- data_enroll %>%
+  rename(
+    year               = YEAR,
+    medicaid_enrollment = HINSCAID
+  ) %>%
+  mutate(
+    state = c(state.abb, "DC")[match(sprintf("%02d", as.numeric(STATEFIP)), 
+                                     c(sprintf("%02d", c(1:56)[-c(3,7,14,43,52)]), "11"))]
+  ) %>%
+# aggregate to the state year level
+  group_by(state, year) %>%
+  summarise(
+    medicaid_enrollment = sum(medicaid_enrollment, na.rm = TRUE),
+    .groups = "drop"
+  )
+View(data_enroll)
+
+data_enroll <- data_enroll %>% filter(year > 2007)
+
+hospdata_analysis <- hospdata_analysis %>%
+  left_join(
+    data_enroll %>% select(state, year, medicaid_enrollment),
+    by = c("state", "year")
+  )
+
+summary(hospdata_analysis$medicaid_enrollment)

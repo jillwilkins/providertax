@@ -635,7 +635,7 @@ hospdata_clean <- hospdata_clean %>%
     # Pre-treatment averages (for treated hospitals)
     # For never-treated (gname == 0), use early years (2004-2006)
     pre_beds_avg = case_when(
-      gname == 0 ~ mean(beds[year %in% 2004:2006], na.rm = TRUE),  # Never treated: use 2004-2006
+      gname == 0 ~ mean(beds[year %in% 2004:20011], na.rm = TRUE),  # Never treated: use 2004-2006
       TRUE ~ mean(beds[year < gname], na.rm = TRUE)                 # Treated: use all years before treatment
     ),
     

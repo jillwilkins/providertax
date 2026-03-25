@@ -77,7 +77,7 @@ cat("Output file: hospdata_analysis.csv\n")
 cat("Location:", data_output_path, "\n")
 
 cat("\n", rep("=", 70), "\n", sep = "")
-cat("CLEANING COMPLETE!\n")
+cat("COMPLETE: cleaned, income data!\n")
 cat(rep("=", 70), "\n\n", sep = "")
 
-View(hospdata_analysis)
+
