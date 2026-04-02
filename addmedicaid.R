@@ -94,7 +94,6 @@ hospdata_analysis <- hospdata_analysis %>%
 
 # IPUMS 
 install.packages('ipumsr')
-
 library('ipumsr')
 
 ddi <- read_ipums_ddi(paste0(data_input_path, "usa_00002.xml"))
@@ -117,7 +116,16 @@ data_enroll <- data_enroll %>%
     medicaid_enrollment = sum(medicaid_enrollment, na.rm = TRUE),
     .groups = "drop"
   )
-View(data_enroll)
+
+#save ipums data
+write.csv(
+  data_enroll,
+  paste0(data_output_path, "ipums_data_enroll.csv"),
+  row.names = FALSE
+)
+
+# load data enrol data if necessary 
+data_enroll <- read.csv(paste0(data_output_path, "ipums_data_enroll.csv"))
 
 data_enroll <- data_enroll %>% filter(year > 2007)
 

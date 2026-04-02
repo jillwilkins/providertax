@@ -603,7 +603,7 @@ result_test <- att_gt(yname = "medicaid_enrollment",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "gname",                  
-                data = hospdata_analysis %>% filter(state != "HI", year < 2020), # state != "TX", state != "NJ"),  
+                data = hospdata_analysis, # state != "TX", state != "NJ"),  
                 control_group = "notyettreated",  
                 xformla = ~ 1,               # covariates (use ~1 if none)
                 est_method = "dr",

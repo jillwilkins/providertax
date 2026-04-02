@@ -14,7 +14,6 @@ library(lubridate)
 library(ggplot2)
 
 # Set file paths (modify these for your system) -------------------------------
-# TIP: Use here::here() package for more portable paths
 data_input_path <- "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/"
 data_output_path <- "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/"
 

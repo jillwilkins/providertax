@@ -16,6 +16,16 @@ library(tidyverse)
 install.packages("fastDummies")
 library(fastDummies)
 
+# normalized var 
+hospdata_analysis <- hospdata_analysis %>%
+  mutate(npr_bed = net_pat_rev / pre_beds_avg, 
+        op_bed = tot_operating_exp / pre_beds_avg,
+        uncomp_bed = uncomp_care/ pre_beds_avg, 
+        cash_bed = cash/ pre_beds_avg, 
+        mcaid_cost_bed = mcaid_cost/ pre_beds_avg,
+        mcaid_enroll_bed = medicaid_enrollment / pre_beds_avg
+        )
+
 # ------------------------------------------------------------------------------
 #1. get valid treatment cohorts
 window <- 5  # Event window (±5 years)
@@ -92,29 +102,78 @@ stacked_data <- stacked_data %>%
 
 # ------------------------------------------------------------------------------
 # 5. estimate stacked DiD with feols
-colnames(stacked_data)
+
 stacked_result <- feols(
-  cash ~ i(rel_year, treated, ref = -1) + exp_status + median_income_pre| mcrnum^df + year^df,
-  data = stacked_data %>% filter(state != "HI", year < 2022), # state != "TX", state != "NJ",
-  cluster = ~state
-)
+   mcaid_prop_discharges ~ i(rel_year, treated, ref = -1) + median_income_pre + exp_status| mcrnum^df + year^df,
+  data = stacked_data %>% filter(state != "HI", year <= 2020), # state != "TX", state != "NJ",
+  cluster = ~state) 
+
 
 summary(stacked_result)
 iplot(stacked_result, main = "Stacked DiD Event Study")
+colnames(hospdata_analysis)
 
+summary(hospdata_analysis$mcaid_enroll_bed)
 
 # Simple stacked DiD - just the interaction
 stacked_simple <- feols(
-  tot_operating_exp_w ~ treated:post + exp_status + median_income_pre | mcrnum^df + year^df,
+  npr_bed ~ treated:post + exp_status + median_income_pre | mcrnum^df + year^df,
   data = stacked_data %>% 
-    filter(state != "HI", year < 2020) %>%
+    filter(state != "HI", year <= 2022) %>%
     mutate(post = ifelse(rel_year >= 0, 1, 0)),
   cluster = ~state
 )
 
+summary(hospdata_analysis$bed)
 summary(stacked_simple)
 
 
+# MED enrollment state level 
+stacked_data_state <- stacked_data %>%
+  group_by(state, year, rel_year, treated, exp_status, df) %>%
+  summarise(
+    medicaid_enrollment = first(medicaid_enrollment),
+    median_income_pre   = first(median_income_pre),
+    beds = mean(beds),
+    n_hospitals = n_distinct(mcrnum),
+    pre_beds_avg        = mean(pre_beds_avg, na.rm = TRUE),  # average across hospitals in state
+    .groups = "drop"
+  )
+
+
+state_stacked_result <- feols(
+  medicaid_enrollment/pre_beds_avg ~ i(rel_year, treated, ref = -1) + median_income_pre + exp_status | state^df + year^df,
+  data = stacked_data_state %>% filter(year < 2022, year > 2007),
+  cluster = ~state
+)
+
+state_stacked_result <- feols(
+  medicaid_enrollment/pre_beds_avg ~ i(rel_year, treated, ref = -1) + 
+    median_income_pre + exp_status | state^df + year^df,
+  data = stacked_data_state %>% filter(year < 2020, year > 2007),
+  cluster = ~state
+  #weights = ~state  # Weight by number of hospitals
+)
+
+summary(state_stacked_result)
+iplot(state_stacked_result, main = "State Stacked DiD Event Study")
+
+
+# Test joint significance of pre-treatment coefficients
+# Get coefficient names (not indices)
+pre_coef_names <- names(coef(state_stacked_result))[grep("rel_year::(-[0-9]+):treated", 
+                                                     names(coef(state_stacked_result)))]
+
+cat("\n=== PRE-TREATMENT COEFFICIENTS ===\n")
+print(pre_coef_names)
+
+# Test joint significance
+wald_test <- wald(state_stacked_result, pre_coef_names)
+
+cat("\n=== JOINT TEST: PRE-TRENDS ===\n")
+print(wald_test)
+
+# If p-value < 0.05 → Pre-trends are significant (problem!)
 # ==============================================================================
 # PRETTY STACKED DiD EVENT STUDY (Clean Style)
 # ==============================================================================
@@ -133,9 +192,9 @@ library(dplyr)
 # Extract coefficients and standard errors
 coef_data <- data.frame(
   rel_year = as.numeric(gsub(".*::(-?[0-9]+):.*", "\\1", 
-                             names(coef(stacked_result))[grepl("rel_year", names(coef(stacked_result)))])),
-  coef = coef(stacked_result)[grepl("rel_year", names(coef(stacked_result)))],
-  se = stacked_result$se[grepl("rel_year", names(coef(stacked_result)))]
+                             names(coef(state_stacked_result))[grepl("rel_year", names(coef(state_stacked_result)))])),
+  coef = coef(state_stacked_result)[grepl("rel_year", names(coef(state_stacked_result)))],
+  se = state_stacked_result$se[grepl("rel_year", names(coef(state_stacked_result)))]
 ) %>%
   mutate(
     ci_lower = coef - 1.96 * se,
@@ -162,7 +221,7 @@ stacked_event_study_gradient <- ggplot(coef_data, aes(x = rel_year, y = coef, co
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
   # Labels
   labs(
-    title = "Stacked DiD Event Study: Log Tot Operating Exp",
+    title = "Stacked DiD Event Study: Medicaid Enrollment per Bed",
     x = "Years Relative to Treatment",
     y = "Effect on Outcome"
   ) +
@@ -185,7 +244,7 @@ stacked_event_study_gradient <- ggplot(coef_data, aes(x = rel_year, y = coef, co
 print(stacked_event_study_gradient)
 
 # Save
-ggsave("sdid_logop.png", 
+ggsave("sdid_mcaid_enrollment_per_bed.png", 
        plot = stacked_event_study_gradient, 
        width = 8, height = 10, dpi = 300)
 
@@ -294,43 +353,47 @@ outcomes <- list(
        label = "Medicaid Share of Discharges", 
        file = "figures/sdid_mcaid_share.png"),
 
-  list(var = "mcaid_charges", 
-       label = "Medicaid Charges", 
-       file = "figures/sdid_mcaid_charges.png"),
+  list(var = "mcaid_cost_bed", 
+       label = "Medicaid Cost Per Bed", 
+       file = "figures/sdid_mcaid_cost.png"),
 
   list(var = "private_prop_discharges", 
        label = "Commercial Share of Discharges", 
        file = "figures/sdid_commercial.png"),
 
-  list(var = "uncomp_care", 
-       label = "Uncompensated Care Charges", 
+  list(var = "uncomp_bed", 
+       label = "Uncompensated Care Charges Per Bed", 
        file = "figures/sdid_uncomp.png"),
   
   list(var = "ucc_prop", 
-       label = "Uncompensated Care Share", 
+       label = "Uncompensated Care Share of Charges", 
        file = "figures/sdid_ucc.png"),
   
   list(var = "op_margin", 
        label = "Operating Margin", 
        file = "figures/sdid_op_margin.png"),
 
-  list(var = "net_pat_rev", 
-       label = "Net Patient Revenue", 
+  list(var = "npr_bed", 
+       label = "Net Patient Revenue per Bed", 
        file = "figures/sdid_npr.png"),
   
   list(var = "log_npr", 
        label = "Log Net Patient Revenue", 
        file = "figures/sdid_log_npr.png"),
 
-    list(var = "tot_operating_exp", 
-       label = "Total Operating Expenses", 
+    list(var = "op_bed", 
+       label = "Total Operating Expenses per Bed", 
        file = "figures/sdid_tot_op.png"),
 
   list(var = "log_op", 
        label = "Log Total Operating Expenses",
-       file = "figure/sdid_log_op.png"),
+       file = "figures/sdid_log_op.png"),
 
-  list(var = "medicaid_enrollment",
+  list(var = "cash_bed", 
+      lable = "Cash per Bed", 
+      file = "figures/sdid_cash"),
+
+  list(var = "mcaid_enroll_bed",
       label = "Medicaid Enrollment",
       file = "figures/sdid_mcaid_enroll.png")
 )
