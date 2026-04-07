@@ -599,11 +599,11 @@ hospdata_op <- hospdata_analysis %>%
   filter(flag_op_exp_jump != 1)
 
 # this was good for mcaid discharges, net pat rev, log_mcc, mcaid_charges, mcaid_discharges,  
-result_test <- att_gt(yname = "medicaid_enrollment",
+result_test <- att_gt(yname = "mcaid_prop_discharges",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "gname",                  
-                data = hospdata_analysis, # state != "TX", state != "NJ"),  
+                data = hospdata_analysis %>% filter(year <= 2022), # state != "TX", state != "NJ"),  
                 control_group = "notyettreated",  
                 xformla = ~ 1,               # covariates (use ~1 if none)
                 est_method = "dr",
@@ -621,7 +621,7 @@ ggdid(result_test)
 agg_simple <- aggte(result_test, type = "simple")
 summary(agg_simple)
 
-agg_dynamic <- aggte(result_test, type = "dynamic", min_e = -4, max_e = 6)
+agg_dynamic <- aggte(result_test, type = "dynamic", min_e = -6, max_e = 6)
 summary(agg_dynamic)
 ggdid(agg_dynamic)
 
@@ -633,20 +633,53 @@ View(hospdata_analysis)
 # new tester 
 # this was good
 result_test1 <- att_gt(
-                yname = "mcaid_prop_discharges",
+                yname = "tot_operating_exp",
                 tname = "year",
                 idname = "mcrnum",
                 gname = "gname",  
-                data = hospdata_analysis %>% filter(year > 2003, gname != 2013),  
+                data = hospdata_analysis %>% filter(year <= 2022), # filter out hospitals in multiple states, which may be data errors; also filter out TX and NJ for now since they have weird patterns and may be data issues
                 control_group = "notyettreated",  
                 est_method = "dr",
                 clustervars = "state", 
                 base_period = "universal"
                 )
 
+# check for duplicates in mcrnum-year combinations
+hospdata_analysis %>%
+  filter(year <= 2022) %>%
+  count(mcrnum, year) %>%
+  filter(n > 1)
+
+dups <- hospdata_analysis %>%
+  filter(year <= 2022) %>%
+  count(mcrnum, year) %>%
+  filter(n > 1) %>%
+  pull(mcrnum)
+
+View(hospdata_analysis %>% filter(mcrnum %in% dups) %>% select(mcrnum, name, year, gname, beds, tot_operating_exp, net_pat_rev))
+
+hospdata_analysis <- hospdata_analysis %>%
+  group_by(mcrnum, year) %>%
+  slice(1) %>%
+  ungroup()
+
+hospdata_analysis %>%
+  filter(year <= 2022) %>%
+  distinct(mcrnum, state) %>%
+  count(mcrnum) %>%
+  filter(n > 1)
+
+multi_state <- hospdata_analysis %>%
+  filter(year <= 2022) %>%
+  distinct(mcrnum, state) %>%
+  count(mcrnum) %>%
+  filter(n > 1) %>%
+  pull(mcrnum)
+
+View(hospdata_analysis %>% filter(mcrnum %in% multi_state) %>% select(mcrnum, name, year, gname, state))
+
+
 table(hospdata_analysis$gname)
-
-
 
 summary(result_test1, type = "group")
 ggdid(result_test1)
@@ -654,7 +687,7 @@ ggdid(result_test1)
 agg_simple1 <- aggte(result_test1, type = "simple")
 summary(agg_simple1)
 
-agg_dynamic1 <- aggte(result_test1, type = "dynamic", min_e = -4, max_e = 4)
+agg_dynamic1 <- aggte(result_test1, type = "dynamic", min_e = -6, max_e = 6)
 summary(agg_dynamic1)
 ggdid(agg_dynamic1)
 

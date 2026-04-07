@@ -329,12 +329,12 @@ hospdata %>%
   head(10)
 # Should show: cohort = "Always (2004)", post_treat = 1
 
-# Check 2005 cohort in 2003
+# Check 2005 cohort in 2001
 hospdata %>%
-  filter(cohort == "2005", year == 2003) %>%
+  filter(cohort == "2005", year == 2001) %>%
   select(state, year, firsttax_num, cohort, gname, post_treat, time_to_treat) %>%
   head(10)
-# Should show: cohort = "2005", post_treat = 0, time_to_treat = -2
+# Should show: cohort = "2005", post_treat = 0, time_to_treat = -4
 
 
 # ==============================================================================
@@ -377,8 +377,8 @@ hospdata <- hospdata %>%
     private_discharges = tot_discharges - (mcaid_discharges + mcare_discharges),
 
     # operating margin 
-    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp, 
-
+    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp,
+  
     # Log variables for skewed outcomes
     log_npr = log(net_pat_rev),  # Add 1 to avoid log(0
     log_op = log(tot_operating_exp) 
@@ -450,4 +450,6 @@ cat("Output file: hospdata_full.csv\n")
 cat(paste("Number of hospitals:", n_distinct(hospdata$mcrnum), "\n"))
 cat(paste("Years covered:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 cat(paste("Total observations:", nrow(hospdata), "\n"))
+
+
 

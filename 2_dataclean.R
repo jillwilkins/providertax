@@ -10,10 +10,6 @@ library(dplyr)
 library(stringr)
 library(readr)
 
-
-# Set file paths ---------------------------------------------------------------
-data_output_path <- "/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/output/"
-
 # ==============================================================================
 # LOAD DATA
 # ==============================================================================
@@ -30,17 +26,17 @@ cat(paste("Year range:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 
 
 # ==============================================================================
-# FILTER 1: RESTRICT TO ANALYSIS YEARS (2002-2024)
+# FILTER 1: RESTRICT TO ANALYSIS YEARS (2000-2024)
 # ==============================================================================
 
-# WHY: Treatment data only available from 2004 onward
+# WHY: Pre 2000 data is sparse
 # DECISION: start sample when treatment data begins
 # NOTE: States with treatment in 2004 are "always treated" in our data
 
 hospdata_clean <- hospdata %>%
-  filter(year >= 2002 & year <= 2024)
+  filter(year >= 1999 & year <= 2024)
 
-cat("\n=== FILTER 1: Year Range (2004-2024) ===\n")
+cat("\n=== FILTER 1: Year Range (2000-2024) ===\n")
 cat(paste("Observations removed:", nrow(hospdata) - nrow(hospdata_clean), "\n"))
 cat(paste("Observations remaining:", nrow(hospdata_clean), "\n"))
 cat(paste("Unique hospitals:", n_distinct(hospdata_clean$mcrnum), "\n"))
@@ -339,6 +335,7 @@ cat(paste("Unique hospitals remaining:", after_count, "\n"))
 # ==============================================================================
 # WHY: The distribution of net patient revenue has extreme outliers and unfeasible values 
 
+before_count <- n_distinct(hospdata_clean$mcrnum)
 begin_avg <- mean(hospdata_clean$net_pat_rev, na.rm = TRUE)
 
 # NEGATIVES 
@@ -393,6 +390,7 @@ hospdata_clean <- hospdata_clean %>%
 
 # after review on 2/26, most high values are very high but dont appear to be errors 
 
+after_count <- n_distinct(hospdata_clean$mcrnum)
 after_avg <- mean(hospdata_clean$net_pat_rev, na.rm = TRUE)
 # summary(hospdata_clean$net_pat_rev)
 
@@ -408,6 +406,7 @@ cat(paste("Average net patient revenue after correction:", after_avg, "\n"))
 # ==============================================================================
 # WHY: Distribution major skewed right, looking to remove the value of over a billion and fix negatives
 
+before_count <- n_distinct(hospdata_clean$mcrnum)
 before_avg <- mean(hospdata_clean$uncomp_care, na.rm = TRUE)
 
 # HIGH VALUES
@@ -448,6 +447,7 @@ hospdata_clean <- hospdata_clean %>%
 hospdata_clean <- hospdata_clean %>%
   filter(!mcrnum %in% c(50257, 330141, 440151))
 
+after_count <- n_distinct(hospdata_clean$mcrnum)
 after_avg <- mean(hospdata_clean$uncomp_care, na.rm = TRUE)
 
 cat("\n=== CLEAN: Uncompensated Care Corrections ===\n")
@@ -490,6 +490,7 @@ hospdata_clean <- hospdata_clean %>%
 # CLEAN: Medicaid Charges
 # ==============================================================================
 # WHY: Distribution shows a max over 10 billion and negative values. 
+# NOTE: 4/7 moving away from charges as an outcome. We dont really know what charges are! 
 
 before_avg <- mean(hospdata_clean$mcaid_charges, na.rm = TRUE)
 
@@ -635,22 +636,22 @@ hospdata_clean <- hospdata_clean %>%
     # Pre-treatment averages (for treated hospitals)
     # For never-treated (gname == 0), use early years (2004-2006)
     pre_beds_avg = case_when(
-      gname == 0 ~ mean(beds[year %in% 2004:20011], na.rm = TRUE),  # Never treated: use 2004-2006
+      gname == 0 ~ mean(beds, na.rm = TRUE),  # Never treated: use 2000-2006
       TRUE ~ mean(beds[year < gname], na.rm = TRUE)                 # Treated: use all years before treatment
     ),
     
     pre_discharges_avg = case_when(
-      gname == 0 ~ mean(tot_discharges[year %in% 2004:2006], na.rm = TRUE),
+      gname == 0 ~ mean(tot_discharges, na.rm = TRUE),
       TRUE ~ mean(tot_discharges[year < gname], na.rm = TRUE)
     ),
     
     # Alternative: Use a fixed baseline period for everyone (more comparable)
-    baseline_beds = mean(beds[year %in% 2004:2006], na.rm = TRUE),
-    baseline_discharges = mean(tot_discharges[year %in% 2004:2006], na.rm = TRUE),
+    baseline_beds = mean(beds[year %in% 2000:2006], na.rm = TRUE),
+    baseline_discharges = mean(tot_discharges[year %in% 2000:2006], na.rm = TRUE),
     
     # Number of pre-treatment years available
     n_pre_years = sum(year < gname, na.rm = TRUE),
-    n_baseline_years = sum(year %in% 2004:2006, na.rm = TRUE)
+    n_baseline_years = sum(year %in% 2000:2006, na.rm = TRUE)
   ) %>%
   ungroup()
 
@@ -679,13 +680,13 @@ cat(paste("Hospitals with missing baseline_beds:",
 
 # Check hospitals treated very early (might have no pre-treatment data)
 early_treated <- hospdata_clean %>%
-  filter(gname == 2004) %>%
+  filter(gname == 0) %>%
   distinct(mcrnum, pre_beds_avg, n_pre_years) %>%
   arrange(n_pre_years)
 
-cat("\n=== 2004 COHORT (LIMITED PRE-TREATMENT DATA) ===\n")
-cat(paste("2004 cohort has", unique(early_treated$n_pre_years), "pre-treatment years\n"))
-cat("Consider using baseline_beds instead for this cohort\n")
+cat("\n=== Always COHORT (CHECK PRE-TREATMENT DATA) ===\n")
+cat(paste("Always cohort has", unique(early_treated$n_pre_years), "pre-treatment years\n"))
+
 
 # ==============================================================================
 # VERIFY TREATMENT VARIABLES ARE INTACT
@@ -707,6 +708,24 @@ if (length(missing_vars) == 0) {
 } else {
   cat("WARNING: Missing variables:", paste(missing_vars, collapse = ", "), "\n")
 }
+
+# ==============================================================================
+# OPTION: SAVE ANALYTICAL DATASET
+# ==============================================================================
+
+write.csv(
+  hospdata_clean,
+  paste0(data_output_path, "hospdata_analysis.csv"),
+  row.names = FALSE
+)
+
+cat("\n=== DATA SAVED SUCCESSFULLY ===\n")
+cat("Output file: hospdata_analysis.csv\n")
+cat("Location:", data_output_path, "\n")
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("COMPLETE: cleaned, income data!\n")
+cat(rep("=", 70), "\n\n", sep = "")
 
 
 

@@ -12,7 +12,7 @@ Sys.setenv(CENSUS_KEY = "3d68cc260a0373b59509aed3e418df2d057eb664")
 # Fetch data for each year (compact version)
 cat("Fetching Census SAIPE data...\n")
 
-saipe_raw <- map_dfr(2003:2022, function(yr) {
+saipe_raw <- map_dfr(1999:2022, function(yr) {
   getCensus(
     name = "timeseries/poverty/saipe",
     vintage = NULL,
@@ -63,8 +63,9 @@ hospdata_clean <- hospdata_clean %>%
   ungroup()
 
 # ==============================================================================
-# SAVE ANALYTICAL DATASET
+# SAVE DATASET
 # ==============================================================================
+# note, this will overwrite what was saved in 2_dataclean.R, but we want to save the final version with income data included
 
 write.csv(
   hospdata_clean,

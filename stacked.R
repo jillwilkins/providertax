@@ -55,7 +55,7 @@ getdata <- function(j, window) {
       gname > j + 5              # controls not treated soon after
     ) %>%
     filter(
-      year >= j - 3 &
+      year >= j - 6 &
       year <= j + 5              # event window bounds
     ) %>%
     mutate(df = j)                    # sub-experiment indicator
@@ -104,27 +104,25 @@ stacked_data <- stacked_data %>%
 # 5. estimate stacked DiD with feols
 
 stacked_result <- feols(
-   mcaid_prop_discharges ~ i(rel_year, treated, ref = -1) + median_income_pre + exp_status| mcrnum^df + year^df,
-  data = stacked_data %>% filter(state != "HI", year <= 2020), # state != "TX", state != "NJ",
+   op_bed ~ i(rel_year, treated, ref = -1) + median_income_pre + exp_status| mcrnum^df + year^df,
+  data = stacked_data %>% filter(year <= 2022), # state != "TX", state != "NJ",
   cluster = ~state) 
-
 
 summary(stacked_result)
 iplot(stacked_result, main = "Stacked DiD Event Study")
 colnames(hospdata_analysis)
 
-summary(hospdata_analysis$mcaid_enroll_bed)
+summary(hospdata_analysis$cash_bed)
 
 # Simple stacked DiD - just the interaction
 stacked_simple <- feols(
-  npr_bed ~ treated:post + exp_status + median_income_pre | mcrnum^df + year^df,
+  log_op ~ treated:post + exp_status + median_income_pre | mcrnum^df + year^df,
   data = stacked_data %>% 
-    filter(state != "HI", year <= 2022) %>%
+    filter(year <= 2022) %>%
     mutate(post = ifelse(rel_year >= 0, 1, 0)),
   cluster = ~state
 )
 
-summary(hospdata_analysis$bed)
 summary(stacked_simple)
 
 
@@ -258,7 +256,7 @@ run_stacked_did <- function(outcome_var,
                             outcome_label,
                             data = stacked_data,
                             controls = "exp_status + median_income_pre",
-                            filter_condition = "state != 'HI' & year < 2022",
+                            filter_condition = "year <= 2022",
                             filename = NULL,
                             width = 10,
                             height = 7) {
@@ -365,10 +363,6 @@ outcomes <- list(
        label = "Uncompensated Care Charges Per Bed", 
        file = "figures/sdid_uncomp.png"),
   
-  list(var = "ucc_prop", 
-       label = "Uncompensated Care Share of Charges", 
-       file = "figures/sdid_ucc.png"),
-  
   list(var = "op_margin", 
        label = "Operating Margin", 
        file = "figures/sdid_op_margin.png"),
@@ -390,12 +384,8 @@ outcomes <- list(
        file = "figures/sdid_log_op.png"),
 
   list(var = "cash_bed", 
-      lable = "Cash per Bed", 
-      file = "figures/sdid_cash"),
-
-  list(var = "mcaid_enroll_bed",
-      label = "Medicaid Enrollment",
-      file = "figures/sdid_mcaid_enroll.png")
+      label = "Cash per Bed", 
+      file = "figures/sdid_cash")
 )
 
 # Run for all outcomes
