@@ -166,10 +166,12 @@ att_mcaid <- results[["mcaid_prop_discharges"]]$coef_data %>%
   pull(att) %>%
   round(3)
 
+mn_mcaid <- 0.15 # FILL IN THE MEAN VALUE (can calculate from state_data or stacked_data)
+
 # FILL IN THE MEAN VALUE 
 label_text <- paste0(
-  "Mean: ", "FILL", "\n",
-   "ATT: ", att_mcaid
+  "  Mean:  ", scales::percent(mn_mcaid), "  \n",
+  "  ATT:     ", scales::percent(att_mcaid), "  "
 )
 
 p_mcaid_labeled <- results[["mcaid_prop_discharges"]]$plot +
@@ -217,8 +219,8 @@ p_uncomp_labeled <- results[["uncomp_bed"]]$plot +
     x          = max(results[["uncomp_bed"]]$coef_data$rel_year) - 0.5,
     y          = max(results[["uncomp_bed"]]$coef_data$ci_upper) * 0.95,
     label      = label_text_uncomp,
-    hjust      = 2.75,
-    vjust      = 6,
+    hjust      = 2.5,
+    vjust      = 7,
     size       = 7,
     fontface   = "italic",
     fill       = "#eaf4fc",
@@ -237,6 +239,18 @@ ggsave("events_for_pres/uncomp_labeled.png",
 # ==============================================================================
 # op_bed
 # ==============================================================================
+
+# generate shared label locations for op and npr 
+y_min <- min(
+  min(results[["op_bed"]]$coef_data$ci_lower),
+  min(results[["npr_bed"]]$coef_data$ci_lower)
+)
+
+y_max <- max(
+  max(results[["op_bed"]]$coef_data$ci_upper),
+  max(results[["npr_bed"]]$coef_data$ci_upper)
+)
+
 att_op <- results[["op_bed"]]$coef_data %>%
   filter(rel_year >= 0) %>%
   summarise(att = mean(coef, na.rm = TRUE)) %>%
@@ -250,12 +264,11 @@ label_text_op <- paste0(
   "  ATT:     ", scales::comma(att_op), "  "
 )
 
-
 p_op_labeled <- results[["op_bed"]]$plot +
   annotate(
     "label",
-    x          = max(results[["op_bed"]]$coef_data$rel_year) - 0.5,
-    y          = max(results[["op_bed"]]$coef_data$ci_upper) * 0.95,
+    x = max(results[["op_bed"]]$coef_data$rel_year) - 0.5,
+    y = y_max * 0.95,
     label      = label_text_op,
     hjust      = 2,
     vjust      = 1,
@@ -293,8 +306,8 @@ label_text_npr <- paste0(
 p_npr_labeled <- results[["npr_bed"]]$plot +
   annotate(
     "label",
-    x          = max(results[["npr_bed"]]$coef_data$rel_year) - 0.5,
-    y          = max(results[["npr_bed"]]$coef_data$ci_upper) * 0.95,
+    x = max(results[["npr_bed"]]$coef_data$rel_year) - 0.5,
+    y = y_max * 0.95,  # same shared y_max,
     label      = label_text_npr,
     hjust      = 2,
     vjust      = 1,
@@ -326,17 +339,23 @@ p_npr_bed <- results[["npr_bed"]]$plot
 # Combine side by side
 # ------------------------------------------------------------------------------
 
-# Shared y axis scale across both panels
+# align axis
+p_op_labeled  <- p_op_labeled  + coord_cartesian(ylim = c(y_min, y_max))
+p_npr_labeled <- p_npr_labeled + coord_cartesian(ylim = c(y_min, y_max))
+
 combined_plot <- p_op_labeled + p_npr_labeled +
   plot_layout(ncol = 2, axes = "collect") +
   plot_annotation(
-    # title = "Effects on Hospital Financial Outcomes",
     theme = theme(
       plot.title = element_text(face = "bold", size = 16, hjust = 0.5)
     )
   )
 
 print(combined_plot)
+
+ggsave("events_for_pres/op_npr_combined.png",
+       plot  = combined_plot,
+       width = 14, height = 10, dpi = 300)
 
 # ------------------------------------------------------------------------------
 # Save
@@ -362,7 +381,7 @@ p_uncomp_bed <- results[["uncomp_bed"]]$plot
 # ------------------------------------------------------------------------------
 
 # Shared y axis scale across both panels
-combined_plot <- p_mcaid_dis + p_uncomp_bed +
+combined_plot <- p_mcaid_labeled + p_uncomp_labeled +
   plot_layout(ncol = 2) +
   plot_annotation(
     # title = "Effects on Hospital Payer Mix",
