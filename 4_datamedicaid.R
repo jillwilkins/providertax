@@ -57,10 +57,58 @@ hospdata_analysis <- hospdata_analysis %>%
 
 summary(hospdata_analysis$medicaid_enrollment)
 
+# ==============================================================================
+# ADD STATE MEDICAID ELIGIBILITY DATA
+# =========================================================================
 
+elig <- read.csv(
+  paste0(data_input_path, "elig_kff.csv"), 
+  skip = 2  # Skip header rows
+)
 
+elig <- elig %>%
+  select(-Footnotes) %>%           # Remove footnote column
+  slice(2:52) %>%                  # Keep state rows only (remove title rows)
+  rename(statename = Location) %>%
+  mutate(
+    # Convert state names to abbreviations
+    state = ifelse(
+      statename == "District of Columbia", 
+      "DC",
+      state.abb[match(statename, state.name)]
+    )
+  )
+  
 
+# rename columns to the closet year they represent
+elig <- elig %>%
+  rename("2003" = "April.2003", "2004" = "July.2004", "2005" = "July.2005", "2006" = "July.2006", "2010" = "December.2009", "2024" = "May.2024") %>%
+  rename_with(~ str_remove(.x, "^January\\."))
 
+# keep only state name and eligibility columns
+elig <- elig %>%
+  select(state, starts_with("20"))
+
+# convert to numeric
+elig <- elig %>%
+  mutate(across(starts_with("20"), as.numeric))
+
+# Then pivot to long format
+elig <- elig %>%
+  pivot_longer(
+    cols = -state,
+    names_to = "year",
+    values_to = "eligibility"
+  ) %>%
+  mutate(year = as.integer(year))
+
+View(elig)
+
+# Merge with hospdata_analysis
+hospdata_analysis <- hospdata_analysis %>%
+  left_join(elig, by = c("state", "year"))
+
+View(hospdata_analysis)
 
 # ==============================================================================
 # Old code but dont want to delete it yet 

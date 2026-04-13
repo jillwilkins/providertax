@@ -26,12 +26,15 @@ hospdata_analysis_wins <- hospdata_analysis %>%
   mutate(
     # Winsorize at 1st and 99th percentile (standard)
     mcaid_prop_discharges_w = winsorize_var(mcaid_prop_discharges, c(0.01, 0.99)),
-    ucc_prop_w = winsorize_var(ucc_prop, c(0.01, 0.99)),
+    uncomp_bed_w = winsorize_var(uncomp_bed, c(0.01, 0.99)),
     uncomp_care_w = winsorize_var(uncomp_care, c(.01, .99)),
     op_margin_w = winsorize_var(op_margin, c(0.01, 0.99)),
     net_pat_rev_w = winsorize_var(net_pat_rev, c(0.01, 0.99)),
     tot_operating_exp_w = winsorize_var(tot_operating_exp, c(0.01, 0.99)),
-    mcaid_charges_w = winsorize_var(mcaid_charges, c(0.01, 0.99)),
+    npr_bed_w = winsorize_var(npr_bed, c(0.01, 0.99)),
+    op_bed_w = winsorize_var(op_bed, c(0.01, 0.99)),
+    cash_bed_w = winsorize_var(cash_bed, c(0.01, 0.99)),
+    mcaid_enroll_bed_w = winsorize_var(mcaid_enroll_bed, c(0.01, 0.99)),
 
     
     # Or more aggressive: 5th and 95th percentile

@@ -5,12 +5,12 @@
 library(ggplot2)
 
 # Which outcome do you want to visualize?
-outcome_var <- "net_pat_rev"  # Change as needed
-outcome_label <- "Net Patient Revenue"  # Change as needed
+outcome_var <- "npr_bed"  # Change as needed
+outcome_label <- "npr_bed"  # Change as needed
 
 # Remove missing values
 plot_data <- hospdata_analysis %>%
-  filter(!is.na(.data[[outcome_var]]) & year <= 2020)
+  filter(!is.na(.data[[outcome_var]]) & year <= 2022 & mcrnum %in% hospitals_with_high_npr_bed == FALSE)  # Exclude hospitals with extreme npr_bed values
 
 # Summary statistics
 cat("\n=== DISTRIBUTION SUMMARY ===\n")
@@ -53,3 +53,20 @@ print(p2)
 #ggsave(paste0("figures/dist_", outcome_var, "_density.png"), 
        #width = 10, height = 6, dpi = 300)
 
+
+summary(hospdata_analysis$npr_bed)
+
+hosp_w_neg_npr_bed <- hospdata_analysis %>% 
+group_by(mcrnum) %>%
+  filter(npr_bed < 0) %>%
+  pull(mcrnum) %>%
+  unique()
+
+hospitals_with_high_npr_bed <- hospdata_analysis %>%
+  group_by(mcrnum) %>%
+  filter(any(npr_bed > 5e6, na.rm = TRUE)) %>%
+  pull(mcrnum) %>%
+  unique()
+
+View(hospdata_analysis %>% filter(mcrnum %in% hospitals_with_high_npr_bed) %>%
+       select(mcrnum, state, name, year, cohort, net_pat_rev, npr_bed, tot_operating_exp, op_bed, beds, pre_beds_avg))

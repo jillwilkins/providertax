@@ -31,7 +31,7 @@ hospdata_analysis <- hospdata_analysis %>%
 window <- 5  # Event window (±5 years)
 
 # Exclude always treated 
-hospdata_stack <- hospdata_analysis %>%
+hospdata_stack <- hospdata_analysis_wins %>%
   filter(cohort != "Always (2004)") 
 
 # Get treated cohorts (exclude never-treated and always treated, gname == 0)
@@ -55,7 +55,7 @@ getdata <- function(j, window) {
       gname > j + 5              # controls not treated soon after
     ) %>%
     filter(
-      year >= j - 6 &
+      year >= j - 5 &
       year <= j + 5              # event window bounds
     ) %>%
     mutate(df = j)                    # sub-experiment indicator
@@ -104,9 +104,10 @@ stacked_data <- stacked_data %>%
 # 5. estimate stacked DiD with feols
 
 stacked_result <- feols(
-   op_bed ~ i(rel_year, treated, ref = -1) + median_income_pre + exp_status| mcrnum^df + year^df,
+  op_bed ~ i(rel_year, treated, ref = -1) + median_income_pre + exp_status| mcrnum^df + year^df,
   data = stacked_data %>% filter(year <= 2022), # state != "TX", state != "NJ",
-  cluster = ~state) 
+  #weights = ~Q_weight,          # <-- corrective Q-weights here
+  cluster = ~state^df) 
 
 summary(stacked_result)
 iplot(stacked_result, main = "Stacked DiD Event Study")
@@ -125,6 +126,19 @@ stacked_simple <- feols(
 
 summary(stacked_simple)
 
+# And what is their combined treated weight?
+stacked_data %>%
+  filter(treated == 1) %>%
+  group_by(rel_year) %>%
+  summarise(
+    n_cohorts        = n_distinct(df),
+    n_treated_hosps  = n_distinct(mcrnum),
+    total_Q_weight   = sum(Q_weight),   # should be constant if Q-weights correct
+    .groups = "drop"
+  ) %>%
+  arrange(rel_year) %>%
+  print()
+
 
 # MED enrollment state level 
 stacked_data_state <- stacked_data %>%
@@ -133,6 +147,7 @@ stacked_data_state <- stacked_data %>%
     medicaid_enrollment = first(medicaid_enrollment),
     median_income_pre   = first(median_income_pre),
     beds = mean(beds),
+    Q_weight = mean(Q_weight, na.rm = TRUE),
     n_hospitals = n_distinct(mcrnum),
     pre_beds_avg        = mean(pre_beds_avg, na.rm = TRUE),  # average across hospitals in state
     .groups = "drop"
@@ -149,8 +164,8 @@ state_stacked_result <- feols(
   medicaid_enrollment/pre_beds_avg ~ i(rel_year, treated, ref = -1) + 
     median_income_pre + exp_status | state^df + year^df,
   data = stacked_data_state %>% filter(year < 2020, year > 2007),
-  cluster = ~state
-  #weights = ~state  # Weight by number of hospitals
+  cluster = ~state,
+  weights = ~Q_weight
 )
 
 summary(state_stacked_result)
@@ -190,9 +205,9 @@ library(dplyr)
 # Extract coefficients and standard errors
 coef_data <- data.frame(
   rel_year = as.numeric(gsub(".*::(-?[0-9]+):.*", "\\1", 
-                             names(coef(state_stacked_result))[grepl("rel_year", names(coef(state_stacked_result)))])),
-  coef = coef(state_stacked_result)[grepl("rel_year", names(coef(state_stacked_result)))],
-  se = state_stacked_result$se[grepl("rel_year", names(coef(state_stacked_result)))]
+                             names(coef(stacked_result))[grepl("rel_year", names(coef(stacked_result)))])),
+  coef = coef(stacked_result)[grepl("rel_year", names(coef(stacked_result)))],
+  se = stacked_result$se[grepl("rel_year", names(coef(stacked_result)))]
 ) %>%
   mutate(
     ci_lower = coef - 1.96 * se,
@@ -219,7 +234,7 @@ stacked_event_study_gradient <- ggplot(coef_data, aes(x = rel_year, y = coef, co
   geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
   # Labels
   labs(
-    title = "Stacked DiD Event Study: Medicaid Enrollment per Bed",
+    title = "Stacked DiD Event Study: npr per Bed",
     x = "Years Relative to Treatment",
     y = "Effect on Outcome"
   ) +
@@ -242,7 +257,7 @@ stacked_event_study_gradient <- ggplot(coef_data, aes(x = rel_year, y = coef, co
 print(stacked_event_study_gradient)
 
 # Save
-ggsave("sdid_mcaid_enrollment_per_bed.png", 
+ggsave("clustersdid2_npr_bed.png", 
        plot = stacked_event_study_gradient, 
        width = 8, height = 10, dpi = 300)
 
@@ -401,6 +416,7 @@ for (outcome in outcomes) {
   )
 }
 
+View(hospdata_analysis)
 # Access individual results
 # results$mcaid_prop_discharges_w$model  # The regression
 # results$mcaid_prop_discharges_w$plot   # The plot

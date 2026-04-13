@@ -226,6 +226,6 @@ donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5
   )
 
 # Save the plot
-ggsave("hospshare_donut.png", plot = donut, width = 7, height = 5, dpi = 300)
+ggsave("hospshare_donut2.png", plot = donut, width = 7, height = 5, dpi = 300)
 
 

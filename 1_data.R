@@ -177,7 +177,9 @@ fmap <- fmap %>%
   rename(multiplier = m) %>%
   mutate(year = as.integer(year)) %>%
   filter(!is.na(fmap) & !is.na(multiplier))  # Remove rows from title lines
-# What does your tax data look like?
+  
+  # What does your tax data look like?
+
 tax %>%
   select(state, firsttax) %>%
   filter(firsttax %in% c("2004", "2005", "2006", "never")) 
