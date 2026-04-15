@@ -12,12 +12,12 @@ adoption_plot <- ggplot(adoption_over_time,
     label      = "33 states have implemented\na provider tax since 2004.",
     hjust      = 0.075,
     vjust      = .80,
-    size       = 4.5,
+    size       = 8,
     fontface   = "italic",
     fill       = "#ffd16659",
     color      = "#17527f",
-    label.size = 0.6,
-    lineheight = 1.3
+    label.size = 0.8,
+    lineheight = 1.5
   ) +
   labs(
    # title = "Cumulative State Adoption of Provider Tax Over Time",
@@ -38,4 +38,4 @@ print(adoption_plot)
 
 ggsave("figures/cumulative_adoption.png",
        plot  = adoption_plot,
-       width = 7, height = 7, dpi = 300)
+       width = 16, height = 10, dpi = 300)

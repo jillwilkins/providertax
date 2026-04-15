@@ -189,11 +189,11 @@ donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5
   )
 
 # create donut
+# create donut
 donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5, fill = fill_color)) +
   geom_rect(color = "white") +
   coord_polar(theta = "y") +
-  xlim(c(2, 4.5)) +  # extend x-axis to give space for outside labels
-  # Labels inside the donut (bold "Hospitals")
+  xlim(c(2, 4.5)) +
   geom_text(
     data = filter(donut_colors, !outside),
     aes(
@@ -205,14 +205,12 @@ donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5
     size = 3,
     color = "black"
   ) +
-  # Labels outside the donut
   geom_text(
     data = filter(donut_colors, outside),
     aes(x = 4.5, y = label_pos, label = label_text),
     size = 2.5,
     hjust = 0.5
   ) +
-  # Lines connecting outside labels to slices
   geom_segment(
     data = filter(donut_colors, outside),
     aes(x = 4, xend = 4.4, y = label_pos, yend = label_pos),
@@ -222,10 +220,11 @@ donut <- ggplot(donut_colors, aes(ymax = ymax, ymin = ymin, xmax = 4, xmin = 2.5
   theme_void() +
   scale_fill_identity() +
   theme(
-    legend.position = "none"
+    legend.position = "none",
+    plot.background = element_rect(fill = "transparent", color = NA),  # ← added
+    panel.background = element_rect(fill = "transparent", color = NA)  # ← added
   )
 
-# Save the plot
-ggsave("hospshare_donut2.png", plot = donut, width = 7, height = 5, dpi = 300)
-
+# Save with transparent background
+ggsave("hospshare_donut.png", plot = donut, width = 7, height = 5, dpi = 300, bg = "transparent")
 

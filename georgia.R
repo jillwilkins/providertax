@@ -178,6 +178,131 @@ ggsave("figures/georgia_share_comparison.png",
        width = 8, height = 6, dpi = 300)
 
 
+# TRY WITH THE LINE 
+# Separate the data
+ga_tax_only <- ga_comparison_share_long %>%
+  filter(type %in% c("Provider Tax (Mean)", "Provider Tax (Median)"))
+
+ga_hrrp_lines <- ga_comparison_share_long %>%
+  filter(type %in% c("HRRP Penalty (Mean)", "HRRP Penalty (Median)"))
+
+# Plot
+comparison_share_plot <- ggplot(ga_tax_only,
+                                aes(x = factor(year), y = share, fill = type)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+  scale_fill_manual(values = c(
+    "Provider Tax (Mean)"   = "#2484d2",
+    "Provider Tax (Median)" = "#abd9e9"
+  )) +
+  # HRRP horizontal lines per year
+  geom_segment(
+    data = ga_hrrp_lines,
+    aes(
+      x     = as.numeric(factor(year)) - 0.35,
+      xend  = as.numeric(factor(year)) + 0.35,
+      y     = share,
+      yend  = share,
+      color = type
+    ),
+    linewidth   = 3.25,
+    inherit.aes = FALSE
+  ) +
+  # HRRP line labels (right side of each line)
+ # HRRP Mean label on the LEFT
+# HRRP Mean label on the LEFT
+geom_text(
+  data = ga_hrrp_lines %>% filter(year == 2022, type == "HRRP Penalty (Mean)"),
+  aes(
+    x     = 2 - 0.38,
+    y     = share,
+    label = "HRRP Mean"
+  ),
+  hjust       = 1,
+  vjust       = -.5,     # push up
+  size        = 4.25,
+  color       = "#DC4B4B",
+  inherit.aes = FALSE
+) +
+# HRRP Median label on the RIGHT
+geom_text(
+  data = ga_hrrp_lines %>% filter(year == 2022, type == "HRRP Penalty (Median)"),
+  aes(
+    x     = 2 + 0.38,
+    y     = share,
+    label = "HRRP Median"
+  ),
+  hjust       = 0,
+  vjust       = 0,    # push down
+  size        = 4.25,
+  color       = "#f4a261",
+  inherit.aes = FALSE
+) +
+  # Provider tax bar top labels
+  geom_text(
+    data = ga_tax_only,
+    aes(
+      x     = factor(year),
+      y     = share,
+      label = case_when(
+        type == "Provider Tax (Mean)"   ~ "Provider Tax \nMean",
+        type == "Provider Tax (Median)" ~ "Provider Tax \nMedian"),
+      group = type
+    ),
+    position = position_dodge(width = 0.7),
+    vjust    = -0.05,  # slightly above the bar
+    size     = 4.25,
+    color    = "black"
+  ) +
+  scale_color_manual(values = c(
+    "HRRP Penalty (Mean)"   = "#DC4B4B",
+    "HRRP Penalty (Median)" = "#f4a261"),
+  guide = "none"
+  ) +
+  labs(
+    x     = "Year",
+    y     = "Payment as \nShare of Pre-Tax Operating Expenses",
+    fill  = NULL,
+    color = NULL
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 0.01),
+    expand = expansion(mult = c(0, 0.15))  # extra space at top for bar labels
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title         = element_text(face = "bold", hjust = 0.5),
+    plot.subtitle      = element_text(hjust = 0.5, size = 10),
+    legend.position    = "none",
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  guides(
+    fill  = guide_legend(nrow = 1),
+    color = guide_legend(nrow = 1)
+  ) + 
+  annotate(
+    "label",
+    x          = 1,        # positions over the 2012 bars
+    y          = 0.035,    # adjust height as needed
+    label      = "Provider taxes represent a much larger\nfinancial obligation than HRRP penalties.",
+    hjust      = 0.5,
+    vjust      = 0.5,
+    size       = 8,
+    fontface   = "italic",
+    fill       = "#ffd16659",
+    color      = "#17527f",
+    label.size = 0.8,
+    lineheight = 1.5
+  ) 
+  
+print(comparison_share_plot)
+
+ggsave("figures/georgia_share_comparison.png",
+       plot  = comparison_share_plot,
+       width = 16, height = 10, dpi = 300)
+
+
+
 # ==============================================================================
 # AVERAGE BY HOSPITAL-YEAR WITH MEDIAN AND EXCLUDING ZEROS
 # ==============================================================================
