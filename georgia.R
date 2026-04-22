@@ -1,7 +1,29 @@
 # ===================================================
 # This script is to compare the Georgia provider tax amount to the HRRP tax amount 
 # ===================================================
+# Calculate change for each hospital
+ga_opex_change <- hospdata_analysis %>%
+  filter(state == "GA", year %in% c(2010, 2011)) %>%
+  arrange(mcrnum, year) %>%
+  group_by(mcrnum) %>%
+  filter(n() == 2) %>%  # Only keep hospitals with both years
+  summarise(
+    opex_2010 = tot_operating_exp[year == 2010],
+    opex_2011 = tot_operating_exp[year == 2011],
+    change = opex_2011 - opex_2010,
+    pct_change = (opex_2011 - opex_2010) / opex_2010 * 100,
+    net_pat_rev_leg = net_pat_rev[year == 2010],
+    tax_pay = case_when (
+      state == "GA" & year == 2011 ~ 0.0145 * net_pat_rev_leg,  # 1.45% of 2010 OPEX
+      TRUE ~ NA_real_
+    ),
+    .groups = "drop"
+  )
 
+summary(ga_opex_change$change)
+summary(ga_opex_change$tax_pay)
+summary(ga_opex_change$pct_change)
+summary(hospdata_stack$op_margin)
 
 # calculate tax amount: 1.45% of the previous years npr since 2011
 georgia_tax <- hospdata_analysis %>%

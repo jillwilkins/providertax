@@ -23,9 +23,24 @@ hospdata_analysis <- hospdata_analysis %>%
         uncomp_bed = uncomp_care/ pre_beds_avg, 
         cash_bed = cash/ pre_beds_avg, 
         mcaid_cost_bed = mcaid_cost/ pre_beds_avg,
-        mcaid_enroll_bed = medicaid_enrollment / pre_beds_avg
+        mcaid_enroll_bed = medicaid_enrollment / pre_beds_avg, 
+        mcaid_dis_bed = mcaid_discharges / pre_beds_avg,
+        private_dis_bed = private_discharges / pre_beds_avg,
         )
 
+summary(hospdata_analysis$mcaid_dis_bed)
+
+# Check the relationship
+printhospdata_analysis %>%
+  filter(!is.na(mcaid_discharges), !is.na(beds), !is.na(tot_discharges)) %>%
+  summarise(
+    mean_beds = mean(beds, na.rm = TRUE),
+    mean_tot_discharges = mean(tot_discharges, na.rm = TRUE),
+    mean_mcaid_discharges = mean(mcaid_discharges, na.rm = TRUE),
+    mean_mcaid_per_bed = mean(mcaid_discharges/beds, na.rm = TRUE),
+    mean_mcaid_share = mean(mcaid_prop_discharges, na.rm = TRUE),
+    n = n()
+  )
 # ------------------------------------------------------------------------------
 #1. get valid treatment cohorts
 window <- 5  # Event window (±5 years)

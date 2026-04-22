@@ -196,7 +196,7 @@ if (diff(q_range) < 0.001) {
 # 8. Regression
 # ------------------------------------------------------------------------------
 stacked_result <- feols(
-  npr_bed_w ~ i(rel_year, treated, ref = -1) +
+  mcaid_discharges/ pre_beds_avg ~ i(rel_year, treated, ref = -1) +
                       median_income_pre + exp_status |
     mcrnum^df + year^df,
   data    = stacked_data %>% filter( state != "HI"), # %>% filter(mcrnum %in% hospitals_with_high_npr_bed == FALSE, mcrnum %in% hosp_w_neg_npr_bed == FALSE), # state != "TX", state != "NJ",
@@ -204,18 +204,24 @@ stacked_result <- feols(
   cluster = ~state^df
 )
 
+post_coefs_count <- coef(stacked_result)[grepl("rel_year::[0-9]+:treated", 
+                                                names(coef(stacked_result)))]
+att_patients <- mean(post_coefs_count)
+att_patients
+
+summary(hospdata_stack$mcaid_dis_bed)
+
 stacked_single_result <- feols(
-  npr_bed_w ~ i(rel_year, treated, ref = -1) +
+  private_discharges ~ i(rel_year, treated, ref = -1) +
                       median_income_pre + exp_status |
     mcrnum^df + year^df,
- data = stacked_data %>% 
-  #filter(state != "HI") %>% 
+data = stacked_data %>% 
   mutate(post = ifelse(rel_year >= 0, 1, 0)),
   weights = ~Q_weight,
   cluster = ~state^df
 )
 
-summary(stacked_single_result)
+summary(stacked_result)
 
 # ------------------------------------------------------------------------------
 # 9. Event study plot

@@ -23,6 +23,7 @@ parse_old_format <- function(path, year) {
     v0 <- trimws(as.character(df[i, 1]))
     !is.na(df[i, 1]) && v0 != "" && v0 != "NA" &&
       !(v0 %in% SKIP_VALS) && !startsWith(v0, "FY") &&
+      !startsWith(v0, "ADM") &&   # add this line
       !grepl("Created On", v0) && is.na(df[i, 2])
   }
   
@@ -71,12 +72,13 @@ parse_old_format <- function(path, year) {
 # ── FY2012–2024 parser (each state in separate sheet) ───────────────────────
 parse_new_format <- function(path, year) {
   state_sheets <- excel_sheets(path)
+  
+  # Drop non-medical sheets: ADM (administration), MAP prefix, and SKIP_VALS
   state_sheets <- state_sheets[!state_sheets %in% SKIP_VALS]
+  state_sheets <- state_sheets[!grepl("^ADM", state_sheets)]  # drop administration sheets
   
   bind_rows(lapply(state_sheets, function(sheet) {
-    
-    # FY2013 uses "MAP - Alabama" style names — strip the prefix for the state value
-    state <- sub("^MAP - ", "", sheet)
+    state <- sub("^MAP - ", "", sheet) 
     
     df <- read_excel(path, sheet = sheet, col_names = FALSE)
     df <- as.data.frame(df)
@@ -118,6 +120,17 @@ parse_new_format <- function(path, year) {
     as_tibble(rec)
   }))
 }
+
+
+panel_old %>%
+  distinct(state) %>%
+  filter(grepl("^ADM|^MAP|^Created", state)) %>%
+  print(n = 50)
+
+panel_new %>%
+  distinct(state) %>%
+  filter(grepl("^ADM|^MAP|^Created", state)) %>%
+  print(n = 50)
 
 # ── Parse all files ───────────────────────────────────────────────────────────
 cat("Parsing FY2002-2011...\n")
@@ -163,18 +176,60 @@ hosp_cols <- names(panel_all)[grepl(
 panel_hosp <- panel_all %>%
   select(state, year, all_of(hosp_cols))
 
+View(panel_hosp)
 
-# And verify Sup. Payments has data for years it should exist
+# verify supp payment data has data for years it should exist
 panel_hosp %>%
   select(state, year, matches("Sup")) %>%
   filter(!is.na(`Inpatient Hospital - Sup. Payments_total`)) %>%
   count(year)
 
+# remove T and C columns 
+panel_hosp <- panel_hosp %>%
+  select(-matches("^(C-|T-)"))
+
+# remove extra dashes and spaces 
+panel_hosp <- panel_hosp %>%
+  rename_with(~ str_replace_all(.x, "[ .\\-–]+", "_") %>%
+                str_replace_all("_+", "_") %>%       # collapse multiple underscores
+                str_remove("_$"))                     # remove trailing underscore
+
+# Save this data in case I need non hospital columns later 
+write.csv(panel_hosp,  file.path(data_output_path, "medicaid_expenditures_full.csv"),  row.names = FALSE)
+
+# keep necessary columns for hosp analysis
+panel_hosp <- panel_hosp %>%
+  select(state, year, matches("Hospital", ignore.case = TRUE))
+
+colnames(panel_hosp)
 
 # ── Save ──────────────────────────────────────────────────────────────────────
-write.csv(panel_all,  file.path(data_input_path, "medicaid_panel_full.csv"),  row.names = FALSE)
 write.csv(panel_hosp, file.path(data_input_path, "medicaid_panel_hospital.csv"), row.names = FALSE)
 
 cat("\nDone!\n")
 cat("Full panel:    ", nrow(panel_all),  "rows,", ncol(panel_all),  "columns\n")
 cat("Hospital panel:", nrow(panel_hosp), "rows,", ncol(panel_hosp), "columns\n")
+
+# change names to abbreviations, drop territories
+panel_hosp <- panel_hosp %>%
+  mutate(
+    state = ifelse(
+      state == "Dist. Of Col.",
+      "DC",
+      state.abb[match(state, state.name)]
+    )
+  ) %>%
+  filter(!is.na(state))  # drops territories and any unmatched names
+
+# Check for mismatches
+View(panel_hosp)
+View(state_data)
+
+state_data_merged <- state_data %>%
+  left_join(panel_hosp, by = c("state", "year"))
+View(state_data_merged)
+
+colnames(state_data_merged)
+
+summary(state_data_merged$Inpatient_Hospital_Sup_Payments_total)
+summary(hospdata_stack$npr_bed)

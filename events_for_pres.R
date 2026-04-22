@@ -5,8 +5,8 @@
 # ==============================================================================
 
 # run the results through my outcomes to include in the presentation 
-
-
+summary(hospdata_stack$tot_discharges)
+summary(hospdata_stack$mcaid_discharges)
 # ==============================================================================
 # FUNCTION: RUN STACKED DiD AND CREATE PLOT
 # ==============================================================================
@@ -151,10 +151,28 @@ for (outcome in outcomes) {
   )
 }
 
-
 names(coef(results[["mcaid_prop_discharges"]]$model))
 
+results
 
+summary(hospdata_stack$mcaid_discharges)
+
+# PRE PERIOD BASELINE MEANS
+pre_treat_means <- stacked_data %>%
+  filter(treated == 1, rel_year < 0) %>%
+  summarise(
+    mn_mcaid  = mean(mcaid_prop_discharges, na.rm = TRUE),
+    mn_uncomp = mean(uncomp_bed,            na.rm = TRUE),
+    mn_op     = mean(op_bed,                na.rm = TRUE),
+    mn_npr    = mean(npr_bed,               na.rm = TRUE)
+  )
+
+mn_mcaid  <- round(pre_treat_means$mn_mcaid,  3)
+mn_uncomp <- round(pre_treat_means$mn_uncomp, 0)
+mn_op     <- round(pre_treat_means$mn_op,     0)
+mn_npr    <- round(pre_treat_means$mn_npr,     0)
+
+print(pre_treat_means)
 
 # ADD Labels for means and att 
 # ==============================================================================
@@ -166,7 +184,6 @@ att_mcaid <- results[["mcaid_prop_discharges"]]$coef_data %>%
   pull(att) %>%
   round(3)
 
-mn_mcaid <- 0.15 # FILL IN THE MEAN VALUE (can calculate from state_data or stacked_data)
 
 # FILL IN THE MEAN VALUE 
 label_text_mcaid <- paste0(
@@ -205,8 +222,6 @@ att_uncomp <- results[["uncomp_bed"]]$coef_data %>%
   summarise(att = mean(coef, na.rm = TRUE)) %>%
   pull(att) %>%
   round(0)
-
-mn_uncomp <- 129353 # FILL IN THE MEAN VALUE (can calculate from state_data or stacked_data)
 
 label_text_uncomp <- paste0(
   "  Mean:  ", scales::comma(mn_uncomp), "  \n",
@@ -257,8 +272,6 @@ att_op <- results[["op_bed"]]$coef_data %>%
   pull(att) %>%
   round(0)
 
-mn_op <- 291009 # FILL IN THE MEAN VALUE (can calculate from state_data or stacked_data)
-
 label_text_op <- paste0(
   "  Mean:  ", scales::comma(mn_op), "  \n",
   "  ATT:     ", scales::comma(att_op), "  "
@@ -295,8 +308,6 @@ att_npr <- results[["npr_bed"]]$coef_data %>%
   summarise(att = mean(coef, na.rm = TRUE)) %>%
   pull(att) %>%
   round(0)
-
-mn_npr <- 230272 # FILL IN THE MEAN VALUE (can calculate from state_data or stacked_data)
 
 label_text_npr <- paste0(
   "  Mean:  ", scales::comma(mn_npr), "  \n",
@@ -464,7 +475,7 @@ scale_y_continuous(
   
   print(p_elig)
 
-  
+
 
 # MEDICAID ENROLLMENT PER BED 
   # Extract coefficients
@@ -537,3 +548,11 @@ ggsave("events_for_pres/state_combined.png",
        width = 16, height = 10, dpi = 300)
 
 
+hospdata_analysis %>%
+  filter(tot_operating_exp < 50000000) %>%
+  summarise(
+    n_unique_hospitals = n_distinct(mcrnum),
+    n_observations = n()
+  )
+
+View(hospdata_analysis)
