@@ -229,7 +229,162 @@ state_data_merged <- state_data %>%
   left_join(panel_hosp, by = c("state", "year"))
 View(state_data_merged)
 
-colnames(state_data_merged)
+colnames(state_data)
 
 summary(state_data_merged$Inpatient_Hospital_Sup_Payments_total)
 summary(hospdata_stack$npr_bed)
+
+panel_hosp %>%
+  select(Inpatient_Hospital_Reg_Payments_total,
+         Inpatient_Hospital_Sup_Payments_total) %>%
+  summary()
+
+# Check negative values
+panel_hosp %>%
+  filter(Inpatient_Hospital_Reg_Payments_total < 0 | 
+         Inpatient_Hospital_Sup_Payments_total < 0) %>%
+  select(state, year, 
+         Inpatient_Hospital_Reg_Payments_total,
+         Inpatient_Hospital_Sup_Payments_total) %>%
+  arrange(Inpatient_Hospital_Reg_Payments_total)
+
+state_data %>%
+  summarise(across(c(Inpatient_Hospital_Reg_Payments_total,
+                     Inpatient_Hospital_Sup_Payments_total,
+                     Outpatient_Hospital_Services_total,
+                     Outpatient_Hospital_Services_Sup_Payments_total),
+                   ~ sum(.x == 0, na.rm = TRUE)))
+
+
+
+#RENAME and Handle 0s
+  state_data <- state_data %>%
+  mutate(
+    clean_inp_tot = ifelse(Inpatient_Hospital_total < 0,    NA,
+                           Inpatient_Hospital_total),
+    clean_out_tot = ifelse(Outpatient_Hospital_total < 0,       NA,
+                           Outpatient_Hospital_total),                       
+    clean_inp_reg = ifelse(Inpatient_Hospital_Reg_Payments_total < 0,    NA,
+                           Inpatient_Hospital_Reg_Payments_total),
+    clean_inp_sup = ifelse(Inpatient_Hospital_Sup_Payments_total < 0,    NA,
+                           Inpatient_Hospital_Sup_Payments_total),
+    clean_out_reg = ifelse(Outpatient_Hospital_Services_total < 0,       NA,
+                           Outpatient_Hospital_Services_total),
+    clean_out_sup = ifelse(Outpatient_Hospital_Services_Sup_Payments_total < 0, NA,
+                           Outpatient_Hospital_Services_Sup_Payments_total)
+  )
+
+ihs <- function(x) log(x + sqrt(x^2 + 1))
+
+state_data <- state_data %>%
+  mutate(
+    inp_reg_per_bed = clean_inp_reg / pre_beds_avg,
+    inp_sup_per_bed = clean_inp_sup / pre_beds_avg,
+    out_reg_per_bed = clean_out_reg / pre_beds_avg,
+    out_sup_per_bed = clean_out_sup / pre_beds_avg,
+    
+    log_inp_reg = ifelse(clean_inp_reg == 0, ihs(clean_inp_reg), log(clean_inp_reg)),
+    log_inp_sup = ifelse(clean_inp_sup == 0, ihs(clean_inp_sup), log(clean_inp_sup)),
+    log_out_reg = ifelse(clean_out_reg == 0, ihs(clean_out_reg), log(clean_out_reg)),
+    log_out_sup = ifelse(clean_out_sup == 0, ihs(clean_out_sup), log(clean_out_sup))
+  )
+
+time_plot <- state_data %>%
+  filter(!is.na(rel_year), !is.na(Inpatient_Hospital_Reg_Payments_total), state != "WY", rel_year >= -5, rel_year <= 5) %>%
+  group_by(rel_year, ever_treat) %>%
+  summarise(mean_inp = mean(Inpatient_Hospital_Sup_Payments_total/pre_beds_avg, na.rm = TRUE), .groups = "drop") %>%
+  mutate(group = ifelse(ever_treat == 1, "Treated", "Never Treated")) %>%
+  ggplot(aes(x = rel_year, y = mean_inp, color = group)) +
+  geom_line() +
+  geom_point() +
+  geom_vline(xintercept = -1, linetype = "dotted", color = "red") +
+  labs(title = "Average Inpatient Regular Payments Per Bed by Treatment Status",
+       x     = "Years Relative to Treatment",
+       y     = "Mean Inpatient Regular Payments Per Bed",
+       color  = "") +
+  theme_minimal()
+
+ggsave("time_plot.png", plot = time_plot, width = 10, height = 6, dpi = 300)
+
+# MAJOR ISSUE with data 
+p99 <- quantile(state_data$inp_reg_per_bed, 0.99, na.rm = TRUE)
+
+state_data %>%
+  filter(inp_reg_per_bed > p99) %>%
+  select(state, year, rel_year, inp_reg_per_bed) %>%
+  arrange(desc(inp_reg_per_bed))
+
+View(state_data %>% filter(state == "WY"))
+summary(state_data$pre_beds_avg)
+
+# Basic summary
+summary(state_data$Inpatient_Hospital_Sup_Payments_total)
+
+# Distribution by year
+state_data %>%
+  filter(state != "WY") %>%  # Exclude WY if needed
+  group_by(year) %>%
+  summarise(
+    n        = n(),
+    mean     = mean(Inpatient_Hospital_Reg_Payments_total, na.rm = TRUE),
+    median   = median(Inpatient_Hospital_Reg_Payments_total, na.rm = TRUE),
+    sd       = sd(Inpatient_Hospital_Reg_Payments_total, na.rm = TRUE),
+    min      = min(Inpatient_Hospital_Reg_Payments_total, na.rm = TRUE),
+    max      = max(Inpatient_Hospital_Reg_Payments_total, na.rm = TRUE),
+    p99      = quantile(Inpatient_Hospital_Reg_Payments_total, 0.99, na.rm = TRUE)
+  ) %>%
+  print(n = 30)
+
+# Does panel_hosp actually have data for 2009+?
+panel_hosp %>%
+  group_by(year) %>%
+  summarise(
+    n = n(),
+    non_na = sum(!is.na(Inpatient_Hospital_total))
+  ) %>%
+  print(n = 30)
+
+
+# Top 10 highest values
+state_data %>%
+  select(state, year, clean_inp_reg) %>%
+  arrange(desc(clean_inp_reg)) %>%
+  head(10)
+
+# Bottom 10 non-zero values  
+state_data %>%
+  filter(clean_inp_reg > 0) %>%
+  select(state, year, clean_inp_reg) %>%
+  arrange(clean_inp_reg) %>%
+  head(10)
+
+  # Column names in panel_old
+names(panel_old)[grepl("Inpatient|Outpatient", names(panel_old), ignore.case = TRUE)]
+summary(panel_hosp$Inpatient_Hospital_total)
+summary(panel_hosp$Inpatient_Hospital_Reg_Payments_total)
+
+# Column names in panel_new
+names(panel_new)[grepl("Inpatient|Outpatient", names(panel_new), ignore.case = TRUE)]
+
+state_year_inp <- panel_all %>%
+  group_by(state, year) %>%
+  summarise(
+    mean_inp_reg = mean(`Inpatient Hospital - Reg. Payments_total`, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(state, year)
+
+rel_year_inp <- state_data %>%
+  group_by(state, rel_year) %>%
+  summarise(
+    mean_inp_reg = mean(Inpatient_Hospital_Reg_Payments_total, na.rm = TRUE),
+    maen_inp_sup = mean(Inpatient_Hospital_Sup_Payments_total, na.rm = TRUE),
+    mean_out_reg = mean(Outpatient_Hospital_Services_Reg_Payments_total, na.rm = TRUE),
+    mean_out_sup = mean(Outpatient_Hospital_Services_Sup_Payments_total, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(state, rel_year)
+
+View(rel_year_inp)
+
+colnames(panel_hosp)

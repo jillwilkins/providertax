@@ -162,15 +162,19 @@ pre_treat_means <- stacked_data %>%
   filter(treated == 1, rel_year < 0) %>%
   summarise(
     mn_mcaid  = mean(mcaid_prop_discharges, na.rm = TRUE),
+    mn_priv  = mean(private_prop_discharges, na.rm = TRUE),
     mn_uncomp = mean(uncomp_bed,            na.rm = TRUE),
     mn_op     = mean(op_bed,                na.rm = TRUE),
-    mn_npr    = mean(npr_bed,               na.rm = TRUE)
+    mn_npr    = mean(npr_bed,               na.rm = TRUE), 
+    mn_op_margin = mean(op_margin,               na.rm = TRUE), 
   )
 
 mn_mcaid  <- round(pre_treat_means$mn_mcaid,  3)
 mn_uncomp <- round(pre_treat_means$mn_uncomp, 0)
 mn_op     <- round(pre_treat_means$mn_op,     0)
 mn_npr    <- round(pre_treat_means$mn_npr,     0)
+mn_op_margin <- round(pre_treat_means$mn_op_margin, 3)
+mn_priv   <- round(pre_treat_means$mn_priv,   3)
 
 print(pre_treat_means)
 

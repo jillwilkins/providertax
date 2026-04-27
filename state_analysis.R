@@ -38,8 +38,9 @@ state_data <- state_data %>%
 colnames(state_data)
 
 state_data <- state_data %>%
-  mutate(inpatient_sup_exp_per_bed = Inpatient_Hospital_Sup_Payments_total / pre_beds_avg) %>%
+  mutate(inp_sup_exp_per_bed = Inpatient_Hospital_Sup_Payments_total / pre_beds_avg) %>%
   ungroup()
+
 summary(state_data$Inpatient_Hospital_Sup_Payments_total)
 
 # NOTES for state data current data availability: 
@@ -117,19 +118,88 @@ state_result_elig <- feols(
 iplot(state_result_elig)
 
 # ==============================================================================
-# Inpatient Expenditure Per Bed Event Study
-state_result_exp <- feols(
-  log(Inpatient_Hospital_Sup_Payments_total) ~ i(rel_year, ever_treat, ref = -1) + median_income_pre + exp_status | state + year,
+# Inpatient Total Expenditure 
+log_inp_reg_result <- feols(
+  log_inp_reg ~ i(rel_year, ever_treat, ref = -1) + median_income_pre + exp_status | state + year,
   data = state_data %>% filter(
-    state != "HI",  # Exclude Hawaii if needed
-    year <= 2022, 
-    year >= 2007, 
-    inpatient_sup_exp_per_bed > 0,
+    year <= 2024, 
+    year >= 2002, 
+    state != "WY",
     (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))  # keep never-treated
   ),
   cluster = ~state
 )
 
-summary(state_result_exp)
+summary(log_inp_reg_result)
+
+# Inpatient Total Supplemental Expenditure 
+log_inp_sup_result <- feols(
+  log_inp_sup ~ i(rel_year, ever_treat, ref = -1) + median_income_pre + exp_status | state + year,
+  data = state_data %>% filter(
+    year <= 2024, 
+    year >= 2008, 
+    (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))  # keep never-treated
+  ),
+  cluster = ~state
+)
+
+summary(log_inp_sup_result)
+
+# Inpatient Total Expenditure Per Bed
+inp_reg_bed_result <- feols(
+  inp_reg_per_bed ~ i(rel_year, ever_treat, ref = -1) + median_income_pre + exp_status | state + year,
+  data = state_data %>% filter( # Exclude Hawaii if needed
+    year <= 2024, 
+    year >= 2002, 
+    inp_reg_per_bed >= 0,
+    state != "WY",
+    (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))  # keep never-treated
+  ),
+  cluster = ~state
+)
+
+summary(inp_reg_bed_result)
+
+# Inpatient Supplemental Expenditure Per Bed
+inp_sup_bed_result <- feols(
+  inp_sup_per_bed ~ i(rel_year, ever_treat, ref = -1) + median_income_pre + exp_status | state + year,
+  data = state_data %>% filter( # Exclude Hawaii if needed
+    year <= 2024, 
+    year >= 2008, 
+    inp_sup_per_bed >= 0,
+    (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))  # keep never-treated
+  ),
+  cluster = ~state
+)
+
+summary(inp_sup_bed_result)
+
+library(broom)
+
+coef_df <- tidy(log_inp_reg_result, conf.int = TRUE) %>%
+  filter(grepl("rel_year", term)) %>%
+  mutate(rel_year = as.integer(str_extract(term, "-?\\d+"))) %>%
+  # Filter to only rel_year -4 to +5
+  filter(rel_year >= -4 & rel_year <= 5) %>%
+  # Add reference year
+  bind_rows(tibble(rel_year = -1, estimate = 0, 
+                   conf.low = 0, conf.high = 0)) %>%
+  arrange(rel_year)
+
+event <- ggplot(coef_df, aes(x = rel_year, y = estimate)) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  geom_vline(xintercept = -1, linetype = "dotted", color = "red") +
+  labs(title = "Event Study: Inpatient Regular Payments",
+       x     = "Years Relative to Treatment",
+       y     = "Estimated Effect (Log Inpatient Regular Payments)") +
+  theme_minimal()
+
+ggsave("event_study_log_inp_reg.png", event, width = 8, height = 5)
+
+
+
 
 

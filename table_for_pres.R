@@ -8,18 +8,43 @@ library(fixest)
 library(kableExtra)
 
 # ------------------------------------------------------------------------------
-# 1. Outcomes
+# 1. Hospital Level Outcomes
 # ------------------------------------------------------------------------------
 outcome_info <- list(
+  list(var = "op_bed",                  label = "Operating Expenses per Bed"),
+  list(var = "npr_bed",                 label = "Net Patient Revenue per Bed"), 
+  list(var = "op_margin",               label = "Operating Margin"),
   list(var = "mcaid_prop_discharges",   label = "Medicaid Share of Discharges"),
   list(var = "private_prop_discharges", label = "Commercial Share of Discharges"),
-  list(var = "uncomp_bed",              label = "Uncompensated Care per Bed"),
-  list(var = "op_bed",                  label = "Operating Expenses per Bed"),
-  list(var = "npr_bed_w",               label = "Net Patient Revenue per Bed")
+  list(var = "uncomp_bed",              label = "Uncompensated Care per Bed")
 )
 
 # ------------------------------------------------------------------------------
-# 2. Run model and extract numbers
+# 2. Pre-period baseline means
+# ------------------------------------------------------------------------------
+pre_treat_means <- stacked_data %>%
+  filter(treated == 1, rel_year < 0) %>%
+  summarise(
+    mn_mcaid     = mean(mcaid_prop_discharges,   na.rm = TRUE),
+    mn_priv      = mean(private_prop_discharges, na.rm = TRUE),
+    mn_uncomp    = mean(uncomp_bed,              na.rm = TRUE),
+    mn_op        = mean(op_bed,                  na.rm = TRUE),
+    mn_npr       = mean(npr_bed,                 na.rm = TRUE),
+    mn_op_margin = mean(op_margin,               na.rm = TRUE)
+  )
+
+# Map variable names to their pre-period means
+pre_means_lookup <- list(
+  op_bed                  = round(pre_treat_means$mn_op,       0),
+  npr_bed                 = round(pre_treat_means$mn_npr,      0),
+  op_margin               = round(pre_treat_means$mn_op_margin, 3),
+  mcaid_prop_discharges   = round(pre_treat_means$mn_mcaid,    3),
+  private_prop_discharges = round(pre_treat_means$mn_priv,     3),
+  uncomp_bed              = round(pre_treat_means$mn_uncomp,   0)
+)
+
+# ------------------------------------------------------------------------------
+# 3. Run model and extract numbers
 # ------------------------------------------------------------------------------
 data_use <- stacked_data %>%
   mutate(post = as.integer(rel_year >= 0))
@@ -48,13 +73,6 @@ summary_table_raw <- map_df(outcome_info, function(oi) {
   se   <- as.numeric(sqrt(diag(vcov(result)))[post_term])
   pval <- as.numeric(pvalue(result)[post_term])
   
-  mn <- stacked_data %>%
-    filter(rel_year == -1, treated == 1) %>%
-    summarise(
-      m = weighted.mean(.data[[oi$var]], w = Q_weight, na.rm = TRUE)
-    ) %>%
-    pull(m)
-  
   stars <- case_when(
     pval < 0.01 ~ "***",
     pval < 0.05 ~ "**",
@@ -64,21 +82,13 @@ summary_table_raw <- map_df(outcome_info, function(oi) {
   
   data.frame(
     Outcome = oi$label,
-    Mean    = round(mn,   2),
-    Beta    = round(beta, 2),
+    Mean    = pre_means_lookup[[oi$var]],
+    Beta    = round(beta, 3),
     SE      = round(se,   2),
     Stars   = stars,
     stringsAsFactors = FALSE
   )
 })
-
-# ------------------------------------------------------------------------------
-# 3. N treated hospitals
-# ------------------------------------------------------------------------------
-n_hosp <- stacked_data %>%
-  filter(treated == 1) %>%
-  distinct(mcrnum) %>%
-  nrow()
 
 # ------------------------------------------------------------------------------
 # 4. Save LaTeX
@@ -94,8 +104,8 @@ summary_table_raw %>%
     align     = c("l", "r", "r")
   ) %>%
   kable_styling(latex_options = c("hold_position")) %>%
-  pack_rows("Payer Mix",          1, 2) %>%
-  pack_rows("Financial Outcomes", 3, 5) %>%
+  pack_rows("Financial Outcomes",          1, 3) %>%
+  pack_rows("Payer Mix", 4, 6) %>%
   add_footnote(
     paste0("Unique treated hospitals: ", scales::comma(n_hosp),
            ". SEs clustered by state.",
@@ -265,8 +275,6 @@ combined %>%
   ) %>%
   kable_styling(latex_options = c("hold_position")) %>%
   pack_rows("Hospital-Level Outcomes", 1,           n_hosp_rows)  %>%
-  pack_rows("Payer Mix",               1,           4)             %>%
-  pack_rows("Financial Outcomes",      5,           n_hosp_rows)  %>%
   pack_rows("State-Level Outcomes",    state_start, state_end)    %>%
   add_footnote(
     paste0(
@@ -280,6 +288,8 @@ combined %>%
     notation = "none"
   ) %>%
   writeLines("combined_summarytable.tex")
+
+cat("Done — combined_summarytable.tex saved.\n")
 
 cat("Done — combined_summarytable.tex saved.\n")
 
