@@ -227,6 +227,7 @@ View(state_data)
 
 state_data_merged <- state_data %>%
   left_join(panel_hosp, by = c("state", "year"))
+
 View(state_data_merged)
 
 colnames(state_data)
@@ -239,60 +240,11 @@ panel_hosp %>%
          Inpatient_Hospital_Sup_Payments_total) %>%
   summary()
 
-# Check negative values
-panel_hosp %>%
-  filter(Inpatient_Hospital_Reg_Payments_total < 0 | 
-         Inpatient_Hospital_Sup_Payments_total < 0) %>%
-  select(state, year, 
-         Inpatient_Hospital_Reg_Payments_total,
-         Inpatient_Hospital_Sup_Payments_total) %>%
-  arrange(Inpatient_Hospital_Reg_Payments_total)
 
-state_data %>%
-  summarise(across(c(Inpatient_Hospital_Reg_Payments_total,
-                     Inpatient_Hospital_Sup_Payments_total,
-                     Outpatient_Hospital_Services_total,
-                     Outpatient_Hospital_Services_Sup_Payments_total),
-                   ~ sum(.x == 0, na.rm = TRUE)))
-
-
-
-#RENAME and Handle 0s
-  state_data <- state_data %>%
-  mutate(
-    clean_inp_tot = ifelse(Inpatient_Hospital_total < 0,    NA,
-                           Inpatient_Hospital_total),
-    clean_out_tot = ifelse(Outpatient_Hospital_total < 0,       NA,
-                           Outpatient_Hospital_total),                       
-    clean_inp_reg = ifelse(Inpatient_Hospital_Reg_Payments_total < 0,    NA,
-                           Inpatient_Hospital_Reg_Payments_total),
-    clean_inp_sup = ifelse(Inpatient_Hospital_Sup_Payments_total < 0,    NA,
-                           Inpatient_Hospital_Sup_Payments_total),
-    clean_out_reg = ifelse(Outpatient_Hospital_Services_total < 0,       NA,
-                           Outpatient_Hospital_Services_total),
-    clean_out_sup = ifelse(Outpatient_Hospital_Services_Sup_Payments_total < 0, NA,
-                           Outpatient_Hospital_Services_Sup_Payments_total)
-  )
-
-ihs <- function(x) log(x + sqrt(x^2 + 1))
-
-state_data <- state_data %>%
-  mutate(
-    inp_reg_per_bed = clean_inp_reg / pre_beds_avg,
-    inp_sup_per_bed = clean_inp_sup / pre_beds_avg,
-    out_reg_per_bed = clean_out_reg / pre_beds_avg,
-    out_sup_per_bed = clean_out_sup / pre_beds_avg,
-    
-    log_inp_reg = ifelse(clean_inp_reg == 0, ihs(clean_inp_reg), log(clean_inp_reg)),
-    log_inp_sup = ifelse(clean_inp_sup == 0, ihs(clean_inp_sup), log(clean_inp_sup)),
-    log_out_reg = ifelse(clean_out_reg == 0, ihs(clean_out_reg), log(clean_out_reg)),
-    log_out_sup = ifelse(clean_out_sup == 0, ihs(clean_out_sup), log(clean_out_sup))
-  )
-
-time_plot <- state_data %>%
-  filter(!is.na(rel_year), !is.na(Inpatient_Hospital_Reg_Payments_total), state != "WY", rel_year >= -5, rel_year <= 5) %>%
+time_plot <- state_data_merged %>%
+  filter(!is.na(rel_year), !is.na(Inpatient_Hospital_Reg_Payments_total), Inpatient_Hospital_Reg_Payments_total > 0,state != "WY", rel_year >= -5, rel_year <= 5) %>%
   group_by(rel_year, ever_treat) %>%
-  summarise(mean_inp = mean(Inpatient_Hospital_Sup_Payments_total/pre_beds_avg, na.rm = TRUE), .groups = "drop") %>%
+  summarise(mean_inp = mean(Inpatient_Hospital_Reg_Payments_total/pre_beds_avg, na.rm = TRUE), .groups = "drop") %>%
   mutate(group = ifelse(ever_treat == 1, "Treated", "Never Treated")) %>%
   ggplot(aes(x = rel_year, y = mean_inp, color = group)) +
   geom_line() +
@@ -388,3 +340,61 @@ rel_year_inp <- state_data %>%
 View(rel_year_inp)
 
 colnames(panel_hosp)
+
+panel_all %>%
+  select(state, year,
+         `Inpatient Hospital - Reg. Payments_total`,
+         `Inpatient Hospital - DSH_total`,
+         `Inpatient Hospital - Sup. Payments_total`,
+         `Outpatient Hospital Services - Reg. Payments_total`,
+         `Outpatient Hospital Services - Sup. Payments_total`) %>%
+  group_by(year) %>%
+  summarise(
+    n_states         = n(),
+    miss_inp_reg     = sum(is.na(`Inpatient Hospital - Reg. Payments_total`) | 
+                           is.nan(`Inpatient Hospital - Reg. Payments_total`) |
+                           is.infinite(`Inpatient Hospital - Reg. Payments_total`)),
+    miss_inp_dsh     = sum(is.na(`Inpatient Hospital - DSH_total`) |
+                           is.nan(`Inpatient Hospital - DSH_total`) |
+                           is.infinite(`Inpatient Hospital - DSH_total`)),
+    miss_inp_sup     = sum(is.na(`Inpatient Hospital - Sup. Payments_total`) |
+                           is.nan(`Inpatient Hospital - Sup. Payments_total`) |
+                           is.infinite(`Inpatient Hospital - Sup. Payments_total`)),
+    miss_out_reg     = sum(is.na(`Outpatient Hospital Services - Reg. Payments_total`) |
+                           is.nan(`Outpatient Hospital Services - Reg. Payments_total`) |
+                           is.infinite(`Outpatient Hospital Services - Reg. Payments_total`)),
+    miss_out_sup     = sum(is.na(`Outpatient Hospital Services - Sup. Payments_total`) |
+                           is.nan(`Outpatient Hospital Services - Sup. Payments_total`) |
+                           is.infinite(`Outpatient Hospital Services - Sup. Payments_total`)),
+    .groups = "drop"
+  ) %>%
+  print(n = 30)
+
+panel_hosp %>%
+  select(state, year,
+         Inpatient_Hospital_Reg_Payments_total,
+         Inpatient_Hospital_DSH_total,
+         Inpatient_Hospital_Sup_Payments_total,
+         Outpatient_Hospital_Services_Reg_Payments_total,
+         Outpatient_Hospital_Services_Sup_Payments_total) %>%
+  group_by(year) %>%
+  summarise(
+    n_states     = n(),
+    miss_inp_reg = sum(is.na(Inpatient_Hospital_Reg_Payments_total) | 
+                       is.nan(Inpatient_Hospital_Reg_Payments_total) |
+                       is.infinite(Inpatient_Hospital_Reg_Payments_total)),
+    miss_inp_dsh = sum(is.na(Inpatient_Hospital_DSH_total) |
+                       is.nan(Inpatient_Hospital_DSH_total) |
+                       is.infinite(Inpatient_Hospital_DSH_total)),
+    miss_inp_sup = sum(is.na(Inpatient_Hospital_Sup_Payments_total) |
+                       is.nan(Inpatient_Hospital_Sup_Payments_total) |
+                       is.infinite(Inpatient_Hospital_Sup_Payments_total)),
+    miss_out_reg = sum(is.na(Outpatient_Hospital_Services_Reg_Payments_total) |
+                       is.nan(Outpatient_Hospital_Services_Reg_Payments_total) |
+                       is.infinite(Outpatient_Hospital_Services_Reg_Payments_total)),
+    miss_out_sup = sum(is.na(Outpatient_Hospital_Services_Sup_Payments_total) |
+                       is.nan(Outpatient_Hospital_Services_Sup_Payments_total) |
+                       is.infinite(Outpatient_Hospital_Services_Sup_Payments_total)),
+    .groups = "drop"
+  ) %>%
+  print(n = 30)

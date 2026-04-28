@@ -5,8 +5,7 @@
 # ==============================================================================
 
 # run the results through my outcomes to include in the presentation 
-summary(hospdata_stack$tot_discharges)
-summary(hospdata_stack$mcaid_discharges)
+
 # ==============================================================================
 # FUNCTION: RUN STACKED DiD AND CREATE PLOT
 # ==============================================================================
@@ -453,9 +452,9 @@ cat("Saved to events_for_pres/mcaid_uncomp_combined.png\n")
     scale_color_manual(values = c("Pre-Treatment" = "#DC4B4B", "Post-Treatment" = "#2484d2")) +
     geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
     labs(
-       title = "Medicaid Eligibility for Parents (FPL)",
+       title = "Medicaid Eligibility for Parents",
       x = "Years Relative to Treatment",
-      y = " "
+      y = "Percent of FPL"
     ) +
     scale_x_continuous(
                 breaks = seq(min(coef_data$rel_year),
@@ -479,6 +478,9 @@ scale_y_continuous(
   
   print(p_elig)
 
+ggsave("events_for_pres/eligibility.png",
+       plot  = p_elig,
+       width = 10, height = 10, dpi = 300)
 
 
 # MEDICAID ENROLLMENT PER BED 
@@ -532,6 +534,10 @@ scale_y_continuous(
     )
   
   print(p_med)
+
+ggsave("events_for_pres/medicaid_enrollment.png",
+       plot  = p_med,
+       width = 10, height = 10, dpi = 300)
 
    library(patchwork)
 

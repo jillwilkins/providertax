@@ -63,6 +63,6 @@ panelview <- panelview + labs(fill = NULL) +
     labels = c("No Provider Tax", "Provider Tax")  # change these to whatever you want
   )
 
-ggsave("panelview_treatment_status.png", panelview, width = 10, height = 8, dpi = 300)
+ggsave("panelview_treatment_status.png", panelview, width = 14, height = 10, dpi = 300)
 
 

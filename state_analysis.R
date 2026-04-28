@@ -57,28 +57,19 @@ state_data <- state_data %>%
     rel_year = year - firsttax
   ) # whatever your adoption year variable is called
 
-state_result <- feols(
-  inpatient_tot_exp_per_bed ~ post_treat:ever_treat + median_income_pre + exp_status | state + year,
-  data = state_data %>% filter(year <= 2022, year >=2002, inpatient_tot_exp_per_bed > 0, (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))),
-  cluster = ~state
-)
-
-summary(state_result) 
-
-
 
 # MEDICIAD ENROLLMENT PER BED EVENT STUDY
 state_result_med <- feols(
-  inpatient_tot_exp_per_bed ~ post_treat:ever_treat + median_income_pre + exp_status | state + year,
+  medicaid_enrollment_bed ~ post_treat:ever_treat + median_income_pre + exp_status | state + year,
   data = state_data %>% filter(
-    state != "HI",  # Exclude Hawaii if needed
     year <= 2022, 
-    year >= 2002, 
-    inpatient_tot_exp_per_bed > 0,
+    year >= 2007,
     (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))  # keep never-treated
   ),
   cluster = ~state
 )
+
+summary(state_result_med)
 
 state_result_med <- feols(
   medicaid_enrollment_bed ~ i(rel_year, ever_treat, ref = -1) + median_income_pre + exp_status | state + year,
@@ -88,6 +79,7 @@ state_result_med <- feols(
   (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))),
   cluster = ~state
 )
+summary(state_result_med)
 
 iplot(state_result_med)
 
