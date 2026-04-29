@@ -1,6 +1,6 @@
 # ==============================================================================
-# Script that prepares my results table to include in Poster Presentation (4/23)
-# This is based on the stacked data set created in fix_stacked.R
+# Script that prepares my results table to include in 3YP 4/27/26 draft
+# This is based on the stacked data set created in 5_buildstacked.R
 # ==============================================================================
  
 library(tidyverse)

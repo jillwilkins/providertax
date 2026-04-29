@@ -10,12 +10,6 @@ library(dplyr)
 install.packages("maps")
 library(maps)
 
-# Example data
-# tax_adopt <- data.frame(
-#   state_abbr = c("CA", "TX", "FL", "NY", "MA", "AL"),
-#   first_tax_year = c(2010, 2013, 2012, 2018, NA, 2011)
-# )
-
 
 tax_adopt_clean <- fmap_tax %>%
   group_by(state) %>%
@@ -67,7 +61,6 @@ ggsave("adopt_map.png", plot = adopt_map, width = 10, height = 6, dpi = 300)
 
 # RATE specific map 
 rate <- read.csv("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/data/input/rate.csv", skip = 1)
-View(rate)
 rate <- rate %>%
   rename(state = State, hosprate = Hospital.taxes) %>%
   mutate(state = tolower(state))
