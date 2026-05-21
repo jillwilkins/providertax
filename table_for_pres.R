@@ -16,6 +16,8 @@ outcome_info <- list(
   list(var = "op_margin",               label = "Operating Margin"),
   list(var = "mcaid_prop_discharges",   label = "Medicaid Share of Discharges"),
   list(var = "private_prop_discharges", label = "Commercial Share of Discharges"),
+  list(var = "mcaid_dis_bed",           label = "Medicaid Discharges per Bed"),
+  list(var = "private_dis_bed",         label = "Commercial Discharges per Bed"),
   list(var = "uncomp_bed",              label = "Uncompensated Care per Bed")
 )
 
@@ -30,7 +32,9 @@ pre_treat_means <- stacked_data %>%
     mn_uncomp    = mean(uncomp_bed,              na.rm = TRUE),
     mn_op        = mean(op_bed,                  na.rm = TRUE),
     mn_npr       = mean(npr_bed,                 na.rm = TRUE),
-    mn_op_margin = mean(op_margin,               na.rm = TRUE)
+    mn_op_margin = mean(op_margin,               na.rm = TRUE),
+    mn_mcaid_bed = mean(mcaid_dis_bed,          na.rm = TRUE),
+    mn_priv_bed  = mean(private_dis_bed,        na.rm = TRUE)
   )
 
 # Map variable names to their pre-period means
@@ -40,7 +44,10 @@ pre_means_lookup <- list(
   op_margin               = round(pre_treat_means$mn_op_margin, 3),
   mcaid_prop_discharges   = round(pre_treat_means$mn_mcaid,    3),
   private_prop_discharges = round(pre_treat_means$mn_priv,     3),
-  uncomp_bed              = round(pre_treat_means$mn_uncomp,   0)
+  uncomp_bed              = round(pre_treat_means$mn_uncomp,   0),
+  mcaid_dis_bed           = round(pre_treat_means$mn_mcaid_bed,  3),
+  private_dis_bed         = round(pre_treat_means$mn_priv_bed,  3)
+
 )
 
 # ------------------------------------------------------------------------------

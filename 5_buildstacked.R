@@ -3,6 +3,13 @@
 # This script will create a balanced stacked did data set 
 # Following weights and structure from Cengiz et al. 2019 and Wing et al. 2024
 # ==============================================================================
+library(fixest)
+
+# normalized var per bed
+hospdata_analysis <- hospdata_analysis %>%
+  mutate(
+        mcaid_enroll_bed = medicaid_enrollment / pre_beds_avg, 
+        )
 
 # ------------------------------------------------------------------------------
 # 0. Parameters
@@ -203,37 +210,48 @@ if (diff(q_range) < 0.001) {
 # ------------------------------------------------------------------------------
 # 8. Regression Player (adjustable for quick analysis)
 # ------------------------------------------------------------------------------
+
+colnames(stacked_data)
+
+stacked_data <- stacked_data %>%
+  mutate(in_sys = case_when(sysid > 0 ~ "1", TRUE ~ "0"))
+
+# change type of in_sys to numeric
+stacked_data <- stacked_data %>%
+  mutate(in_sys = as.numeric(in_sys))
+
 stacked_result <- feols(
-  mcaid_discharges/ pre_beds_avg ~ i(rel_year, treated, ref = -1) +
+ mcaid_prop_discharges ~ i(rel_year, treated, ref = -1) +
                       median_income_pre + exp_status |
     mcrnum^df + year^df,
-  data    = stacked_data %>% filter( state != "HI"), # %>% filter(mcrnum %in% hospitals_with_high_npr_bed == FALSE, mcrnum %in% hosp_w_neg_npr_bed == FALSE), # state != "TX", state != "NJ",
-  weights = ~Q_weight,
-  cluster = ~state^df
-)
-
-post_coefs_count <- coef(stacked_result)[grepl("rel_year::[0-9]+:treated", 
-                                                names(coef(stacked_result)))]
-att_patients <- mean(post_coefs_count)
-att_patients
-
-summary(hospdata_stack$mcaid_dis_bed)
-
-stacked_single_result <- feols(
-  private_discharges ~ i(rel_year, treated, ref = -1) +
-                      median_income_pre + exp_status |
-    mcrnum^df + year^df,
-data = stacked_data %>% 
-  mutate(post = ifelse(rel_year >= 0, 1, 0)),
+  data    = stacked_data, #%>% filter(expyear == 2014),
   weights = ~Q_weight,
   cluster = ~state^df
 )
 
 summary(stacked_result)
 
+post_coefs_count <- coef(stacked_result)[grepl("rel_year::[0-9]+:treated", 
+                                                names(coef(stacked_result)))]
+att_patients <- mean(post_coefs_count)
+att_patients
+
+stacked_single_result <- feols(
+  mcaid_prop_discharges ~ i(rel_year, treated, ref = -1) +
+                      median_income_pre + exp_status |
+    mcrnum^df + year^df,
+  data = stacked_data %>%  filter(expyear != 2014),
+  mutate(post = ifelse(rel_year >= 0, 1, 0)),
+  weights = ~Q_weight,
+  cluster = ~state^df
+)
+
+summary(stacked_single_result)
+
 # ------------------------------------------------------------------------------
 # 9. Event study plot
 # ------------------------------------------------------------------------------
+
 iplot(
   stacked_result,
   main = "Weighted stacked DiD — total operating expenditure",
@@ -242,6 +260,7 @@ iplot(
 )
  abline(h = 0, lty = 2, col = "gray50")
 abline(v = -0.5, lty = 3, col = "gray70")
+
 
 # ------------------------------------------------------------------------------
 # Diagnose: how many sub-experiments contribute at each event time?

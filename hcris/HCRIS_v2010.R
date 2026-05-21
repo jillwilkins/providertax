@@ -59,7 +59,7 @@ colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")
 
 
 # Import data -------------------------------------------------------------
-for (i in 2010:2021) {
+for (i in 2010:2024) {
   HCRIS.alpha=read_csv(paste0("data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_ALPHA.CSV"),
                        col_names=c('RPT_REC_NUM','WKSHT_CD','LINE_NUM','CLMN_NUM','ITM_VAL_NUM'))
   HCRIS.numeric=read_csv(paste0("data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_NMRC.CSV"),
@@ -96,4 +96,4 @@ for (i in 2010:2021) {
 }
 write_tsv(final.hcris.v2010, 'data/output/HCRIS_Data_v2010.txt', append = FALSE, col_names = TRUE)
 colnames(final.hcris.v2010)
-View(final.hcris.v2010)
+

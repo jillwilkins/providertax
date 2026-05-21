@@ -320,7 +320,7 @@ hospdata <- hospdata %>%
   # 1 = did expand within window 
   exp_during = case_when(
     expyear - firsttax_num <= 5 ~ 1,  # expansion happens less than 5 years post tax, exp_during = 1
-    firsttax_num - expyear <= 3 ~ 1  # tax happens less than years post expansion, exp_during = 1, 
+    firsttax_num - expyear <= 3 ~ 1  # tax happens less than 3 years post expansion, exp_during = 1
   ))
 
 
@@ -340,54 +340,7 @@ hospdata %>%
 
 
 # ==============================================================================
-# 7. CREATE OUTCOME VARIABLES
-# ==============================================================================
-
-# Calculate key hospital outcome measures --------------------------------------
-# WHAT: Create standardized outcome variables for analysis 
-
-hospdata <- hospdata %>%
-  mutate(
-    # Uncompensated care as proportion of total charges
-    ucc_prop = uncomp_care / tot_charges,
-    
-    # Average cost per discharge
-    cost_per_discharge = (cost_to_charge * tot_charges) / tot_discharges,
-    
-    # Medicaid cost-to-charge ratio
-    mcaid_ccr = mcaid_cost / mcaid_charges,
-    
-    # Medicaid share of charges
-    mcaid_prop = mcaid_charges / tot_charges,
-    
-    # Medicaid share of discharges
-    mcaid_prop_discharges = mcaid_discharges / tot_discharges,
-
-    # Medicaid cost per medicaid discharge
-    mcaid_cost_per_discharge = mcaid_cost / mcaid_discharges,
-    
-    # Medicare share of discharges
-    mcare_prop_discharges = mcare_discharges / tot_discharges,
-    
-    # Combined Medicare + Medicaid share
-    mm_prop_discharges = (mcaid_discharges + mcare_discharges) / tot_discharges,
-    
-    # Private insurance share (residual)
-    private_prop_discharges = 1 - mm_prop_discharges,
-
-    # number of private discharges 
-    private_discharges = tot_discharges - (mcaid_discharges + mcare_discharges),
-
-    # operating margin 
-    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp,
-  
-    # Log variables for skewed outcomes
-    log_npr = log(net_pat_rev),  # Add 1 to avoid log(0
-    log_op = log(tot_operating_exp) 
-  )
-
-# ==============================================================================
-# 8. VERIFY TREATMENT GROUPS
+# 7. VERIFY TREATMENT GROUPS
 # ==============================================================================
 
 # Check distribution of treatment cohorts --------------------------------------
@@ -412,7 +365,7 @@ hospdata %>%
   print()
 
 # ==============================================================================
-# 9. JOIN AHA: join necessary var from aha. 
+# 8. JOIN AHA: join necessary var from aha. 
 # ==============================================================================
 # Load AHA data
 aha <- read_csv(paste0(data_input_path, "AHAdata_20052023.csv"))
@@ -422,7 +375,8 @@ colnames(aha) <- tolower(colnames(aha))
 
 # Select only what you need from AHA and prepare for merge
 aha_minimal <- aha %>%
-  select(mcrnum, year, cntrl, serv, rurlhos, obbd, cicbd, alchbd, psybd) 
+  select(mcrnum, year, cntrl, serv, rurlhos, sysid, sysname, alchhos, psyhos, obhos, obbd, cicbd, alchbd, psybd, admtot, dctot, ipdtot, vem, vtot, 
+  suropip, suropop, suroptot, voth, mcrdc, mcdipd, mcddc, sptdc, sptip, thrtdc, thrtip, opotdc, opotip) 
 
 # Convert aha_minimal mcrnum to match hospdata (integer)
 aha_minimal <- aha_minimal %>%
@@ -432,10 +386,76 @@ aha_minimal <- aha_minimal %>%
 hospdata <- hospdata %>%
   left_join(aha_minimal, by = c("mcrnum", "year"))
 
+View(hospdata_analysis)
+View(aha_minimal)
+
 # Check AHA coverage
 cat("\n=== AHA DATA COVERAGE ===\n")
 cat(paste("AHA year range:", min(aha_minimal$year), "to", max(aha_minimal$year), "\n"))
 cat(paste("Unique hospitals in AHA:", n_distinct(aha_minimal$mcrnum), "\n"))
+
+# ==============================================================================
+# 9. CREATE OUTCOME VARIABLES
+# ==============================================================================
+
+# Calculate key hospital outcome measures --------------------------------------
+# WHAT: Create standardized outcome variables for analysis 
+
+hospdata <- hospdata %>%
+  mutate(
+    # Uncompensated care as proportion of total charges
+    ucc2npr = uncomp_care / net_pat_rev,
+    
+    # Average cost per discharge
+    cost_per_discharge = (cost_to_charge * tot_charges) / tot_discharges,
+    
+    # Medicaid cost-to-charge ratio
+    mcaid_ccr = mcaid_cost / mcaid_charges,
+    
+    # Medicaid share of charges
+    mcaid_prop = mcaid_charges / tot_charges,
+    
+    # Medicaid share of discharges
+    mcaid_prop_discharges = mcaid_discharges / tot_discharges,
+
+    mcaid_prop_dis_aha = mcddc / dctot, 
+
+    # medicaid share of inpatient days 
+    mcaid_prop_days = mcdipd / ipdtot,
+
+    # total facility commercial share of discharges
+    private_prop_discharges = thrtdc / dctot,
+
+    # commercial share of inpatient days 
+    private_prop_days = thrtip / ipdtot,
+
+    # self pay share of discharges
+    self_prop_discharges = sptdc / dctot,
+
+    # self pay share of inpatient days
+    self_prop_days = sptip / ipdtot,
+
+    # Medicaid cost per medicaid discharge
+    mcaid_cost_per_discharge = mcaid_cost / mcaid_discharges,
+    
+    # Medicare share of discharges
+    mcare_prop_discharges = mcare_discharges / tot_discharges,
+    
+    # Combined Medicare + Medicaid share
+    mm_prop_discharges = (mcaid_discharges + mcare_discharges) / tot_discharges,
+    
+    #  nonmedicaid, non medicare 
+    nonm_prop_discharges = 1 - mm_prop_discharges,
+
+    # number of non m discharges 
+    nonm_discharges = tot_discharges - (mcaid_discharges + mcare_discharges),
+
+    # operating margin 
+    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp,
+  
+    # Log variables for skewed outcomes
+    log_npr = log(net_pat_rev),  # Add 1 to avoid log(0
+    log_op = log(tot_operating_exp))
 
 # ==============================================================================
 # 10. SAVE FULL DATASET: no hospitals or years have been dropped yet. 
@@ -452,6 +472,7 @@ cat("Output file: hospdata_full.csv\n")
 cat(paste("Number of hospitals:", n_distinct(hospdata$mcrnum), "\n"))
 cat(paste("Years covered:", min(hospdata$year), "to", max(hospdata$year), "\n"))
 cat(paste("Total observations:", nrow(hospdata), "\n"))
+
 
 
 

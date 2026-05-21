@@ -6,15 +6,32 @@ library(tidycensus)
 library(tidyverse)
 install.packages("tabulapdf")
 library(tabulapdf)
-
-
-# IPUMS 
+library(tigris)
 install.packages('ipumsr')
 library('ipumsr')
 
+# obtain IPUMS ACS data on Medicaid Enrollment 
 ddi <- read_ipums_ddi(paste0(data_input_path, "usa_00002.xml"))
 data_enroll <- read_ipums_micro(ddi)
-colnames(data_enroll)
+
+
+# updated approach
+data_enroll <- data_enroll %>%
+  rename(
+    year                = YEAR,
+    medicaid_enrollment = HINSCAID
+  ) %>%
+  mutate(
+    statefip   = sprintf("%02d", as.numeric(STATEFIP)),
+    state_name = fips_codes$state_name[match(statefip, fips_codes$state_code)],
+    state      = state.abb[match(state_name, state.name)]
+  ) %>%
+  filter(!is.na(state)) %>%   # drops Puerto Rico, territories, unknowns explicitly
+  group_by(state, statefip, year) %>%
+  summarise(
+    medicaid_enrollment = sum(medicaid_enrollment, na.rm = TRUE),
+    .groups = "drop"
+  )
 
 # rename variables, convert the fips code
 data_enroll <- data_enroll %>%
@@ -108,7 +125,7 @@ View(elig)
 hospdata_analysis <- hospdata_analysis %>%
   left_join(elig, by = c("state", "year"))
 
-View(hospdata_analysis)
+
 
 # ==============================================================================
 # Old code but dont want to delete it yet 

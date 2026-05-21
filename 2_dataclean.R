@@ -686,6 +686,19 @@ early_treated <- hospdata_clean %>%
 cat("\n=== Always COHORT (CHECK PRE-TREATMENT DATA) ===\n")
 cat(paste("Always cohort has", unique(early_treated$n_pre_years), "pre-treatment years\n"))
 
+# ==============================================================================
+# ADDITIONAL VARIABLES FOR ANALYSIS (PER BED)
+# ==============================================================================
+hospdata_clean <- hospdata_clean %>%
+  mutate(
+    npr_bed = net_pat_rev / pre_beds_avg, 
+    op_bed = tot_operating_exp / pre_beds_avg,
+    uncomp_bed = uncomp_care/ pre_beds_avg, 
+    cash_bed = cash/ pre_beds_avg, 
+    mcaid_cost_bed = mcaid_cost/ pre_beds_avg,
+    mcaid_dis_bed = mcaid_discharges / pre_beds_avg,
+    nonm_dis_bed = nonm_discharges / pre_beds_avg,
+  )
 
 # ==============================================================================
 # VERIFY TREATMENT VARIABLES ARE INTACT

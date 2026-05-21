@@ -11,6 +11,9 @@ stacked_data_state <- stacked_data %>%
     median_income_pre   = first(median_income_pre),
     eligibility         = first(eligibility),  # state-level FPL threshold
     beds = mean(beds),
+    uncomp_bed = mean(uncomp_bed),
+    ucc2npr = mean(ucc2npr), 
+    mcaid_prop_discharges = mean(mcaid_prop_discharges),
     n_hospitals = n_distinct(mcrnum),
     pre_beds_avg        = mean(pre_beds_avg, na.rm = TRUE),
     .groups = "drop"
@@ -28,7 +31,10 @@ state_data <- hospdata_analysis %>%
     exp_status = exp_status[1],
     firsttax = first(firsttax), 
     pre_beds_avg = mean(pre_beds_avg, na.rm = TRUE), 
-    medicaid_enrollment_bed = medicaid_enrollment / pre_beds_avg,  # state-level FPL threshold
+    medicaid_enrollment_bed = medicaid_enrollment / pre_beds_avg,  
+    uncomp_bed = mean(uncomp_bed, na.rm = TRUE),
+    ucc2npr = mean(ucc2npr),
+    mcaid_prop_discharges = mean(mcaid_prop_discharges),
     .groups = "drop"
   )
 
@@ -57,6 +63,18 @@ state_data <- state_data %>%
     rel_year = year - firsttax
   ) # whatever your adoption year variable is called
 
+
+state_result_un <- feols(
+  uninsured_rate ~ post_treat:ever_treat + median_income_pre + exp_status | state + year,
+  data = state_data %>% filter(
+    year <= 2022, 
+    year >= 2007,
+    (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))  # keep never-treated
+  ),
+  cluster = ~state
+)
+
+summary(state_result_un)
 
 # MEDICIAD ENROLLMENT PER BED EVENT STUDY
 state_result_med <- feols(

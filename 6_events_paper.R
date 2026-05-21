@@ -4,6 +4,13 @@
 # The figures are saved under the folder "events_for_paper"
 # ==============================================================================
 
+# 5/11 add private dis 
+stacked_data <- stacked_data %>%
+  mutate(
+    private_dis_bed = private_discharges / pre_beds_avg, 
+    mcaid_dis_bed = mcaid_discharges / pre_beds_avg
+  )
+
 # ==============================================================================
 # FUNCTION: RUN STACKED DiD AND CREATE PLOT
 # ==============================================================================
@@ -117,13 +124,25 @@ outcomes <- list(
        label = "Medicaid Share of Discharges", 
        file = "events_for_paper/mcaid_dis.png"),
 
-  list(var = "private_prop_discharges", 
-       label = "Commercial Share of Discharges", 
+  list(var = "nonm_prop_discharges", 
+       label = "Non Public Share of Discharges", 
        file = "events_for_paper/private_dis.png"),
+  
+  list(var = "mcaid_dis_bed", 
+       label = "Medicaid Discharges Per Bed", 
+       file = "events_for_paper/mcaid_dis_bed.png"),
+
+  list(var = "nonm_dis_bed", 
+       label = "Non Public Discharges Per Bed", 
+       file = "events_for_paper/nonm_dis_bed.png"),
 
   list(var = "uncomp_bed", 
        label = "Uncompensated Care Charges Per Bed", 
        file = "events_for_paper/uncomp.png"),
+
+  list(var = "ucc2npr", 
+       label = "Uncompensated Care Charges as a Share of Net Patient Revenue", 
+       file = "events_for_paper/ucc2npr.png"),
   
   list(var = "op_bed", 
        label = "Operating Expenses Per Bed", 
