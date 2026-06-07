@@ -7,7 +7,7 @@
 # 5/11 add private dis 
 stacked_data <- stacked_data %>%
   mutate(
-    private_dis_bed = private_discharges / pre_beds_avg, 
+    nonm_dis_bed = nonm_discharges / pre_beds_avg, 
     mcaid_dis_bed = mcaid_discharges / pre_beds_avg
   )
 
@@ -91,10 +91,10 @@ scale_y_continuous(
       axis.title.x = element_text(size = 12, margin = margin(t = 10)),
       axis.title.y = element_text(size = 12, margin = margin(r = 10)),
       axis.text = element_text(size = 11, color = "black"),
-      panel.grid.major = element_line(color = "grey90", size = 0.3),
+      panel.grid.major = element_line(color = "#f2f2f2", size = 0.3),
       panel.grid.minor = element_blank(),
-      panel.background = element_rect(fill = "white", color = NA),
-      plot.background = element_rect(fill = "white", color = NA),
+      panel.background = element_rect(fill = "transparent", color = NA),
+      plot.background = element_rect(fill = "transparent", color = NA),
       legend.position = "none"
     )
   
@@ -271,10 +271,10 @@ scale_y_continuous(
       axis.title.x = element_text(size = 12, margin = margin(t = 10)),
       axis.title.y = element_text(size = 12, margin = margin(r = 10)),
       axis.text = element_text(size = 11, color = "black"),
-      panel.grid.major = element_line(color = "grey90", size = 0.3),
+      panel.grid.major = element_line(color = "#f2f2f2", size = 0.3),
       panel.grid.minor = element_blank(),
-      panel.background = element_rect(fill = "white", color = NA),
-      plot.background = element_rect(fill = "white", color = NA),
+      panel.background = element_rect(fill = "transparent", color = NA),
+      plot.background = element_rect(fill = "transparent", color = NA),
       legend.position = "none"
     )
   

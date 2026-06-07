@@ -59,11 +59,58 @@ ggsave("panelview_treatment_status.png", panelview, width = 14, height = 10, dpi
 # Cumulative Tax Adoption 
 # Last Updated: 4/27/26 for 3YP poster.
 
-adoption_plot <- ggplot(adoption_over_time, 
+library(tidyverse)
+library(scales)
+
+ hospdata_analysis %>%
+  filter(!is.na(firsttax)) %>%
+  distinct(state, firsttax) %>%
+  arrange(firsttax) %>%
+  group_by(firsttax) %>%
+  summarise(new_states = n()) %>%
+  mutate(cumulative_states = cumsum(new_states))
+
+adoption_over_time <- tibble(
+  firsttax          = 2004:2024,
+  cumulative_states = c(12, 16, 20, 20, 20, 23, 29, 34,
+                        38, 39, 40, 40, 40, 42, 42, 43, 43, 44, 44, 44, 45)
+)
+
+adoption_plot <- ggplot(adoption_over_time,
+                              aes(x = firsttax, y = cumulative_states)) +
+  geom_col(
+    fill  = "#b7e6f6df",   # light blue matching the saved image
+    color = "#17527f",
+    alpha = 1,
+    width = 0.95
+  ) +
+  labs(
+    x = "Year",
+    y = "Number of States"
+  ) +
+  scale_x_continuous(
+    breaks = seq(min(adoption_over_time$firsttax),
+                 max(adoption_over_time$firsttax), by = 2)
+  ) +
+  scale_y_continuous(breaks = pretty_breaks(n = 8)) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title         = element_text(face = "bold", hjust = 0.5),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+print(adoption_plot)
+
+ggsave("figures/cumulative_adoption.png",
+       plot   = adoption_plot,
+       width  = 11,
+       height = 9,
+       dpi    = 300)
+
+adoption_plot_label <- ggplot(adoption_over_time, 
                         aes(x = firsttax, y = cumulative_states)) +
-  geom_col(fill = "#b8deff", color = "#17527f", alpha = 0.75, width = 0.95) +
-  annotate(
-    "label",
+  geom_col(fill = "#ff974f", color = "#17527f", alpha = 0.75, width = 0.95) +
+  annotate("label",
     x          = min(adoption_over_time$firsttax) + 0.5,
     y          = max(adoption_over_time$cumulative_states) * 0.95,
     label      = "33 states have implemented\na provider tax since 2004.",
@@ -91,9 +138,8 @@ adoption_plot <- ggplot(adoption_over_time,
     panel.grid.major.x = element_blank()
   )
 
-print(adoption_plot)
 
-ggsave("figures/cumulative_adoption.png",
+ggsave("figures/cumulative_adoption_label.png",
        plot  = adoption_plot,
        width = 16, height = 10, dpi = 300)
 

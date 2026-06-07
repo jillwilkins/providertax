@@ -85,12 +85,66 @@ state_data_cps <- state_data_cps %>%
 # MEDICIAD ENROLLMENT PER BED EVENT STUDY (confirmation with the acs data)
 state_result_med_cps <- feols(
   n_medicaid_caidly / pre_beds_avg ~ i(rel_year, ever_treat, ref = -1) + median_income_pre + exp_status | state + year,
-  data = state_data_cps %>% filter
-  (is.na(rel_year) | (rel_year >= -4 & rel_year <= 5))),
+  data = state_data_cps %>% filter(is.na(rel_year) | (rel_year >= -4 & rel_year <= 5)),
   cluster = ~state
 )
 
 summary(state_result_med_cps)
+
+# MEDICAID ENROLLMENT PER BED 
+  # Extract coefficients
+  coef_data_medcps <- data.frame(
+    rel_year = as.numeric(gsub(".*::(-?[0-9]+):.*", "\\1", 
+                               names(coef(state_result_med_cps))[grepl("rel_year", names(coef(state_result_med_cps)))])),
+    coef = coef(state_result_med_cps)[grepl("rel_year", names(coef(state_result_med_cps)))],
+    se = state_result_med_cps$se[grepl("rel_year", names(coef(state_result_med_cps)))]
+  ) %>%
+    mutate(
+      ci_lower = coef - 1.96 * se,
+      ci_upper = coef + 1.96 * se
+    ) %>%
+    bind_rows(data.frame(rel_year = -1, coef = 0, se = 0, ci_lower = 0, ci_upper = 0)) %>%
+    arrange(rel_year) %>%
+    mutate(
+      period_color = ifelse(rel_year < 0, "Pre-Treatment", "Post-Treatment")
+    )
+  
+  # Create plot
+  p_medcps <- ggplot(coef_data_medcps, aes(x = rel_year, y = coef, color = period_color)) +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), 
+                  width = 0.3, size = 0.8) +
+    geom_point(size = 3) +
+    scale_color_manual(values = c("Pre-Treatment" = "#DC4B4B", "Post-Treatment" = "#2484d2")) +
+    geom_hline(yintercept = 0, color = "black", linetype = "solid", size = 0.4) +
+    labs(
+      x = "Years Relative to Treatment", 
+      y = " "
+    ) +
+    scale_x_continuous(
+                breaks = seq(min(coef_data_medcps$rel_year),
+               max(coef_data_medcps$rel_year), 1)
+) +
+scale_y_continuous(
+  labels = scales::number_format(accuracy = 0.01)
+) +
+    theme_minimal(base_size = 14) +
+    theme(
+      plot.title = element_text(face = "bold", size = 20, hjust = 0.5),
+      axis.title.x = element_text(size = 12, margin = margin(t = 10)),
+      axis.title.y = element_text(size = 12, margin = margin(r = 10)),
+      axis.text = element_text(size = 11, color = "black"),
+      panel.grid.major = element_line(color = "grey90", size = 0.3),
+      panel.grid.minor = element_blank(),
+      panel.background = element_rect(fill = "white", color = NA),
+      plot.background = element_rect(fill = "white", color = NA),
+      legend.position = "none"
+    )
+  
+  print(p_medcps)
+
+ggsave("events_for_paper/medicaid_enrollment_cps.png",
+       plot  = p_medcps,
+       width = 10, height = 8, dpi = 300)
 
 # Results agree to the acs based estimates. 
 

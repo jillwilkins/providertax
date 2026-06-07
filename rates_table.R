@@ -19,7 +19,6 @@ library(kableExtra)
 taxrates_raw <- read_excel("/Users/jilldickens/Library/CloudStorage/OneDrive-Emory/Tax Info/taxrates.xlsx", sheet = 1)
 
 # Preview structure
-glimpse(taxrates_raw)
 
 # ============================================================
 # 2. CLEAN & RESHAPE
@@ -38,7 +37,7 @@ taxrates_raw %>%
   rename_with(~ tolower(gsub("\\s+", "_", .x))) %>%
   rename(year_start = `year_(assumed_fiscal_unless_otherwise_stated)`) %>%
   mutate(year = as.integer(format(as.Date(as.numeric(year_start), origin = "1899-12-30"), "%Y"))) %>%
-  select(state, year, rate, base_amount) %>%
+  select(state, year, rate, base_amount, base_year) %>%
   group_by(state, year) %>%
   filter(n() > 1) %>%
   arrange(state, year) %>%
@@ -47,7 +46,7 @@ taxrates_raw %>%
 taxrates_raw %>%
   rename_with(~ tolower(gsub("\\s+", "_", .x))) %>%
   filter(tolower(state) == "connecticut") %>%
-  select(state, rate, base_amount, rate2, base2) %>%
+  select(state, rate, base_amount, base_year, rate2, base2, base_year) %>%
   head(10)
 
 
@@ -55,7 +54,7 @@ taxrates_clean <- taxrates_raw %>%
   rename_with(~ tolower(gsub("\\s+", "_", .x))) %>%
   rename(year_start = `year_(assumed_fiscal_unless_otherwise_stated)`) %>%
   mutate(year = as.integer(format(as.Date(as.numeric(year_start), origin = "1899-12-30"), "%Y"))) %>%
-  select(state, year, rate, base_amount, rate2, base2) %>%
+  select(state, year, rate, base_amount, rate2, base2, base_year) %>%
   filter(!is.na(rate) | !is.na(rate2)) %>%
   mutate(
     state    = tools::toTitleCase(tolower(state)),
@@ -64,16 +63,17 @@ taxrates_clean <- taxrates_raw %>%
     tax_rate2 = rate2,
     tax_base2 = base2
   ) %>%
-  select(state, year, tax_rate, tax_base, tax_rate2, tax_base2) %>%
+  select(state, year, tax_rate, tax_base, tax_rate2, tax_base2, base_year) %>%
   distinct()
 
 
 # remove never taxed or incomplete rows 
 taxrates_clean <- taxrates_clean %>%
-select(state, year, tax_rate, tax_base, tax_rate2, tax_base2) %>%
+select(state, year, tax_rate, tax_base, tax_rate2, tax_base2, base_year) %>%
   distinct() %>%
   filter(!is.na(tax_rate))
 
+View(taxrates_clean)
 
 # ============================================================
 # 3. OPTIONAL: Summarize to one row per state-year

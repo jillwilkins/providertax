@@ -127,6 +127,46 @@ state_result_elig <- feols(
 
 iplot(state_result_elig)
 
+# eligibility incresed count 
+# 1. Number of states that adopted the tax
+n_adopted <- state_data %>%
+  filter(state != "HI", year >= 2002, year <= 2022) %>%
+  filter(ever_treat == 1) %>%
+  distinct(state) %>%
+  nrow()
+
+# States where eligibility increased in the same year as first tax adoption
+n_increased_at_adoption <- state_data %>%
+  filter(state != "HI", year >= 2002, ever_treat == 1) %>%
+  group_by(state) %>%
+  arrange(year) %>%
+  mutate(elig_change = eligibility - lag(eligibility)) %>%
+  filter(year == firsttax) %>%
+  summarise(increased = elig_change > 0, .groups = "drop")
+
+View(n_increased_at_adoption)
+
+cat("States that adopted the tax:", n_distinct(n_increased_at_adoption$state), "\n")
+cat("States where eligibility increased in adoption year:", sum(n_increased_at_adoption$increased, na.rm = TRUE), "\n")
+
+# States where eligibility increased in the same year as first tax adoption
+
+adoption_summary <- state_data %>%
+  filter(year >= 2002, ever_treat == 1, firsttax != 2004) %>%
+  group_by(state) %>%
+  arrange(year) %>%
+  mutate(elig_change = eligibility - lag(eligibility)) %>%
+  filter(year == firsttax) %>%
+  summarise(
+    firsttax_year = first(firsttax),
+    elig_change = first(elig_change),
+    increased = elig_change > 0,
+    .groups = "drop"
+  ) %>%
+  arrange(firsttax_year)
+
+View(adoption_summary)
+
 # ==============================================================================
 # Inpatient Total Expenditure 
 log_inp_reg_result <- feols(
