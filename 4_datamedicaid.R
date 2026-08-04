@@ -125,6 +125,12 @@ View(elig)
 hospdata_analysis <- hospdata_analysis %>%
   left_join(elig, by = c("state", "year"))
 
+# SAVE 
+write.csv(
+  hospdata_analysis,
+  paste0(data_output_path, "hospdata_analysis.csv"),
+  row.names = FALSE
+)
 
 
 # ==============================================================================

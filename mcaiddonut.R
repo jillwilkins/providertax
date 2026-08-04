@@ -30,7 +30,7 @@ ggplot(data, aes(x = 2, y = value, fill = label)) +
   geom_col(width = 1, color = "white", linewidth = 0.8) +
   geom_text(
     aes(x = 2, y = midval, label = paste0(label_wrap, "\n")),
-    color = "white", size = 3.2, fontface = "bold", lineheight = 0.9
+    color = "white", size = 3.5, fontface = "bold", lineheight = 0.9
   ) +
   coord_polar(theta = "y", start = 0) +
   xlim(0.5, 2.5) +

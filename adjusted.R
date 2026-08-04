@@ -62,6 +62,8 @@ stacked_data_real <- stacked_data %>%
     op_bed_real = op_bed * inflation_factor,
     npr_bed_real = npr_bed * inflation_factor,
     uncomp_bed_real = uncomp_bed * inflation_factor,
+    net_mcaid_rev_real = net_mcaid_rev * inflation_factor,
+    ln_mcaid_rev_real = log(net_mcaid_rev_real)
     
     # If you have these variables, adjust them too:
     # op_exp_real = op_exp * inflation_factor,

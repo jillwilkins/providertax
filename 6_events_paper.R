@@ -5,6 +5,7 @@
 # ==============================================================================
 
 # 5/11 add private dis 
+
 stacked_data <- stacked_data %>%
   mutate(
     nonm_dis_bed = nonm_discharges / pre_beds_avg, 
@@ -15,31 +16,33 @@ stacked_data <- stacked_data %>%
 # FUNCTION: RUN STACKED DiD AND CREATE PLOT
 # ==============================================================================
 
-run_stacked_did <- function(outcome_var, 
+run_stacked_did <- function(outcome_var,
                             outcome_label,
                             data = stacked_data,
                             controls = "exp_status + median_income_pre",
-                            #filter_condition = "state != 'HI'"" 
+                            #filter_condition = "state != 'HI'""
                              y_scale     = "comma",
+                            weights = ~Q_weight,
                             filename = NULL,
                             width = 10,
                             height = 10) {
-  
+
   # Build formula
   formula_str <- paste0(
-    outcome_var, " ~ i(rel_year, treated, ref = -1) + ", 
+    outcome_var, " ~ i(rel_year, treated, ref = -1) + ",
     controls, " | mcrnum^df + year^df"
   )
-  
+
   # Filter data
   #data_filtered <- data %>% filter(eval(parse(text = filter_condition)))
-  
+
   # Estimate
   cat("\n=== Estimating Stacked DiD for:", outcome_var, "===\n")
-  
+
   result <- feols(
     as.formula(formula_str),
     data = data,        # change to data_filtered if you want to apply the filter condition
+    weights = weights,
     cluster = ~state
   )
   

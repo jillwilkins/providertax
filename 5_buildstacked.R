@@ -5,6 +5,9 @@
 # ==============================================================================
 library(fixest)
 
+# load data in if not done already 
+# hospdata_analysis <- read.csv(paste0(data_output_path, "hospdata_analysis.csv"))
+
 # normalized var per bed
 hospdata_analysis <- hospdata_analysis %>%
   mutate(
@@ -216,20 +219,26 @@ colnames(stacked_data)
 stacked_data <- stacked_data %>%
   mutate(in_sys = case_when(sysid > 0 ~ "1", TRUE ~ "0"))
 
-# change type of in_sys to numeric
 stacked_data <- stacked_data %>%
-  mutate(in_sys = as.numeric(in_sys))
+  mutate(pre_mcaid_dis = mean(mcaid_discharges[rel_year < 0], na.rm = TRUE), .by = mcrnum)
 
-stacked_result <- feols(
- mcaid_prop_discharges ~ i(rel_year, treated, ref = -1) +
-                      median_income_pre + exp_status |
-    mcrnum^df + year^df,
-  data    = stacked_data, #%>% filter(expyear == 2014),
+stacked_data <- stacked_data %>%
+  mutate(ln_mcaid_rev = log(net_mcaid_rev_wins))
+
+stacked_result_real <- feols(
+   uncomp_bed ~ i(rel_year, treated, ref = -1) +
+                      median_income_pre + exp_status | mcrnum^df + year^df,
+  data    = stacked_data_real %>%  filter(beds < 100),  
   weights = ~Q_weight,
   cluster = ~state^df
 )
 
-summary(stacked_result)
+summary(stacked_result_real)
+
+summary(hospdata_analysis$net_mcaid_rev)
+summary(stacked_data$net_mcaid_rev)
+
+colnames(hospdata_analysis)
 
 post_coefs_count <- coef(stacked_result)[grepl("rel_year::[0-9]+:treated", 
                                                 names(coef(stacked_result)))]
@@ -253,8 +262,8 @@ summary(stacked_single_result)
 # ------------------------------------------------------------------------------
 
 iplot(
-  stacked_result,
-  main = "Weighted stacked DiD — total operating expenditure",
+  stacked_result_real,
+  main = "Weighted stacked DiD — Wins, Ln, Real Medicaid Revenue",
   xlab = "Event time (years since adoption)",
   ylab = "Coefficient estimate (95% CI)"
 )
