@@ -307,20 +307,16 @@ hospdata <- hospdata %>%
   
 
   # 6. EXP_STATUS: Is this state operating under Medicaid expansion in this year?
-  # 0 = not expanded in this year 
+  # 0 = not expanded in this year
   # 1 = expanded in this year
+  # Non-expansion states are coded expyear == 0 (not NA) upstream, so that
+  # must be checked explicitly -- otherwise `year >= expyear` (i.e. year >= 0)
+  # is true for every real year and every non-expansion state gets marked
+  # "expanded" in 100% of its state-years.
   exp_status = case_when(
-    is.na(expyear) ~ 0,                 # Non-expansion states = 0
+    is.na(expyear) | expyear == 0 ~ 0,  # Non-expansion (or unknown) states = 0
     year >= expyear ~ 1,                # After expansion = 1
     TRUE ~ 0                           # Before expansion = 0
-  ),
-
-  #7. EXP_DURING: Does this state expand during the window (3 year pre provider tax, 5 years post)
-  # 0 = did not expand within window 
-  # 1 = did expand within window 
-  exp_during = case_when(
-    expyear - firsttax_num <= 5 ~ 1,  # expansion happens less than 5 years post tax, exp_during = 1
-    firsttax_num - expyear <= 3 ~ 1  # tax happens less than 3 years post expansion, exp_during = 1
   ))
 
 
