@@ -1,0 +1,25 @@
+\begin{table}[!h]
+\centering
+\caption{Hospital Attrition from the Balanced Panel}
+\begin{tabular}{lrr}
+\toprule
+\multicolumn{3}{l}{\textbf{Panel A: Exit Timing Relative to Own Adoption Year}}\\
+Exit Timing & N & \% \\
+\midrule
+Before own adoption & 654 & 71.2\% \\
+At/after own adoption & 264 & 28.8\% \\
+\addlinespace
+\multicolumn{3}{l}{\textbf{Panel B: Pre-Period Characteristics, Cleanly Exited vs. Stayed}}\\
+Variable & Cleanly Exited & Stayed Through Panel End \\
+\midrule
+N Hospitals & 918 & 1494 \\
+Beds & 105 & 224 \\
+Op. Margin & -0.085 & +0.017 \\
+Discharges & 3,628 & 12,672 \\
+\% Rural & 11.6\% & 9.7\% \\
+\% Nonprofit & 62.7\% & 80.4\% \\
+\% For-Profit & 37.3\% & 19.6\% \\
+\bottomrule
+\end{tabular}
+\footnotesize{Panel A covers treated hospitals with a clean exit (present, then gone for good) from the balanced panel, split by whether the exit happened before or at/after their own state's tax adoption. Panel B compares pre-period characteristics of treated hospitals that cleanly exit vs. those observed through the panel's final year. See attrition\_analysis.R and attrition\_analysis\_notes.md for definitions and caveats -- exiting the balanced panel is not proof of hospital closure.}
+\end{table}

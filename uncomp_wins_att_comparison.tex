@@ -1,0 +1,45 @@
+\begin{table}[!h]
+\centering
+\caption{Uncompensated Care Outcomes: Pooled ATT Across Winsorization Levels}
+\centering
+\begin{tabular}[t]{llrrr}
+\toprule
+Outcome & Winsorization & Pre-Treatment Mean & N Hospitals & ATT\\
+\midrule
+Uncompensated Care per Bed & Raw (unwinsorized) & 116,331 & 1,314 & -12,881\\
+ &  &  &  & (11,315)\\
+Uncompensated Care per Bed & 1\% / 99\% winsorized & 114,835 & 1,314 & -16,352\\
+ &  &  &  & (10,773)\\
+Uncompensated Care per Bed & 1\% / 95\% winsorized & 112,227 & 1,314 & -15,673*\\
+\addlinespace
+ &  &  &  & (7,851)\\
+Uncompensated Care as \% of NPR & Raw (unwinsorized) & 0.131 & 1,290 & -0.020\\
+ &  &  &  & (0.013)\\
+Uncompensated Care as \% of NPR & 1\% / 99\% winsorized & 0.130 & 1,290 & -0.024*\\
+ &  &  &  & (0.012)\\
+\addlinespace
+Uncompensated Care as \% of NPR & 1\% / 95\% winsorized & 0.128 & 1,290 & -0.021**\\
+ &  &  &  & (0.009)\\
+Uncompensated Care as \% of Total Charges & Raw (unwinsorized) & 0.031 & 925 & -0.003\\
+ &  &  &  & (0.003)\\
+Uncompensated Care as \% of Total Charges & 1\% / 99\% winsorized & 0.028 & 925 & -0.003\\
+\addlinespace
+ &  &  &  & (0.003)\\
+Uncompensated Care as \% of Total Charges & 1\% / 95\% winsorized & 0.027 & 925 & -0.003\\
+ &  &  &  & (0.003)\\
+Log of Uncompensated Care Charges & Raw (unwinsorized) & 15.865 & 950 & -0.167\\
+ &  &  &  & (0.169)\\
+\addlinespace
+Log of Uncompensated Care Charges & 1\% / 99\% winsorized & 15.886 & 950 & -0.124\\
+ &  &  &  & (0.163)\\
+Log of Uncompensated Care Charges & 1\% / 95\% winsorized & 15.874 & 950 & -0.131\\
+ &  &  &  & (0.160)\\
+\bottomrule
+\multicolumn{5}{l}{\textsuperscript{} Pooled treated x post coefficient from a stacked difference-in-differences model (Q-weighted,}\\
+\multicolumn{5}{l}{hospital x cohort and year x cohort fixed effects, controls for state Medicaid expansion status}\\
+\multicolumn{5}{l}{and median income, SEs clustered by state), estimated separately for each uncompensated care}\\
+\multicolumn{5}{l}{outcome at three winsorization levels (raw, 1\%/99\%, 1\%/95\%). N Hospitals is the number of}\\
+\multicolumn{5}{l}{unique treated hospitals with non-missing data contributing to that specific regression. * p<0.10,}\\
+\multicolumn{5}{l}{** p<0.05, *** p<0.01.}\\
+\end{tabular}
+\end{table}

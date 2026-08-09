@@ -231,11 +231,13 @@ print(make_tandem_scatter(
   "UCC-to-NPR Effect (winsorized)", "Operating Expenses/Bed Effect (winsorized)",
   "heterogeneity_ucc2npr_vs_opbed.png"
 ))
+
 print(make_tandem_scatter(
   "uncomp_bed_win_w", "op_bed_win_w",
   "Uncompensated Care/Bed Effect (winsorized)", "Operating Expenses/Bed Effect (winsorized)",
   "heterogeneity_uncompbed_vs_opbed.png"
 ))
+
 print(make_tandem_scatter(
   "mcaid_dis_bed_win_w", "npr_bed_win_w",
   "Medicaid Discharges/Bed Effect (winsorized)", "Net Patient Revenue/Bed Effect (winsorized)",

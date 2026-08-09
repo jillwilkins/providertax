@@ -226,9 +226,9 @@ stacked_data <- stacked_data %>%
   mutate(ln_mcaid_rev = log(net_mcaid_rev_wins))
 
 stacked_result_real <- feols(
-   uncomp_bed ~ i(rel_year, treated, ref = -1) +
+   cash / net_pat_rev ~ i(rel_year, treated, ref = -1) +
                       median_income_pre + exp_status | mcrnum^df + year^df,
-  data    = stacked_data_real %>%  filter(beds < 100),  
+  data    = stacked_data_real,  
   weights = ~Q_weight,
   cluster = ~state^df
 )
@@ -246,7 +246,7 @@ att_patients <- mean(post_coefs_count)
 att_patients
 
 stacked_single_result <- feols(
-  mcaid_prop_discharges ~ i(rel_year, treated, ref = -1) +
+  uncomp_care / tot_charges ~ i(rel_year, treated, ref = -1) +
                       median_income_pre + exp_status |
     mcrnum^df + year^df,
   data = stacked_data %>%  filter(expyear != 2014),
