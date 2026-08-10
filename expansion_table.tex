@@ -1,27 +1,34 @@
 \begin{table}[!h]
 \centering
-\begin{tabular}[t]{lrrrr}
+\caption{Medicaid Expansion Checks}
+\begin{tabular}{lrr}
 \toprule
-\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Panel A: Triple Interaction} & \multicolumn{2}{c}{Panel B: Full Timing vs. Pre-2014-Only} \\
-\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5}
-Outcome & Non-Expansion & Expansion Diff. & Full Timing & Pre-2014 Only\\
+\multicolumn{3}{l}{\textbf{Panel A: Triple Interaction}}\\
+Outcome & Non-Expansion & Expansion Diff. \\
 \midrule
-\addlinespace[0.3em]
-\multicolumn{5}{l}{\textbf{Financial Outcomes}}\\
-\hspace{1em}Operating Expenses per Bed & 9644.024 (19131.15) & 5348.131 (29789.35) & 35739.755** (16844.09) & 46532.296** (18822.98)\\
-\hspace{1em}Net Patient Revenue per Bed & -1035.905 (25954.11) & 12635.659 (33051.64) & 33766.085** (16257.66) & 35368.055* (19056.73)\\
-\hspace{1em}Operating Margin & -0.016 (0.01) & 0.011 (0.01) & -0.002 (0.01) & -0.009 (0.01)\\
-\addlinespace[0.3em]
-\multicolumn{5}{l}{\textbf{Payer Mix / Uncompensated Care}}\\
-\hspace{1em}Medicaid Share of Discharges & 0.020** (0.01) & -0.015 (0.01) & 0.013** (0.01) & 0.013 (0.01)\\
-\hspace{1em}Medicaid Discharges per Bed & 0.852** (0.41) & -0.645 (0.51) & 0.571** (0.27) & 0.632 (0.46)\\
-\hspace{1em}Uncompensated Care per Bed & 20104.691 (21615.06) & -5968.397 (25391.31) & -9370.171 (9996.97) & -32458.811*** (11602.58)\\
-\hspace{1em}UCC-to-NPR Ratio & 0.011 (0.01) & -0.002 (0.02) & -0.017 (0.01) & -0.040** (0.01)\\
+\multicolumn{3}{l}{\textit{Financial Outcomes}}\\
+Operating Expenses per Bed & 9644.024 (19131.15) & 5348.131 (29789.35) \\
+Net Patient Revenue per Bed & -1035.905 (25954.11) & 12635.659 (33051.64) \\
+Operating Margin & -0.016 (0.01) & 0.011 (0.01) \\
+\multicolumn{3}{l}{\textit{Payer Mix / Uncompensated Care}}\\
+Medicaid Share of Discharges & 0.020** (0.01) & -0.015 (0.01) \\
+Medicaid Discharges per Bed & 0.852** (0.41) & -0.645 (0.51) \\
+Uncompensated Care per Bed & 20104.691 (21615.06) & -5968.397 (25391.31) \\
+UCC-to-NPR Ratio & 0.011 (0.01) & -0.002 (0.02) \\
+\addlinespace
+\multicolumn{3}{l}{\textbf{Panel B: Pre-2014-Only ("No Expansion")}}\\
+Outcome & Pre-2014 Only &  \\
+\midrule
+\multicolumn{3}{l}{\textit{Financial Outcomes}}\\
+Operating Expenses per Bed & 46532.296** (18822.98) &  \\
+Net Patient Revenue per Bed & 35368.055* (19056.73) &  \\
+Operating Margin & -0.009 (0.01) &  \\
+\multicolumn{3}{l}{\textit{Payer Mix / Uncompensated Care}}\\
+Medicaid Share of Discharges & 0.013 (0.01) &  \\
+Medicaid Discharges per Bed & 0.632 (0.46) &  \\
+Uncompensated Care per Bed & -32458.811*** (11602.58) &  \\
+UCC-to-NPR Ratio & -0.040** (0.01) &  \\
 \bottomrule
-\multicolumn{5}{l}{\textsuperscript{} Panel A reports a single triple-interaction model on the full-timing sample: Non-Expansion is the ATT for never-expanded states (Treated x Post); Expansion}\\
-\multicolumn{5}{l}{Diff. is the additional effect for ever-expanded states (Treated x Post x EverExpanded), the coefficient of interest for testing a differential effect.}\\
-\multicolumn{5}{l}{Panel B re-estimates the baseline stacked DiD (pooled treated x post coefficient, Q-weighted, hospital x cohort and year x cohort fixed effects) on the}\\
-\multicolumn{5}{l}{full sample vs. a sample restricted to year < 2014; the restricted sample uses only the 2005, 2006, and 2009 adoption cohorts. SEs clustered by state. *}\\
-\multicolumn{5}{l}{p<0.10, ** p<0.05, *** p<0.01.}\\
 \end{tabular}
+\footnotesize{Panel A reports a single triple-interaction model on the full-timing sample: Non-Expansion is the ATT for never-expanded states (Treated x Post); Expansion Diff. is the additional effect for ever-expanded states (Treated x Post x EverExpanded), the coefficient of interest for testing a differential effect. Panel B re-estimates the baseline stacked DiD (pooled treated x post coefficient, Q-weighted, hospital x cohort and year x cohort fixed effects) restricted to year < 2014, before ACA Medicaid expansion took effect almost everywhere; this sample uses only the 2005, 2006, and 2009 adoption cohorts. Compare against the full-timing ATT in the main results table. SEs clustered by state. * p<0.10, ** p<0.05, *** p<0.01.}
 \end{table}

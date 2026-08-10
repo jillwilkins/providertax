@@ -68,18 +68,17 @@ p_pct_npr <- ggplot(plot_data_pct, aes(x = years_since_tax, y = value, color = s
   scale_x_continuous(breaks = 0:10) +
   scale_y_continuous(labels = function(x) paste0(x, "%"), expand = expansion(mult = c(0.05, 0.12))) +
   labs(
-    title    = "Provider Tax as % of Net Patient Revenue, by Years Since Adoption",
+    # title    = "Provider Tax as % of Net Patient Revenue, by Years Since Adoption",
     x        = "Years Since Tax Adoption",
     y        = "Tax as % of NPR",
-    caption  = wrap_caption(paste(
-      "Truncated at 10 years since adoption. Sample coverage (number of states",
-      "represented) peaks at years 9-12 (12-14 states) and declines steadily",
-      "thereafter, as states either have not been taxing that long yet or rate",
-      "data isn't available that far out -- beyond year 10 the average reflects",
-      "an increasingly small, unstable set of states rather than a consistent",
-      "cross-section."
-    ))
-  ) +
+    #caption  = wrap_caption(paste(
+    #  "Truncated at 10 years since adoption. Sample coverage (number of states",
+    #  "represented) peaks at years 9-12 (12-14 states) and declines steadily",
+    #  "thereafter, as states either have not been taxing that long yet or rate",
+    #  "data isn't available that far out -- beyond year 10 the average reflects",
+    #  "an increasingly small, unstable set of states rather than a consistent",
+    #  "cross-section."
+    ) +
   line_theme
 
 ggsave("tax_pct_npr_by_years_since_tax.png", p_pct_npr, width = 9, height = 6, background = "transparent", dpi = 300)

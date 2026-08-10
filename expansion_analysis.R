@@ -7,9 +7,17 @@
 #   2. Split the full-timing sample by whether a state ever expanded
 #      Medicaid (using the corrected `expyear`, not the old buggy
 #      `exp_status`) and compare ATTs side by side.
-# Self-contained: builds its own stacked samples so it can construct more
-# than one window, rather than depending on a single shared `stacked_data`.
-# Requires hospdata_analysis already in the environment.
+#
+# The full-timing baseline (window=4, 1999-2022, unfiltered) is IDENTICAL to
+# 5_buildstacked.R's canonical build, so it just reuses the shared
+# `stacked_data` instead of rebuilding it. The pre-2014 and expansion/
+# non-expansion splits are genuinely different samples (different cohort
+# validity window, or built from a filtered subset of hospitals before the
+# balanced-panel step) that 5_buildstacked.R doesn't produce, so
+# build_stacked_data() (a parameterized copy of that builder, including
+# Q-weights) is still used for those three.
+# Requires stacked_data (5_buildstacked.R) and hospdata_analysis already in
+# the environment.
 # ==============================================================================
 
 library(dplyr)
@@ -93,7 +101,16 @@ outcomes <- c("op_bed", "npr_bed", "op_margin", "mcaid_prop_discharges",
 # PART 1: FULL TIMING VS. "PRETEND EXPANSION NEVER HAPPENED" (year < 2014)
 # ==============================================================================
 
-full_stacked <- build_stacked_data(hospdata_analysis, window = 4, yr_min = 1999, yr_max = 2022)
+# Full-timing baseline = the shared stacked_data (window=4, 1999-2022,
+# unfiltered) -- same sample 5_buildstacked.R already built. Only need to
+# defensively add the derived columns this script's outcome list requires.
+if (!"post" %in% names(stacked_data)) {
+  stacked_data <- stacked_data %>% mutate(post = as.integer(rel_year >= 0))
+}
+if (!"mcaid_dis_bed" %in% names(stacked_data)) {
+  stacked_data <- stacked_data %>% mutate(mcaid_dis_bed = mcaid_discharges / pre_beds_avg)
+}
+full_stacked <- stacked_data
 cat("Full-timing sample: cohorts =", n_distinct(full_stacked$df),
     "| hospitals =", n_distinct(full_stacked$mcrnum), "\n")
 
