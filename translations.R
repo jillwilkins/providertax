@@ -67,3 +67,15 @@ print(mcaid_translation, row.names = FALSE)
 
 cat("\nCumulative additional Medicaid discharges, years 0-4:",
     round(sum(mcaid_translation$at_representative_hospital), 1), "\n")
+
+# ------------------------------------------------------------------------------
+# 4. Additional net patient revenue at the median hospital, by years since
+#    adoption and cumulatively across all 5 observed post-treatment years
+# ------------------------------------------------------------------------------
+npr_translation <- translate_per_bed_outcome("npr_bed")
+
+cat("\n=== ADDITIONAL NET PATIENT REVENUE AT THE MEDIAN HOSPITAL (", median_beds, "beds ) ===\n")
+print(npr_translation, row.names = FALSE)
+
+cat("\nCumulative additional net patient revenue, years 0-4: $",
+    scales::comma(round(sum(npr_translation$at_representative_hospital), 0)), "\n")
