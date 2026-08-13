@@ -125,64 +125,21 @@ tax <- tax %>%
 
 
 # ==============================================================================
-# 3. LOAD AND PROCESS FMAP DATA
+# 3. [REMOVED] FMAP DATA
+# fmap/multiplier (from fmaps_kff.csv) were merged into hospdata but never
+# used anywhere downstream in the project -- confirmed via a project-wide
+# grep before removing. Dropped to avoid the dependency on that file
+# (currently an un-synced OneDrive placeholder that times out on read).
+# totaltax and expyear, which DO feed the actual analysis (exp_status,
+# descriptive rollout stats), come from tax_totals/expansion below, not
+# from fmaps_kff.csv, so removing this section doesn't affect them.
 # ==============================================================================
 
-fmap <- read.csv(
-  paste0(data_input_path, "fmaps_kff.csv"), 
-  skip = 2
-)
-
-# Clean FMAP data structure ----------------------------------------------------
-fmap <- fmap %>%
-  select(-Footnotes) %>%
-  slice(2:52) %>%
-  rename(statename = Location) %>%
-  mutate(
-    state = ifelse(
-      statename == "District of Columbia",
-      "DC",
-      state.abb[match(statename, state.name)]
-    )
-  )
-
-# Rename FMAP columns ----------------------------------------------------------
-# WHAT: Extract year from column names, create naming like "fmap_2004", "m_2004" format
-
-fmap <- fmap %>%
-  rename_with(~ case_when(
-    str_detect(.x, "FMAP") ~ paste0("fmap_", str_extract(.x, "\\d{4}")),
-    str_detect(.x, "Multiplier") ~ paste0("m_", str_extract(.x, "\\d{4}")),
-    TRUE ~ .x
-  ))
-
-# Reshape FMAP from wide to long -----------------------------------------------
-# WHAT: Convert from one row per state to one row per state-year
-# WHY: Easier to merge with panel data structure
-
-# First, convert to numeric
-fmap <- fmap %>%
-  mutate(across(
-    matches("^(fmap|m)_\\d{4}$"), 
-    ~ as.numeric(as.character(.))
-  ))
-
-# Then pivot to long format
-fmap <- fmap %>%
-  pivot_longer(
-    cols = -state,
-    names_to = c(".value", "year"),
-    names_pattern = "(fmap|m)_(\\d{4})"  # Separate prefix from year
-  ) %>%
-  rename(multiplier = m) %>%
-  mutate(year = as.integer(year)) %>%
-  filter(!is.na(fmap) & !is.na(multiplier))  # Remove rows from title lines
-  
-  # What does your tax data look like?
+# What does your tax data look like?
 
 tax %>%
   select(state, firsttax) %>%
-  filter(firsttax %in% c("2004", "2005", "2006", "never")) 
+  filter(firsttax %in% c("2004", "2005", "2006", "never"))
 
 # ==============================================================================
 # 4. CREATE CUMULATIVE TAX COUNT (for descriptive stats)
@@ -228,27 +185,18 @@ expansion <- expansion %>%
 # 5. MERGE ALL DATA SOURCES
 # ==============================================================================
 
-# Create master state-year dataset for TIME-VARYING variables only
-fmap_tax <- fmap %>%
-  left_join(tax_totals, by = "year") %>%  # Year-level only
-  left_join(expansion, by = "state")       # State-level only
-
 # Create separate state-level dataset for NON-TIME-VARYING variables
 state_info <- tax %>%
   select(state, firsttax)  # This is STATE-LEVEL, not state-year
 
 # Merge with HCRIS hospital data
 hospdata <- hcris %>%
-  # First merge state-year variables
-  left_join(
-    fmap_tax %>% select(state, year, fmap, multiplier, totaltax, expyear),
-    by = c("state", "year")
-  ) %>%
-  # Then merge state-level variables (no year!)
-  left_join(
-    state_info,
-    by = "state"  # ← Only by state!
-  ) %>%
+  # totaltax is year-level only (same value for every state in a given year)
+  left_join(tax_totals, by = "year") %>%
+  # expyear is state-level only (no year)
+  left_join(expansion %>% select(state, expyear), by = "state") %>%
+  # firsttax is state-level only (no year)
+  left_join(state_info, by = "state") %>%
   rename(mcrnum = provider_number)
 
 # ==============================================================================
@@ -364,23 +312,60 @@ hospdata %>%
 # 8. JOIN AHA: join necessary var from aha. 
 # ==============================================================================
 # Load AHA data
-aha <- read_csv(paste0(data_input_path, "AHAdata_20052023.csv"))
+aha <- read_csv(paste0(data_input_path, "newAHAdata_20052023.csv"))
 
 #cahnge column names to lowercase
 colnames(aha) <- tolower(colnames(aha))
 
 # Select only what you need from AHA and prepare for merge
+# Service-line offering variables (emdephos, psyemhos, traumhos, adtchos,
+# iclabhos, eswlhos) added for the service-line analysis; vem, alchhos,
+# psybd, alchbd were already here.
 aha_minimal <- aha %>%
-  select(mcrnum, year, cntrl, serv, rurlhos, sysid, sysname, alchhos, psyhos, obhos, obbd, cicbd, alchbd, psybd, admtot, dctot, ipdtot, vem, vtot, 
-  suropip, suropop, suroptot, voth, mcrdc, mcdipd, mcddc, sptdc, sptip, thrtdc, thrtip, opotdc, opotip) 
+  select(id, mcrnum, year, cntrl, serv, rurlhos, sysid, sysname, alchhos, psyhos, obhos, obbd, cicbd, alchbd, psybd, admtot, dctot, ipdtot, vem, vtot,
+  suropip, suropop, suroptot, voth, mcrdc, mcdipd, mcddc, sptdc, sptip, thrtdc, thrtip, opotdc, opotip,
+  emdephos, psyemhos, traumhos, adtchos, iclabhos, eswlhos)
 
 # Convert aha_minimal mcrnum to match hospdata (integer)
 aha_minimal <- aha_minimal %>%
   mutate(mcrnum = as.integer(mcrnum))
 
+# FIX: mcrnum is 100% missing in AHA for 2005-2007 (confirmed against the
+# raw file), even though every other AHA field -- including id, AHA's own
+# stable internal facility ID -- is fully populated those years. Left as-is,
+# the year+mcrnum merge below silently drops all AHA data for 2005-2007,
+# for every AHA-sourced variable, not just the new service-line ones.
+# Fix: build an id -> mcrnum crosswalk from years where both are present
+# (2008+), keep only IDs that map to a single stable mcrnum (94.7% of IDs;
+# the remaining ~5% have genuinely inconsistent mcrnum across years and are
+# left out rather than guessed at), then backfill mcrnum for 2005-2007 rows
+# using that crosswalk before merging.
+id_mcrnum_crosswalk <- aha_minimal %>%
+  filter(!is.na(id), !is.na(mcrnum)) %>%
+  distinct(id, mcrnum) %>%
+  group_by(id) %>%
+  filter(n_distinct(mcrnum) == 1) %>%
+  distinct(id, mcrnum) %>%
+  ungroup()
+
+cat("\n=== AHA id -> mcrnum CROSSWALK ===\n")
+cat("Stable id->mcrnum mappings:", nrow(id_mcrnum_crosswalk), "\n")
+
+aha_minimal <- aha_minimal %>%
+  left_join(id_mcrnum_crosswalk, by = "id", suffix = c("", "_xwalk")) %>%
+  mutate(mcrnum = coalesce(mcrnum, mcrnum_xwalk)) %>%
+  select(-mcrnum_xwalk)
+
+cat("mcrnum non-missing by year after crosswalk backfill:\n")
+aha_minimal %>%
+  filter(year %in% 2005:2010) %>%
+  group_by(year) %>%
+  summarise(n = n(), n_mcrnum_nonmiss = sum(!is.na(mcrnum)), .groups = "drop") %>%
+  print()
+
 # Merge on both mcrnum and year
 hospdata <- hospdata %>%
-  left_join(aha_minimal, by = c("mcrnum", "year"))
+  left_join(aha_minimal %>% select(-id), by = c("mcrnum", "year"))
 
 View(hospdata_analysis)
 View(aha_minimal)

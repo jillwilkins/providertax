@@ -256,7 +256,7 @@ time_plot <- state_data_merged %>%
        color  = "") +
   theme_minimal()
 
-ggsave("time_plot.png", plot = time_plot, width = 10, height = 6, dpi = 300)
+ggsave("mco_expenditure_analysis/time_plot.png", plot = time_plot, width = 10, height = 6, dpi = 300)
 
 # MAJOR ISSUE with data 
 p99 <- quantile(state_data$inp_reg_per_bed, 0.99, na.rm = TRUE)

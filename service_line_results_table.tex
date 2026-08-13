@@ -1,0 +1,44 @@
+\begin{table}[!h]
+\centering
+\caption{Service Line Offerings: Pooled Average Treatment Effects on the Treated}
+\centering
+\begin{tabular}[t]{lrrr}
+\toprule
+Outcome & Pre-Treatment Mean & N Hospitals & ATT\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{Service Line Offered (percentage points)}}\\
+\hspace{1em}Emergency Department & 96.1\% & 1,416 & 0.5pp\\
+\hspace{1em} &  &  & (0.5pp)\\
+\hspace{1em}Psychiatric Emergency Services & 47.2\% & 1,416 & 1.0pp\\
+\hspace{1em} &  &  & (1.1pp)\\
+\hspace{1em}Alcohol/Chemical Dependency Unit & 11.1\% & 1,416 & 1.1pp\\
+\hspace{1em} &  &  & (0.7pp)\\
+\hspace{1em}Trauma Center & 35.0\% & 1,416 & -1.1pp\\
+\hspace{1em} &  &  & (1.8pp)\\
+\hspace{1em}Adult Day Care Program & 43.8\% & 1,416 & 0.3pp\\
+\hspace{1em} &  &  & (0.4pp)\\
+\hspace{1em}Cardiac Catheterization Lab & 57.8\% & 1,416 & 0.7pp\\
+\hspace{1em} &  &  & (0.9pp)\\
+\hspace{1em}ESWL & 40.4\% & 1,416 & 2.5pp**\\
+\hspace{1em} &  &  & (1.2pp)\\
+\addlinespace[0.3em]
+\multicolumn{4}{l}{\textbf{Volume / Bed Counts}}\\
+\hspace{1em}Emergency Department Visits & 39,096 & 1,422 & -936.92\\
+\hspace{1em} &  &  & (581.40)\\
+\hspace{1em}Psychiatric Beds & 14.57 & 1,416 & -0.40\\
+\hspace{1em} &  &  & (0.31)\\
+\hspace{1em}Alcohol/Chemical Dependency Beds & 1.46 & 1,416 & -0.02\\
+\hspace{1em} &  &  & (0.07)\\
+\bottomrule
+\multicolumn{4}{l}{\textsuperscript{} Pooled treated x post coefficient from a stacked difference-in-differences}\\
+\multicolumn{4}{l}{model (Q-weighted, hospital x cohort and year x cohort fixed effects, controls}\\
+\multicolumn{4}{l}{for state Medicaid expansion status and median income, SEs clustered by}\\
+\multicolumn{4}{l}{state). Binary service-line outcomes estimated as a linear probability model;}\\
+\multicolumn{4}{l}{coefficients and pre-treatment means reported in percentage points. N}\\
+\multicolumn{4}{l}{Hospitals is the number of unique treated hospitals with non-missing data}\\
+\multicolumn{4}{l}{contributing to that specific outcome's regression -- coverage varies}\\
+\multicolumn{4}{l}{substantially across these AHA-sourced fields, see}\\
+\multicolumn{4}{l}{service\_line\_summary\_stats.R notes. * p<0.10, ** p<0.05, *** p<0.01.}\\
+\end{tabular}
+\end{table}

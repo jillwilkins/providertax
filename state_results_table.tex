@@ -1,0 +1,27 @@
+\begin{table}[!h]
+\centering
+\caption{State-Level Outcomes: Pooled Average Treatment Effects on the Treated}
+\centering
+\begin{tabular}[t]{lrrr}
+\toprule
+Outcome & Pre-Treatment Mean & N States & ATT\\
+\midrule
+Uninsured Rate & 17.8\% & 27 & -0.36pp\\
+ &  &  & (0.62pp)\\
+Medicaid Enrollment per Bed Capacity & 21.76 & 30 & -0.210\\
+ &  &  & (0.259)\\
+\bottomrule
+\multicolumn{4}{l}{\textsuperscript{} Pooled treated x post coefficient from a state-level stacked}\\
+\multicolumn{4}{l}{difference-in-differences model (Q-weighted, state x cohort and}\\
+\multicolumn{4}{l}{year x cohort fixed effects, controls for state Medicaid}\\
+\multicolumn{4}{l}{expansion status and median income, SEs clustered by state).}\\
+\multicolumn{4}{l}{Uninsured Rate from Garthwaite et al. (2015)-style CPS}\\
+\multicolumn{4}{l}{replication (data years 1985-2011); Medicaid Enrollment per Bed}\\
+\multicolumn{4}{l}{Capacity is state Medicaid enrollment (IPUMS ACS, 2007+)}\\
+\multicolumn{4}{l}{divided by total pre-treatment hospital bed capacity in the}\\
+\multicolumn{4}{l}{state. N States is the number of unique treated states with}\\
+\multicolumn{4}{l}{non-missing data contributing to that specific regression --}\\
+\multicolumn{4}{l}{coverage differs between the two outcomes' underlying data}\\
+\multicolumn{4}{l}{sources. * p<0.10, ** p<0.05, *** p<0.01.}\\
+\end{tabular}
+\end{table}
