@@ -160,27 +160,6 @@ cat("att_forprofit_own = ATT for for-profit hospitals, tested on its own (not ju
 print(triple_results, digits = 4)
 
 # ------------------------------------------------------------------------------
-# 3b. Pre-treatment means by ownership group -- context for the ATT
-#    magnitudes (e.g. a given pp change means something different off an
-#    ~90% base vs. an ~10% base).
-# ------------------------------------------------------------------------------
-pre_treat_mean_ownership <- function(outcome_var) {
-  d <- stacked_data %>% filter(treated == 1, rel_year < 0, !is.na(for_profit))
-  list(
-    nonprofit  = mean(d[[outcome_var]][d$for_profit == 0], na.rm = TRUE),
-    forprofit  = mean(d[[outcome_var]][d$for_profit == 1], na.rm = TRUE)
-  )
-}
-
-triple_results <- triple_results %>%
-  rowwise() %>%
-  mutate(
-    mean_nonprofit = pre_treat_mean_ownership(outcome)$nonprofit,
-    mean_forprofit = pre_treat_mean_ownership(outcome)$forprofit
-  ) %>%
-  ungroup()
-
-# ------------------------------------------------------------------------------
 # 4. LaTeX table: 3 columns (Non-Profit, For-Profit Diff., For-Profit Own
 #    ATT). Rows sorted with any-significant outcomes first (ranked by
 #    strongest p-value across the three columns), not-significant after.
@@ -200,13 +179,6 @@ fmt_se <- function(se, is_binary) {
   paste0("(", sprintf(paste0("%.", digits, "f"), se * if (is_binary) 100 else 1), ")")
 }
 
-fmt_mean <- function(mean_val, is_binary) {
-  # escaped \% for LaTeX -- an unescaped % starts a comment and silently
-  # truncates the rest of that row when compiled (same bug class caught in
-  # attrition_table.R)
-  if (is_binary) paste0(sprintf("%.1f", mean_val * 100), "\\%") else sprintf("%.2f", mean_val)
-}
-
 triple_results <- triple_results %>%
   mutate(min_p = pmin(p_nonprofit, p_forprofit_diff, p_forprofit_own),
          any_sig = min_p < 0.10) %>%
@@ -218,8 +190,6 @@ ownership_table_rows <- do.call(rbind, lapply(seq_len(nrow(triple_results)), fun
   rbind(
     data.frame(
       Outcome              = oi$label,
-      `NP Mean`            = fmt_mean(r$mean_nonprofit, oi$is_binary),
-      `FP Mean`            = fmt_mean(r$mean_forprofit, oi$is_binary),
       `Non-Profit`         = fmt_beta(r$att_nonprofit, r$p_nonprofit, oi$is_binary),
       `For-Profit Diff.`   = fmt_beta(r$att_forprofit_diff, r$p_forprofit_diff, oi$is_binary),
       `For-Profit Own ATT` = fmt_beta(r$att_forprofit_own, r$p_forprofit_own, oi$is_binary),
@@ -227,8 +197,6 @@ ownership_table_rows <- do.call(rbind, lapply(seq_len(nrow(triple_results)), fun
     ),
     data.frame(
       Outcome              = "",
-      `NP Mean`            = "",
-      `FP Mean`            = "",
       `Non-Profit`         = fmt_se(r$se_nonprofit, oi$is_binary),
       `For-Profit Diff.`   = fmt_se(r$se_forprofit_diff, oi$is_binary),
       `For-Profit Own ATT` = fmt_se(r$se_forprofit_own, oi$is_binary),
@@ -245,8 +213,8 @@ tbl <- ownership_table_rows %>%
     booktabs  = TRUE,
     escape    = FALSE,
     caption   = "Service Line Offerings: For-Profit vs. Non-Profit Heterogeneity",
-    col.names = c("Outcome", "NP Mean", "FP Mean", "Non-Profit", "For-Profit Diff.", "For-Profit Own ATT"),
-    align     = c("l", "r", "r", "r", "r", "r")
+    col.names = c("Outcome", "Non-Profit", "For-Profit Diff.", "For-Profit Own ATT"),
+    align     = c("l", "r", "r", "r")
   ) %>%
   kable_styling(latex_options = c("hold_position"))
 
@@ -257,26 +225,6 @@ if (n_sig > 0 && n_sig < nrow(ownership_table_rows)) {
 }
 
 tbl %>%
-  add_footnote(
-    paste0(
-      "NP Mean and FP Mean are pre-treatment means (treated hospitals, years ",
-      "before adoption) for non-profit and for-profit hospitals respectively -- ",
-      "context for the ATT magnitudes, since a given point change means ",
-      "something different off a high vs. low base. Triple-interaction model, ",
-      "fit twice with the reference ownership group flipped so both groups' own ",
-      "ATT get a direct significance test, not just the non-profit baseline and ",
-      "the relative differential: Non-Profit and For-Profit Own ATT are each ",
-      "group's own treated x post effect tested on its own; For-Profit Diff. is ",
-      "for-profit minus non-profit, the formal test of whether the two differ. ",
-      "Rows ranked by the strongest (smallest) p-value across all three ATT ",
-      "columns; vem (Emergency Department Visits) has a known pre-trend issue ",
-      "documented separately and should not be read as a clean result despite ",
-      "appearing here. Ownership fixed per hospital (first non-missing ",
-      "typectrl/cntrl). Q-weighted, hospital x cohort and year x cohort fixed ",
-      "effects, SEs clustered by state. * p<0.10, ** p<0.05, *** p<0.01."
-    ),
-    notation = "none"
-  ) %>%
   writeLines("service_line_ownership_heterogeneity.tex")
 
 cat("\nDone -- service_line_ownership_heterogeneity.tex saved.\n")
