@@ -44,6 +44,13 @@ if (!"mcaid_dis_bed" %in% names(stacked_data)) {
 if (!"tot_discharges_bed" %in% names(stacked_data)) {
   stacked_data <- stacked_data %>% mutate(tot_discharges_bed = tot_discharges / pre_beds_avg)
 }
+if (!"uncomp_bed_w95" %in% names(stacked_data)) {
+  winsorize_var <- function(x, probs = c(0.01, 0.95)) {
+    bounds <- quantile(x, probs = probs, na.rm = TRUE)
+    pmin(pmax(x, bounds[1]), bounds[2])
+  }
+  stacked_data <- stacked_data %>% mutate(uncomp_bed_w95 = winsorize_var(uncomp_bed, c(0.01, 0.95)))
+}
 
 n_hosp <- n_distinct(stacked_data$mcrnum[stacked_data$treated == 1])
 cat("Stacked sample: cohorts =", n_distinct(stacked_data$df),
@@ -58,11 +65,9 @@ outcome_info <- list(
   list(var = "npr_bed",                label = "Net Patient Revenue per Bed"),
   list(var = "op_margin",              label = "Operating Margin"),
   list(var = "mcaid_prop_discharges",  label = "Medicaid Share of Discharges"),
-  list(var = "nonm_prop_discharges",   label = "Non-Public Share of Discharges"),
   list(var = "mcaid_dis_bed",          label = "Medicaid Discharges per Bed"),
-  list(var = "nonm_dis_bed",           label = "Non-Public Discharges per Bed"),
   list(var = "tot_discharges_bed",     label = "Total Discharges per Bed"),
-  list(var = "uncomp_bed",             label = "Uncompensated Care per Bed"),
+  list(var = "uncomp_bed_w95",         label = "Uncompensated Care per Bed"),
   list(var = "ucc2npr",                label = "Uncompensated Care as % of NPR")
 )
 
@@ -144,7 +149,7 @@ print(main_results_long)
 # ------------------------------------------------------------------------------
 # 5. LaTeX table
 # ------------------------------------------------------------------------------
-main_results_long %>%
+tex_lines <- main_results_long %>%
   kbl(
     format    = "latex",
     booktabs  = TRUE,
@@ -153,16 +158,18 @@ main_results_long %>%
     align     = c("l", "r", "r")
   ) %>%
   kable_styling(latex_options = c("hold_position")) %>%
-  add_footnote(
-    paste0(
-      "Pooled treated x post coefficient from a stacked difference-in-differences ",
-      "model (Q-weighted, hospital x cohort and year x cohort fixed effects, ",
-      "controls for state Medicaid expansion status and median income, SEs ",
-      "clustered by state). Unique treated hospitals: ", n_hosp, ". ",
-      "* p<0.10, ** p<0.05, *** p<0.01."
-    ),
-    notation = "none"
-  ) %>%
-  writeLines("main_results_table.tex")
+  as.character() %>%
+  strsplit("\n") %>%
+  unlist()
+
+bottomrule_idx <- which(tex_lines == "\\bottomrule")
+footnote_lines <- c(
+  "",
+  "\\multicolumn{3}{l}{\\footnotesize Standard errors clustered at the state level.}\\\\",
+  "\\multicolumn{3}{l}{\\footnotesize * p$<$0.10, ** p$<$0.05, *** p$<$0.01.}\\\\"
+)
+
+tex_lines <- append(tex_lines, footnote_lines, after = bottomrule_idx)
+writeLines(tex_lines, "main_results_table.tex")
 
 cat("\nDone -- main_results_table.tex saved.\n")
