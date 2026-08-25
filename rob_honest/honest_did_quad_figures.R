@@ -106,18 +106,21 @@ build_quad_figure <- function(top_var, top_label, bottom_var, bottom_label, file
   combined
 }
 
+output_dir <- "honest_did_figures"
+if (!dir.exists(output_dir)) dir.create(output_dir)
+
 cat("\n=== Building honestdid_financial.png (op_bed / npr_bed) ===\n")
 fig_financial <- build_quad_figure(
   "op_bed",  "Operating Expenses per Bed",
   "npr_bed", "Net Patient Revenue per Bed",
-  "honestdid_financial.png"
+  file.path(output_dir, "honestdid_financial.png")
 )
 
 cat("\n=== Building honestdid_patient.png (mcaid_prop_discharges / uncomp_bed) ===\n")
 fig_patient <- build_quad_figure(
   "mcaid_prop_discharges", "Medicaid Share of Discharges",
   "uncomp_bed",            "Uncompensated Care per Bed",
-  "honestdid_patient.png"
+  file.path(output_dir, "honestdid_patient.png")
 )
 
 cat("\nDone -- both quad figures saved.\n")

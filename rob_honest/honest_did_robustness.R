@@ -51,7 +51,9 @@ outcomes <- list(
   list(var = "uncomp_bed",            label = "Uncompensated Care per Bed")
 )
 
-target_periods <- c(0, 1, 3)
+target_periods <- c(0, 3)
+output_dir <- "honest_did_figures"
+if (!dir.exists(output_dir)) dir.create(output_dir)
 
 run_honest_did <- function(outcome_var, outcome_label, target_rel_year,
                             data = stacked_data,
@@ -159,7 +161,7 @@ for (o in outcomes) {
     key <- paste0(o$var, "_e", t)
     honest_did_results[[key]] <- run_honest_did(
       o$var, o$label, target_rel_year = t,
-      filename = paste0("honest_did_", o$var, "_e", t, ".png")
+      filename = file.path(output_dir, paste0("honest_did_", o$var, "_e", t, ".png"))
     )
   }
 }

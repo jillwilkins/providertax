@@ -251,7 +251,7 @@ p <- ggplot(event_plot, aes(x = rel_year, y = mean_log_mco)) +
   geom_point(color = "#DC4B4B", size = 2.5) +
   geom_text(aes(label = n_states), vjust = -1.2, size = 3, color = "gray30") +
   geom_vline(xintercept = -0.5, linetype = "dotted", color = "gray40") +
-  labs(title = "Mean Log Medicaid MCO Spending by Years Relative to Tax Adoption",
+  labs(title = "Mean Log Medicaid MCO Spending by Years Relative to Hosp Tax Adoption",
        subtitle = "Treated states only (labels = # states); comparison group is in the DiD regression, not this plot",
        x = "Years Relative to Tax Adoption", y = "Mean log(MCO spending)") +
   theme_minimal()
