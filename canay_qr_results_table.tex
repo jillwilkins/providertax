@@ -1,0 +1,28 @@
+\begin{table}[!h]
+\centering
+\caption{Canay (2011) Two-Step Quantile Regression: Estimates by Outcome and Quantile}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lrrrrr}
+\toprule
+Outcome & $\tau=0.10$ & $\tau=0.25$ & $\tau=0.50$ & $\tau=0.75$ & $\tau=0.90$\\
+\midrule
+Operating Expenses per Bed & 6,480 & 2,948 & 5,754 & 9,094 & 10,277\\
+ & (31,673) & (26,379) & (26,132) & (26,993) & (28,999)\\
+Net Patient Revenue per Bed & 63,274** & 47,387* & 33,396 & 28,374 & 32,261\\
+ & (31,577) & (26,527) & (25,538) & (25,389) & (26,881)\\
+Medicaid Share of Discharges & 0.0157 & 0.0103 & 0.0086 & 0.0074 & -0.0016\\
+\addlinespace
+ & (0.0108) & (0.0085) & (0.0087) & (0.0101) & (0.0119)\\
+Uncompensated Care per Bed (winsorized) & 18,175** & 2,870 & -5,845 & -13,400 & -23,904**\\
+ & (7,865) & (7,257) & (7,964) & (10,048) & (11,819)\\
+Operating Margin & 0.0550*** & 0.0371*** & 0.0258*** & 0.0148** & 0.0064\\
+ & (0.0128) & (0.0094) & (0.0066) & (0.0064) & (0.0085)\\
+\bottomrule
+
+\multicolumn{6}{l}{\footnotesize Standard errors from a state-level cluster bootstrap (200 replicates) of the full two-step procedure.}\\
+\multicolumn{6}{l}{\footnotesize Step 1: panel fixed-effects regression (plm, within) to estimate each hospital's fixed effect.}\\
+\multicolumn{6}{l}{\footnotesize Step 2: pooled quantile regression of the fixed-effect-adjusted outcome on tax\_on and controls.}\\
+\multicolumn{6}{l}{\footnotesize * p$<$0.10, ** p$<$0.05, *** p$<$0.01.}\\
+\end{tabular}}
+\end{table}

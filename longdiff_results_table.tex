@@ -1,0 +1,27 @@
+\begin{table}[!h]
+\centering
+\caption{Quantile Difference-in-Differences: Long-Difference Estimates by Outcome and Quantile}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lrrrrr}
+\toprule
+Outcome & $\tau=0.10$ & $\tau=0.25$ & $\tau=0.50$ & $\tau=0.75$ & $\tau=0.90$\\
+\midrule
+Operating Expenses per Bed & 26,752 & 10,185 & 4,997 & 21,404 & 56,353*\\
+ & (23,296) & (20,877) & (25,745) & (29,399) & (33,673)\\
+Net Patient Revenue per Bed & 32,922 & 14,099 & 1,155 & 7,859 & 37,885\\
+ & (25,330) & (26,731) & (27,200) & (27,823) & (28,749)\\
+Medicaid Share of Discharges & 0.0158 & 0.0075 & 0.0045 & 0.0046 & 0.0067\\
+\addlinespace
+ & (0.0152) & (0.0094) & (0.0044) & (0.0063) & (0.0080)\\
+Uncompensated Care per Bed (winsorized) & -5,369 & -11,329** & -25,710** & -37,821** & -28,022\\
+ & (9,582) & (4,742) & (10,066) & (18,933) & (28,422)\\
+Operating Margin & 0.0299* & 0.0150* & 0.0005 & -0.0168*** & -0.0259**\\
+ & (0.0173) & (0.0078) & (0.0033) & (0.0056) & (0.0122)\\
+\bottomrule
+
+\multicolumn{6}{l}{\footnotesize Standard errors from a state-level cluster bootstrap (500 replicates).}\\
+\multicolumn{6}{l}{\footnotesize Outcome is the pre/post long difference within each hospital x cohort sub-experiment.}\\
+\multicolumn{6}{l}{\footnotesize * p$<$0.10, ** p$<$0.05, *** p$<$0.01.}\\
+\end{tabular}}
+\end{table}
