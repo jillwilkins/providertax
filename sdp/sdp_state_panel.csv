@@ -1,0 +1,52 @@
+"state","state_name","sdp_adopt","sdp_year","hosp_sdp","program_name","provider_type","confidence"
+"AL","Alabama",0,NA,0,"None","None","Confirmed absence"
+"AK",NA,0,NA,0,NA,NA,NA
+"AZ","Arizona",1,2017,1,"HEALTHII; Targeted Investments (TI) Program","Hospital (inpt/outpt), integrated behavioral/physical health","Likely"
+"AR",NA,0,NA,0,NA,NA,NA
+"CA","California",1,2017,1,"Private Hospital Directed Payment Program; DPH Enhanced Payment Program; Prop 56","Hospital (inpt/outpt), physicians, dental","Confirmed"
+"CO","Colorado",1,2025,1,"CHASE (Colorado Healthcare Affordability and Sustainability Enterprise) SDP","Hospital (inpt/outpt), behavioral health","Confirmed"
+"CT",NA,0,NA,0,NA,NA,NA
+"DE","Delaware",1,2022,1,"Diamond State Health Plan (DSHP) hospital directed payment","Hospital (inpatient acute, inpatient behavioral, outpatient)","Likely"
+"FL","Florida",1,2021,1,"Hospital Directed Payment Program (DPP)","Hospital (inpt/outpt), cancer centers","Confirmed"
+"GA","Georgia",1,NA,1,"Public Hospital DPP; Physician DPP; GA-AID","Public hospitals, physicians/professional","Not found (archive exists)"
+"HI","Hawaii",1,2021,1,"Med-QUEST Hospital Directed Access Payment; Nursing Facility LTC Access Payments; Private Hospital Uniform Payment Increase","Hospital (inpt/outpt); nursing facility","Likely"
+"ID",NA,0,NA,0,NA,NA,NA
+"IL","Illinois",1,2018,1,"MCO Hospital Access Program (MCAP); IL_Fee_IPH series","Hospital (inpt/outpt), physicians","Likely"
+"IN","Indiana",1,2018,1,"Hospital directed payment (Hospital Assessment Fee-funded)","Hospital (inpt/outpt)","Likely"
+"IA","Iowa",1,2022,1,"Hospital directed payment (IA_Fee_IPH.OPH1); UIHC ACR minimum fee schedule; AMC professional (IA_Fee_AMC); nursing facility payments","Hospital (inpt/outpt); physicians/AMC; nursing facility","Likely"
+"KS","Kansas",1,2021,1,"KanCare hospital directed payment; AMC professional services SDP","Hospital (inpt/outpt, teaching/children's); physicians/AMC","Confirmed (hospital); Not found (AMC exact date)"
+"KY","Kentucky",1,2019,0,"University Directed Payment Program","Physicians/professional at academic medical centers","Confirmed"
+"LA","Louisiana",1,2022,1,"Hospital/Practitioner Directed Payment Program","Hospital (inpt/outpt), practitioners","Confirmed"
+"ME",NA,0,NA,0,NA,NA,NA
+"MD","Maryland",1,2025,0,"HealthChoice primary care directed payment; state-owned-university academic/professional SDP","Physicians/professional (primary care, AMC, specialty)","Confirmed"
+"MA","Massachusetts",1,2018,1,"MassHealth ACO-linked directed payments; BH VBP","Hospital, behavioral health, ACO-affiliated providers","Likely"
+"MI","Michigan",1,2018,1,"Hospital Rate Adjustment (HRA), ACR/TPR methodology","Hospital (inpt/outpt)","Confirmed"
+"MN","Minnesota",1,2022,1,"Hennepin County hospital directed payment; alternative inpatient payment rate","Hospital (inpatient)","Likely"
+"MS","Mississippi",1,2018,1,"Mississippi Hospital Access Program (MHAP)","Hospital","Confirmed"
+"MO","Missouri",1,2022,1,"MO HealthNet hospital directed payment; children's hospital fee schedule; ambulance/EMT uniform increase","Hospital (inpt/outpt, children's); ambulance/EMT","Confirmed"
+"MT",NA,0,NA,0,NA,NA,NA
+"NE","Nebraska",1,2024,1,"Heritage Health hospital directed payment","Hospital (inpt/outpt)","Confirmed"
+"NV","Nevada",1,2020,1,"AMC VBP directed payment (UMC, UNR/UNLV)","Hospital, physicians/AMC","Likely"
+"NH","New Hampshire",1,2021,1,"Critical access hospital directed payment; psychiatric professional SDP; CMHC/children's hospital payments","Hospital (inpt/outpt, CAH, children's); behavioral health/psychiatric","Confirmed"
+"NJ","New Jersey",1,NA,1,"Essex County hospital add-on; specialty pharmacy arrangement","Hospital (inpatient), pharmacy","Not found"
+"NM","New Mexico",1,2019,1,"Hospital VBP; UNM Medical Group DP; Primary Care Payment Reform","Hospital, physicians/AMC, primary care, ambulance","Likely"
+"NY","New York",1,2018,1,"Multiple VBP/fee directed payments tied to DSRIP/VBP roadmap","Hospital, behavioral health, primary care","Likely"
+"NC","North Carolina",1,2023,1,"Healthcare Access and Stabilization Program (HASP)","Hospital (inpt/outpt)","Confirmed (no earlier SDP)"
+"ND",NA,0,NA,0,NA,NA,NA
+"OH","Ohio",1,2018,0,"CICIP (Care Innovation and Community Improvement Program)","Physicians/professional at 4 academic medical centers","Confirmed"
+"OK","Oklahoma",1,2024,1,"SoonerSelect directed payments","Hospital, physicians/professional","Confirmed"
+"OR","Oregon",1,2018,1,"Qualified Directed Payments (3 hospital pools); Behavioral Health DPs","Hospital, behavioral health","Mixed"
+"PA","Pennsylvania",1,2018,1,"Hospital uniform % increase; Hospital Quality Incentive Payment (HQIP)","Hospital","Mixed"
+"RI","Rhode Island",1,2020,1,"Hospital directed payment","Hospital","Likely"
+"SC","South Carolina",1,NA,1,"Hospital uniform % increase; pharmacy arrangement","Hospital, pharmacy","Not found"
+"SD",NA,0,NA,0,NA,NA,NA
+"TN","Tennessee",1,2020,1,"Hospital inpatient/outpatient DP; nursing facility DP; AMC VBP","Hospital, nursing facility, AMC physicians","Likely"
+"TX","Texas",1,2017,1,"UHRIP (pilot Dec 2017); QIPP (Sept 2017); later CHIRP (2022)","Hospital, nursing facility, behavioral health, physicians","Confirmed"
+"UT","Utah",1,2020,0,"Directed payment arrangement(s)","Not specified in research","Likely"
+"VT",NA,0,NA,0,NA,NA,NA
+"VA","Virginia",1,2019,1,"Private acute care hospital uniform % increase","Hospital (inpt/outpt)","Likely"
+"WA","Washington",1,2018,1,"Inpatient/Outpatient DPP; later HSNP (2024)","Hospital (inpt/outpt)","Likely"
+"WV","West Virginia",1,NA,1,"Hospital access-fee directed payment","Hospital (inpt/outpt), physicians","Not found"
+"WI","Wisconsin",1,2018,1,"Behavioral health SDP (SSI/BadgerCare Plus); hospital access payment SDP","Behavioral health (SSI/BadgerCare Plus); hospital (inpt/outpt)","Confirmed"
+"WY",NA,0,NA,0,NA,NA,NA
+"DC","District of Columbia",1,2024,1,"DHCF hospital directed payment","Hospital (inpt/outpt)","Confirmed"
