@@ -1,0 +1,31 @@
+\begin{table}[!h]
+\centering
+\caption{Stacked DiD: ATT by Pre-Tax Operating Margin Quartile}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lrrrr}
+\toprule
+Outcome & Q1 (Lowest) & Q2 & Q3 & Q4 (Highest)\\
+\midrule
+Operating Expenses per Bed & 52,748* & 25,691 & 76,218** & 42,751***\\
+ & (31,158) & (38,230) & (30,864) & (14,060)\\
+Net Patient Revenue per Bed & 62,184* & 33,704 & 64,153* & 30,227\\
+ & (32,168) & (34,824) & (33,849) & (27,977)\\
+Medicaid Share of Discharges & 0.0203** & 0.0154 & 0.0126** & 0.0183**\\
+\addlinespace
+ & (0.0086) & (0.0095) & (0.0054) & (0.0075)\\
+Uncompensated Care per Bed (winsorized) & -27,224** & -8,292 & -17,408** & -22,169*\\
+ & (12,326) & (10,767) & (7,369) & (10,973)\\
+Medicaid Discharges per Bed & 0.8724** & 1.0129** & 0.8099** & 0.3057\\
+ & (0.4147) & (0.4942) & (0.3204) & (0.3948)\\
+\addlinespace
+Operating Margin & 0.0102* & -0.0037 & -0.0105 & -0.0158\\
+ & (0.0056) & (0.0070) & (0.0066) & (0.0279)\\
+\bottomrule
+
+\multicolumn{5}{l}{\footnotesize Quartiles of each hospital's own pre-treatment (rel\_year$<$0) average operating margin; Q1 = lowest.}\\
+\multicolumn{5}{l}{\footnotesize ATT is fixest::aggregate() applied to i(rel\_year, treated, ref=-1), collapsing all post-period}\\
+\multicolumn{5}{l}{\footnotesize rel\_year:treated terms into one coefficient (Sun and Abraham 2021 aggregation).}\\
+\multicolumn{5}{l}{\footnotesize Standard errors clustered by state. * p$<$0.10, ** p$<$0.05, *** p$<$0.01.}\\
+\end{tabular}}
+\end{table}
