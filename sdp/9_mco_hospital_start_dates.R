@@ -58,3 +58,5 @@ print(state_summary, n = Inf)
 
 write.csv(state_summary, "sdp/mco_hospital_state_summary_tmp.csv", row.names = FALSE)
 file.rename("sdp/mco_hospital_state_summary_tmp.csv", "sdp/mco_hospital_state_summary.csv")
+
+View(hosp_progs)
