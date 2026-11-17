@@ -367,9 +367,6 @@ aha_minimal %>%
 hospdata <- hospdata %>%
   left_join(aha_minimal %>% select(-id), by = c("mcrnum", "year"))
 
-View(hospdata_analysis)
-View(aha_minimal)
-
 # Check AHA coverage
 cat("\n=== AHA DATA COVERAGE ===\n")
 cat(paste("AHA year range:", min(aha_minimal$year), "to", max(aha_minimal$year), "\n"))
@@ -431,8 +428,13 @@ hospdata <- hospdata %>%
     # number of non m discharges 
     nonm_discharges = tot_discharges - (mcaid_discharges + mcare_discharges),
 
-    # operating margin 
-    op_margin = (net_pat_rev - tot_operating_exp)/ tot_operating_exp,
+    # operating margin: (NPR - opex) / NPR. NA if NPR <= 0 (undefined /
+    # sign-flipped) or |margin| > 1 (reporting errors). Updated 2026-11-17;
+    # previously divided by tot_operating_exp.
+    op_margin = if_else(net_pat_rev > 0,
+                        (net_pat_rev - tot_operating_exp) / net_pat_rev,
+                        NA_real_),
+    op_margin = if_else(abs(op_margin) <= 1, op_margin, NA_real_),
   
     # Log variables for skewed outcomes
     log_npr = log(net_pat_rev),  # Add 1 to avoid log(0

@@ -1,0 +1,30 @@
+\begin{table}[!h]
+\centering
+\caption{Stacked DiD: ATT by Pre-Tax Operating Margin Quartile}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lrrrr}
+\toprule
+ & Q1 (Lowest) & Q2 & Q3 & Q4 (Highest)\\
+\midrule
+Operating Expenses per Bed & 55,851* & 15,468 & 67,641** & 44,524***\\
+ & (30,821) & (43,789) & (30,524) & (14,471)\\
+Net Patient Revenue per Bed & 60,165* & 27,303 & 54,909 & 31,719\\
+ & (32,896) & (38,848) & (34,916) & (24,033)\\
+Medicaid Share of Discharges & 0.0144 & 0.0201** & 0.0147*** & 0.0176**\\
+ & (0.0088) & (0.0091) & (0.0054) & (0.0075)\\
+Uncompensated Care per Bed (winsorized) & -19,828* & -15,083 & -19,007** & -18,541\\
+ & (10,275) & (10,251) & (8,356) & (11,011)\\
+Medicaid Discharges per Bed & 0.6283 & 1.1425** & 0.8597** & 0.3157\\
+ & (0.4034) & (0.4939) & (0.3613) & (0.3755)\\
+Operating Margin & -0.0053 & 0.0029 & -0.0088 & -0.0051\\
+ & (0.0071) & (0.0067) & (0.0063) & (0.0091)\\
+\bottomrule
+
+\multicolumn{5}{l}{\footnotesize Quartiles of each hospital's pre-treatment average}\\
+\multicolumn{5}{l}{\footnotesize operating margin, (NPR $-$ opex)/NPR; Q1 = lowest.}\\
+\multicolumn{5}{l}{\footnotesize ATT: fixest::aggregate() average of the post-period}\\
+\multicolumn{5}{l}{\footnotesize rel\_year:treated coefficients, within each quartile.}\\
+\multicolumn{5}{l}{\footnotesize SEs clustered by state. * p$<$0.10, ** p$<$0.05, *** p$<$0.01.}\\
+\end{tabular}}
+\end{table}

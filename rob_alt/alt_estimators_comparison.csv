@@ -1,0 +1,13 @@
+"Estimate","SE","Estimator","Outcome","outcome_var","lb","ub"
+35740,16844,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",2725.76,68754.24
+22726.8716275291,26455.3947241304,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-29125.7020317665,74579.4452868247
+22122.4335608999,30461.9620690339,"Staggered TWFE","Operating Expenses per Bed ($)","op_bed",-37583.0120944066,81827.8792162063
+33766,16258,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",1900.32,65631.68
+19309.1091286423,29939.9215323377,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-39373.1370747395,77991.3553320241
+42023.558341876,30505.4338356573,"Staggered TWFE","Net Patient Revenue per Bed ($)","npr_bed",-17767.0919760122,101814.208659764
+0.013,0.005,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",0.0032,0.0228
+0.0117572931203827,0.00651560989833739,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00101330228035862,0.024527888521124
+0.00635933225713226,0.00940084745285692,"Staggered TWFE","Medicaid Share of Discharges","mcaid_prop_discharges",-0.0120663287504673,0.0247849932647318
+-13265,7129,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-27237.84,707.84
+-24347.7683631009,12662.9203550697,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-49167.0922590375,471.555532835599
+-15485.6418515292,15934.5165505204,"Staggered TWFE","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-46717.2942905492,15746.0105874907

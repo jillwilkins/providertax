@@ -1,0 +1,109 @@
+"rel_year","Estimate","SE","Estimator","Outcome","outcome_var","lb","ub"
+-4,-15896.372555907,12162.4727262696,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",-39734.8190993954,7942.07398758138
+-3,-10297.2576180529,9368.48002470163,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",-28659.4784664681,8064.96323036226
+-2,-8334.37098950103,6141.33937367907,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",-20371.396161912,3702.65418290995
+-1,0,0,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",0,0
+0,16124.9822339612,7977.83394664519,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",488.42769853663,31761.5367693858
+1,28236.9301071171,15841.5835517319,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",-2812.57365427748,59286.4338685117
+2,44131.9354343321,22933.3842383282,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",-817.497672791069,89081.3685414553
+3,47596.378941283,25780.2422806436,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",-2932.89592877848,98125.6538113445
+4,60667.1215870557,36682.4533831717,"Stacked DiD (main)","Operating Expenses per Bed ($)","op_bed",-11230.4870439609,132564.730218072
+-4,-7754.77960962404,13777.8672926787,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-34759.3995032743,19249.8402840262
+-3,-7323.36299152097,14796.5252223966,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-36324.5524274183,21677.8264443763
+-2,-12302.6276768219,9650.00655086335,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-31216.640516514,6611.38516287029
+-1,0,0,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",0,0
+0,14155.6911293679,19381.0558148997,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-23831.1782678355,52142.5605265713
+1,15031.1412836989,26797.5811909294,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-37492.1178505227,67554.4004179205
+2,26426.0174092712,25387.8460738136,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-23334.1608954035,76186.1957139458
+3,22398.1344017705,30854.6153006192,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-38076.911587443,82873.180390984
+4,35623.3739135372,40511.9376011926,"Callaway & Sant'Anna","Operating Expenses per Bed ($)","op_bed",-43780.0237848003,115026.771611875
+-4,-10427.4784695077,13631.4309017191,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-37145.0830368772,16290.1260978618
+-3,-12378.1746612432,10479.1043844817,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-32917.2192548274,8160.8699323409
+-2,-11290.2946265158,6942.19107743199,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-24896.9891382825,2316.39988525087
+-1,0,0,"TWFE event study","Operating Expenses per Bed ($)","op_bed",0,0
+0,5077.49433402188,5732.5513090776,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-6158.30623177022,16313.294899814
+1,850.501415954392,10576.6658254257,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-19879.76360188,21580.7664337887
+2,16788.2954068209,24139.722455555,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-30525.560606067,64102.1514197087
+3,15760.3367175814,27888.2821077221,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-38900.6962135539,70421.3696487168
+4,33843.0231602302,34496.0208281974,"TWFE event study","Operating Expenses per Bed ($)","op_bed",-33769.1776630368,101455.223983497
+-4,-15044.8587212399,16125.0832892745,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-46650.0219682179,16560.304525738
+-3,-11711.2908283744,13657.9742905661,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-38480.9204378838,15058.3387811351
+-2,-10221.2473581127,10885.6005378569,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-31557.0244123121,11114.5296960868
+-1,0,0,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",0,0
+0,15158.2529119354,10046.6663518689,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-4533.2131377275,34849.7189615984
+1,29704.2480416977,16560.2681708798,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-2753.87757322661,62162.3736566221
+2,37473.8482717254,22225.3912166035,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-6087.91851281757,81035.6150562683
+3,52547.437826771,27381.7340280649,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-1120.76086823621,106215.636521778
+4,48251.391184931,33744.5578597823,"Stacked DiD (main)","Net Patient Revenue per Bed ($)","npr_bed",-17887.9422202423,114390.724590104
+-4,-6922.53449724467,37558.9047710778,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-80537.9878485572,66692.9188540679
+-3,-11559.8506775873,33280.8388174642,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-76790.2947598171,53670.5934046425
+-2,-8872.6128920399,27112.143817598,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-62012.4147745319,44267.1889904521
+-1,0,0,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",0,0
+0,21931.9170908056,31843.0247219819,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-40480.411364279,84344.2455458902
+1,29342.0789243392,41439.6540151781,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-51879.64294541,110563.800794088
+2,17729.7771461131,25332.4436523615,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-31921.8124125155,67381.3667047418
+3,17567.3085801036,34567.2778263924,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-50184.5559596256,85319.1731198327
+4,9974.46390185,40703.3290511881,"Callaway & Sant'Anna","Net Patient Revenue per Bed ($)","npr_bed",-69804.0610384786,89752.9888421786
+-4,-25012.8780693307,17046.0250595825,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-58423.0871861124,8397.33104745106
+-3,-22648.6626439486,13352.3245915866,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-48819.2188434584,3521.89355556116
+-2,-17525.6457533778,9614.17363547601,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-36369.4260789108,1318.13457215514
+-1,0,0,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",0,0
+0,16186.3422225119,8565.32112286147,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-601.68717829659,32974.3716233204
+1,21975.4194972587,15465.5968764551,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-8337.15038059318,52287.9893751107
+2,25124.5784646282,20193.2330683186,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-14454.1583492763,64703.3152785327
+3,34616.068159545,24114.8781411047,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-12649.0929970201,81881.2293161102
+4,30670.4781985785,27909.7607295127,"TWFE event study","Net Patient Revenue per Bed ($)","npr_bed",-24032.6528312665,85373.6092284234
+-4,0.00444351675992459,0.0070704015428743,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00941447026410903,0.0183015037839582
+-3,0.00382508753555578,0.00479002276310478,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",-0.0055633570801296,0.0132135321512412
+-2,0.000726332798208433,0.0028123240161506,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00478582227344673,0.0062384878698636
+-1,0,0,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",0,0
+0,0.00334138645017221,0.00309951130863233,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00273365571474716,0.00941642861509157
+1,0.0106281679755377,0.00587077106346556,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",-0.000878543308854797,0.0221348792599302
+2,0.0168636147293327,0.00752026363957491,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",0.00212389799576592,0.0316033314628996
+3,0.0241046084691222,0.00722376769786729,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",0.00994602378130232,0.0382631931569421
+4,0.0270812939881347,0.00969376417153026,"Stacked DiD (main)","Medicaid Share of Discharges","mcaid_prop_discharges",0.00808151621193536,0.046081071764334
+-4,0.000690497826068667,0.00415924349205189,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00746161941835304,0.00884261507049038
+-3,0.00174139832015948,0.00476128700964617,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00759072421874701,0.011073520859066
+-2,0.000542546049895117,0.00311323224624463,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00555938915274436,0.00664448125253459
+-1,0,0,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",0,0
+0,0.00277547155235561,0.00392156486633163,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.0049107955856544,0.0104617386903656
+1,0.00826910726691855,0.00431432458243592,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.000186968914655845,0.0167251834484929
+2,0.0103239426115345,0.00611654013439133,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00166447605187254,0.0223123612749415
+3,0.0156209061253091,0.00886771412571102,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00175981356108454,0.0330016258117027
+4,0.0217970380457957,0.0133847560738753,"Callaway & Sant'Anna","Medicaid Share of Discharges","mcaid_prop_discharges",-0.0044370838589999,0.0480311599505912
+-4,0.00232663629453632,0.00626244530852226,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00994775651016732,0.01460102909924
+-3,0.00270139339366077,0.00458956648585867,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00629415691862223,0.0116969437059438
+-2,0.00132860441383776,0.00246148943260253,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.0034959148740632,0.00615312370173872
+-1,0,0,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",0,0
+0,0.0014852065462959,0.00216067968821145,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00274972564259854,0.00572013873519034
+1,0.00511531401705884,0.00476545211325103,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00422497212491318,0.0144556001590309
+2,0.00680308641871691,0.00674865694692034,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00642428119724696,0.0200304540346808
+3,0.0114616549400259,0.00678204258647612,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.00183114852946734,0.0247544584095191
+4,0.0151606368597432,0.00810838286282241,"TWFE event study","Medicaid Share of Discharges","mcaid_prop_discharges",-0.000731793551388695,0.0310530672708752
+-4,-5342.33046333921,10100.8649440235,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-25140.0257536253,14455.3648269469
+-3,-4449.12109851547,7676.00688008123,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-19494.0945834747,10595.8523864437
+-2,-964.616084898905,3730.73950195285,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-8276.8655087265,6347.63333892869
+-1,0,0,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",0,0
+0,-2485.19102334485,6195.28073735773,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-14627.941268566,9657.55922187629
+1,-5983.15423533697,7268.66102009204,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-20229.7298347174,8263.42136404343
+2,-12863.9380916235,9900.47508366608,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-32268.869255609,6540.99307236205
+3,-33434.1508693451,11203.1100950959,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-55392.2466557332,-11476.0550829571
+4,-50256.1413057082,17240.6685589419,"Stacked DiD (main)","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-84047.8516812343,-16464.4309301821
+-4,-4228.24887782312,18838.0146958787,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-41150.7576817454,32694.2599260991
+-3,-3359.06932974782,12555.5142517422,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-27967.8772631625,21249.7386036668
+-2,565.799785079117,5607.11079028866,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-10424.1373638867,11555.7369340449
+-1,0,0,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",0,0
+0,-1848.57143141287,8594.05781961497,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-18692.9247578582,14995.7818950325
+1,-5196.1372540398,14952.5752063331,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-34503.1846584527,24110.9101503731
+2,-17771.4535603208,16665.4420946495,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-50435.7200658338,14892.8129451921
+3,-41807.8047001775,15872.2015129207,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-72917.3196655021,-10698.289734853
+4,-55114.8748695537,22360.8843814398,"Callaway & Sant'Anna","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-98942.2082571756,-11287.5414819318
+-4,-5125.08073071762,13125.7365739765,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-30851.5244157116,20601.3629542763
+-3,-595.497402204356,7587.88849059161,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-15467.7588437639,14276.7640393552
+-2,2250.45540882008,3810.83273534928,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-5218.77675246451,9719.68757010466
+-1,0,0,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",0,0
+0,-7353.56546688573,5193.74743897465,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-17533.310447276,2826.17951350458
+1,-10974.3351132548,7317.37907673701,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-25316.3981036594,3367.7278771497
+2,-17716.9818139976,13723.1916197076,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-44614.4373886246,9180.47376062926
+3,-27650.4445782451,18920.9944097041,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-64735.5936212652,9434.70446477506
+4,-35239.0772005303,26090.5271057256,"TWFE event study","Uncompensated Care per Bed ($, winsorized)","uncomp_bed_w95",-86376.5103277525,15898.3559266918

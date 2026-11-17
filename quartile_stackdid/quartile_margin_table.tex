@@ -1,0 +1,20 @@
+\begin{table}[!h]
+\centering
+\caption{Stacked DiD: Operating Margin ATT by Pre-Tax Operating Margin Quartile}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lrrrr}
+\toprule
+ & Q1 (Lowest) & Q2 & Q3 & Q4 (Highest)\\
+\midrule
+Operating Margin & -0.0053 & 0.0029 & -0.0088 & -0.0051\\
+ & (0.0071) & (0.0067) & (0.0063) & (0.0091)\\
+\bottomrule
+
+\multicolumn{5}{l}{\footnotesize Quartiles of each hospital's pre-treatment average}\\
+\multicolumn{5}{l}{\footnotesize operating margin, (NPR $-$ opex)/NPR; Q1 = lowest.}\\
+\multicolumn{5}{l}{\footnotesize ATT: fixest::aggregate() average of the post-period}\\
+\multicolumn{5}{l}{\footnotesize rel\_year:treated coefficients, within each quartile.}\\
+\multicolumn{5}{l}{\footnotesize SEs clustered by state. * p$<$0.10, ** p$<$0.05, *** p$<$0.01.}\\
+\end{tabular}}
+\end{table}

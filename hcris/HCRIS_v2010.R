@@ -48,7 +48,7 @@ hcris.vars = rbind(hcris.vars,c('dsh_from_mcaid','S100000','00500','00100','nume
 hcris.vars = rbind(hcris.vars,c('mcaid_charges','S100000','00600','00100','numeric'))
 hcris.vars = rbind(hcris.vars,c('mcaid_cost','S100000','00700','00100','numeric'))
 hcris.vars = rbind(hcris.vars,c('rev_cost_mcaid','S100000','00800','00100','numeric'))
-hcris.vars = rbind(hcris.vars, c('typectrl', 'S200001', '02100', '00000', 'numeric'))
+hcris.vars = rbind(hcris.vars, c('typectrl', 'S200001', '02100', '00100', 'alpha'))
 hcris.vars = rbind(hcris.vars, c('provtype', 'S200001', '00300', '00400', 'numeric'))
 hcris.vars = rbind(hcris.vars, c('tot_uncomp_care_cost', 'S100000', '03000', '00100', 'numeric'))
 
@@ -59,7 +59,7 @@ colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")
 
 
 # Import data -------------------------------------------------------------
-for (i in 2010:2024) {
+for (i in 2010:2025) {
   HCRIS.alpha=read_csv(paste0("data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_ALPHA.CSV"),
                        col_names=c('RPT_REC_NUM','WKSHT_CD','LINE_NUM','CLMN_NUM','ITM_VAL_NUM'))
   HCRIS.numeric=read_csv(paste0("data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_NMRC.CSV"),

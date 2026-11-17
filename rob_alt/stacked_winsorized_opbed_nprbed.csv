@@ -1,0 +1,55 @@
+"rel_year","Estimate","SE","outcome_var","Outcome","Version","lb","ub"
+-4,-15896.372555907,12162.4727262696,"op_bed","Operating Expenses per Bed ($)","Raw",-39734.8190993954,7942.07398758138
+-3,-10297.2576180529,9368.48002470163,"op_bed","Operating Expenses per Bed ($)","Raw",-28659.4784664681,8064.96323036226
+-2,-8334.37098950103,6141.33937367907,"op_bed","Operating Expenses per Bed ($)","Raw",-20371.396161912,3702.65418290995
+-1,0,0,"op_bed","Operating Expenses per Bed ($)","Raw",0,0
+0,16124.9822339612,7977.83394664519,"op_bed","Operating Expenses per Bed ($)","Raw",488.42769853663,31761.5367693858
+1,28236.9301071171,15841.5835517319,"op_bed","Operating Expenses per Bed ($)","Raw",-2812.57365427748,59286.4338685117
+2,44131.9354343321,22933.3842383282,"op_bed","Operating Expenses per Bed ($)","Raw",-817.497672791069,89081.3685414553
+3,47596.378941283,25780.2422806436,"op_bed","Operating Expenses per Bed ($)","Raw",-2932.89592877848,98125.6538113445
+4,60667.1215870557,36682.4533831717,"op_bed","Operating Expenses per Bed ($)","Raw",-11230.4870439609,132564.730218072
+-4,-14474.5528924946,11460.8234014928,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-36937.7667594204,7988.66097443132
+-3,-8927.23702385081,8670.49444172404,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-25921.4061296299,8066.93208192831
+-2,-8420.22620099211,5675.8347294842,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-19544.8622707811,2704.40986879692
+-1,0,0,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",0,0
+0,14088.1179545298,7722.61336930169,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-1048.20424930153,29224.4401583611
+1,20667.8895515897,15057.1931627612,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-8844.20904742229,50179.9881506016
+2,35543.7700442733,21519.5853594775,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-6634.61726030259,77722.1573488492
+3,34452.4009705064,23887.2916112336,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-12366.6905875115,81271.4925285242
+4,41963.4738495185,32314.4373437761,"op_bed_w99","Operating Expenses per Bed ($)","Winsorized (1st/99th pctile)",-21372.8233442827,105299.77104332
+-4,-6987.61010668199,9489.88868246293,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-25587.7919243093,11612.5717109453
+-3,-3567.0537304504,7149.9126463942,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-17580.882517383,10446.7750564822
+-2,-5860.32238043233,4518.55072157453,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-14716.6817947184,2996.03703385375
+-1,0,0,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",0,0
+0,11484.2042072471,5887.68863241829,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-55.6655122927805,23024.0739267869
+1,15997.6379507153,11667.7894689081,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-6871.22940834464,38866.5053097753
+2,26588.1410187901,16271.0545914603,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-5303.12598047198,58479.4080180522
+3,22227.591474163,17387.4528422743,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-11851.8160966946,56306.9990450205
+4,24828.5157554057,21895.2429863957,"op_bed_w95","Operating Expenses per Bed ($)","Winsorized (1st/95th pctile)",-18086.1604979298,67743.1920087412
+-4,-15044.8587212399,16125.0832892745,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-46650.0219682179,16560.304525738
+-3,-11711.2908283744,13657.9742905661,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-38480.9204378838,15058.3387811351
+-2,-10221.2473581127,10885.6005378569,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-31557.0244123121,11114.5296960868
+-1,0,0,"npr_bed","Net Patient Revenue per Bed ($)","Raw",0,0
+0,15158.2529119354,10046.6663518689,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-4533.2131377275,34849.7189615984
+1,29704.2480416977,16560.2681708798,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-2753.87757322661,62162.3736566221
+2,37473.8482717254,22225.3912166035,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-6087.91851281757,81035.6150562683
+3,52547.437826771,27381.7340280649,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-1120.76086823621,106215.636521778
+4,48251.391184931,33744.5578597823,"npr_bed","Net Patient Revenue per Bed ($)","Raw",-17887.9422202423,114390.724590104
+-4,-8716.65312893185,13108.2717904679,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-34408.865838249,16975.5595803853
+-3,-5638.98437377147,10048.1824867142,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-25333.4220477312,14055.4533001883
+-2,-4490.02694019853,7217.32926607425,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-18635.9923017041,9655.938421307
+-1,0,0,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",0,0
+0,15072.4782768246,8056.8405819262,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-718.929263750775,30863.8858174
+1,18358.7885681784,14553.1210846386,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-10165.3287577132,46882.90589407
+2,36251.370846077,21324.4704840425,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-5544.59130264626,78047.3329948003
+3,37885.7663739269,24230.6084719495,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-9606.22623109419,85377.7589789479
+4,40573.9286260392,32787.2711899205,"npr_bed_w99","Net Patient Revenue per Bed ($)","Winsorized (1st/99th pctile)",-23689.1229062049,104836.980158283
+-4,-5701.48324754481,11436.5872118355,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-28117.1941827424,16714.2276876528
+-3,-2628.66344018417,8817.3581489169,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-19910.6854120613,14653.3585316929
+-2,-2458.59633469895,5612.46856579942,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-13459.0347236658,8541.84205426792
+-1,0,0,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",0,0
+0,12170.8384565784,6854.2230264059,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-1263.43867517718,25605.1155883339
+1,12939.7522950052,12917.3027776224,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-12378.1611491348,38257.6657391451
+2,30791.3273934291,18506.4436332766,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-5481.30212779301,67063.9569146511
+3,26057.4741800263,19889.0850984585,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-12925.1326129523,65040.0809730049
+4,27465.7635397894,25268.2233164432,"npr_bed_w95","Net Patient Revenue per Bed ($)","Winsorized (1st/95th pctile)",-22059.9541604394,76991.4812400182

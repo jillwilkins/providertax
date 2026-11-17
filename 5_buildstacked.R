@@ -4,9 +4,11 @@
 # Following weights and structure from Cengiz et al. 2019 and Wing et al. 2024
 # ==============================================================================
 library(fixest)
+library(purrr)
+library(tidyverse)
 
 # load data in if not done already 
-# hospdata_analysis <- read.csv(paste0(data_output_path, "hospdata_analysis.csv"))
+hospdata_analysis <- read.csv(paste0(data_output_path, "hospdata_analysis.csv"))
 
 # normalized var per bed
 hospdata_analysis <- hospdata_analysis %>%
@@ -209,119 +211,15 @@ if (diff(q_range) < 0.001) {
 }
 
 
-# The stacked data set has been built. Test regressions below or move to analysis script for formality. 
 # ------------------------------------------------------------------------------
-# 8. Regression Player (adjustable for quick analysis)
+# 8. Derived variables used by downstream scripts
+#    in_sys        -> event_studies/scope_calc.R
+#    pre_mcaid_dis -> diagnostics/investigate_mcaidrev.R
 # ------------------------------------------------------------------------------
-
-colnames(stacked_data)
-
 stacked_data <- stacked_data %>%
   mutate(in_sys = case_when(sysid > 0 ~ "1", TRUE ~ "0"))
 
 stacked_data <- stacked_data %>%
   mutate(pre_mcaid_dis = mean(mcaid_discharges[rel_year < 0], na.rm = TRUE), .by = mcrnum)
 
-stacked_data <- stacked_data %>%
-  mutate(ln_mcaid_rev = log(net_mcaid_rev_wins))
-
-stacked_result_real <- feols(
-   cash / net_pat_rev ~ i(rel_year, treated, ref = -1) +
-                      median_income_pre + exp_status | mcrnum^df + year^df,
-  data    = stacked_data_real,  
-  weights = ~Q_weight,
-  cluster = ~state^df
-)
-
-summary(stacked_result_real)
-
-summary(hospdata_analysis$net_mcaid_rev)
-summary(stacked_data$net_mcaid_rev)
-
-colnames(hospdata_analysis)
-
-post_coefs_count <- coef(stacked_result)[grepl("rel_year::[0-9]+:treated", 
-                                                names(coef(stacked_result)))]
-att_patients <- mean(post_coefs_count)
-att_patients
-
-stacked_single_result <- feols(
-  uncomp_care / tot_charges ~ i(rel_year, treated, ref = -1) +
-                      median_income_pre + exp_status |
-    mcrnum^df + year^df,
-  data = stacked_data %>%  filter(expyear != 2014),
-  mutate(post = ifelse(rel_year >= 0, 1, 0)),
-  weights = ~Q_weight,
-  cluster = ~state^df
-)
-
-summary(stacked_single_result)
-
-# ------------------------------------------------------------------------------
-# 9. Event study plot
-# ------------------------------------------------------------------------------
-
-iplot(
-  stacked_result_real,
-  main = "Weighted stacked DiD — Wins, Ln, Real Medicaid Revenue",
-  xlab = "Event time (years since adoption)",
-  ylab = "Coefficient estimate (95% CI)"
-)
- abline(h = 0, lty = 2, col = "gray50")
-abline(v = -0.5, lty = 3, col = "gray70")
-
-
-# ------------------------------------------------------------------------------
-# Diagnose: how many sub-experiments contribute at each event time?
-# ------------------------------------------------------------------------------
-
-# Count contributing sub-experiments and their combined weight at each event time
-event_time_info <- stacked_data %>%
-  filter(treated == 1) %>%
-  group_by(rel_year) %>%
-  summarise(
-    n_cohorts         = n_distinct(df),
-    n_treated_hosps   = n_distinct(mcrnum),
-    total_Q_weight    = sum(Q_weight),
-    cohorts_present   = paste(sort(unique(df)), collapse = ", "),
-    .groups           = "drop"
-  ) %>%
-  arrange(rel_year)
-
-cat("=== CONTRIBUTING SUB-EXPERIMENTS BY EVENT TIME ===\n")
-print(event_time_info, width = 120)
-
-# ------------------------------------------------------------------------------
-# Extract event study coefficients and SEs to see the pattern directly
-# ------------------------------------------------------------------------------
-es_df <- broom::tidy(stacked_result) %>%
-  filter(str_detect(term, "rel_year")) %>%
-  mutate(
-    rel_year = as.numeric(str_extract(term, "-?[0-9]+")),
-    ci_lo    = estimate - 1.96 * std.error,
-    ci_hi    = estimate + 1.96 * std.error,
-    ci_width = ci_hi - ci_lo
-  ) %>%
-  arrange(rel_year)
-
-cat("\n=== SE AND CI WIDTH BY EVENT TIME ===\n")
-es_df %>%
-  select(rel_year, estimate, std.error, ci_width) %>%
-  print(n = 20)
-
-# Is the SE pattern symmetric around 0?
-# If SEs at e=-5 ≈ SEs at e=+5, widening is due to fewer cohorts (expected)
-# If SEs at e=+5 >> SEs at e=-5, post-period variance is growing (investigate)
-cat("\n=== PRE vs POST SE COMPARISON ===\n")
-es_df %>%
-  mutate(period = if_else(rel_year < 0, "pre", "post")) %>%
-  group_by(period) %>%
-  summarise(
-    mean_se  = mean(std.error),
-    max_se   = max(std.error),
-    min_se   = min(std.error),
-    .groups  = "drop"
-  ) %>%
-  print()
-
-
+# The stacked data set has been built. Analysis lives in separate scripts.

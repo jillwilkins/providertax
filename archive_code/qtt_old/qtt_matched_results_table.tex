@@ -1,0 +1,28 @@
+% NOTE: values digitized from opmargin_qttmatch_plot.png (approx. +/- 0.001).
+% Replace with saved panel_qtt() output before using in the paper.
+\begin{table}[!h]
+\centering
+\caption{Quantile Treatment Effects on the Treated: Operating Margin, Matched Sample}
+\centering
+\begin{tabular}[t]{lcc}
+\toprule
+Quantile ($\tau$) & QTT & 95\% CI\\
+\midrule
+0.1 & 0.0145 & {}[-0.0025, 0.0310]\\
+0.2 & 0.0060 & {}[-0.0045, 0.0170]\\
+0.3 & -0.0004 & {}[-0.0097, 0.0090]\\
+\addlinespace
+0.4 & -0.0042 & {}[-0.0121, 0.0038]\\
+0.5 & -0.0075 & {}[-0.0151, 0.0002]\\
+0.6 & -0.0118$^{\dagger}$ & {}[-0.0202, -0.0033]\\
+\addlinespace
+0.7 & -0.0134$^{\dagger}$ & {}[-0.0249, -0.0017]\\
+0.8 & -0.0185$^{\dagger}$ & {}[-0.0347, -0.0023]\\
+0.9 & -0.0278 & {}[-0.0717, 0.0160]\\
+\bottomrule
+
+\multicolumn{3}{l}{\footnotesize QTTs estimated with the Callaway and Li (2019) panel estimator (qte::panel\_qtt())}\\
+\multicolumn{3}{l}{\footnotesize on the matched sample. Pointwise 95\% bootstrap confidence intervals.}\\
+\multicolumn{3}{l}{\footnotesize $\dagger$ pointwise 95\% CI excludes zero. The 95\% uniform band includes zero at every $\tau$.}\\
+\end{tabular}
+\end{table}

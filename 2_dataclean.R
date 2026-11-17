@@ -212,7 +212,7 @@ hospitals_with_extreme_beds <- hospdata_clean %>%
   pull(mcrnum) %>%
   unique()
 
-View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_extreme_beds) %>% select(mcrnum, state, year, beds))
+#View(hospdata_clean %>% filter(mcrnum %in% hospitals_with_extreme_beds) %>% select(mcrnum, state, year, beds))
 # Looking at these observations shows they are data errors 
 
 # Replace extreme values with average of year before and after
@@ -371,9 +371,9 @@ hospdata_clean <- hospdata_clean %>%
   )
 
 # hospitals to remove for incomplete data or unfeasible values
-# mcrnum == 50733, 50425, 50139, 450831
+# mcrnum == 50733, 50425, 50139, 450831, 110074
 hospdata_clean <- hospdata_clean %>%
-  filter(!mcrnum %in% c(50733, 50425, 50139, 450831))
+  filter(!mcrnum %in% c(50733, 50425, 50139, 450831, 110074))
 
 # HIGH VALUES 
 hospitals_with_high_npr <- hospdata_clean %>%
@@ -734,11 +734,5 @@ write.csv(
 cat("\n=== DATA SAVED SUCCESSFULLY ===\n")
 cat("Output file: hospdata_analysis.csv\n")
 cat("Location:", data_output_path, "\n")
-
-cat("\n", rep("=", 70), "\n", sep = "")
-cat("COMPLETE: cleaned, income data!\n")
-cat(rep("=", 70), "\n\n", sep = "")
-
-
 
 
